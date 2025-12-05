@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/app_constants.dart';
@@ -19,18 +20,26 @@ class ApiService {
 
   // Initialize with stored tokens
   Future<void> initialize() async {
+    developer.log('🔧 ApiService: Initializing...', name: 'ApiService');
+    developer.log('🔧 ApiService: Base URL: $baseUrl', name: 'ApiService');
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(AppConstants.cacheKeyToken);
     _refreshToken = prefs.getString(AppConstants.cacheKeyRefreshToken);
+    developer.log('🔧 ApiService: Token exists: ${_token != null}, RefreshToken exists: ${_refreshToken != null}', name: 'ApiService');
+    if (_token != null) {
+      developer.log('🔧 ApiService: Token preview: ${_token!.substring(0, _token!.length > 20 ? 20 : _token!.length)}...', name: 'ApiService');
+    }
   }
 
   // Store tokens
   Future<void> setTokens(String token, String refreshToken) async {
+    developer.log('💾 ApiService: Storing tokens', name: 'ApiService');
     _token = token;
     _refreshToken = refreshToken;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(AppConstants.cacheKeyToken, token);
     await prefs.setString(AppConstants.cacheKeyRefreshToken, refreshToken);
+    developer.log('💾 ApiService: Tokens stored successfully', name: 'ApiService');
   }
 
   // Clear tokens
@@ -64,6 +73,9 @@ class ApiService {
   }) async {
     try {
       final uri = _buildUri(endpoint, queryParams);
+      developer.log('📡 ApiService: GET $uri', name: 'ApiService');
+      developer.log('📡 ApiService: RequiresAuth: $requiresAuth, HasToken: ${_token != null}', name: 'ApiService');
+
       final response = await http
           .get(
             uri,
@@ -71,14 +83,19 @@ class ApiService {
           )
           .timeout(Duration(seconds: AppConstants.apiTimeout));
 
+      developer.log('📡 ApiService: Response status: ${response.statusCode}', name: 'ApiService');
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e) {
+      developer.log('❌ ApiService: SocketException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on HttpException {
+    } on HttpException catch (e) {
+      developer.log('❌ ApiService: HttpException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on FormatException {
+    } on FormatException catch (e) {
+      developer.log('❌ ApiService: FormatException: $e', name: 'ApiService');
       throw ApiException('Invalid response format');
     } catch (e) {
+      developer.log('❌ ApiService: Exception: $e', name: 'ApiService');
       throw ApiException(e.toString());
     }
   }
@@ -91,6 +108,12 @@ class ApiService {
   }) async {
     try {
       final uri = _buildUri(endpoint);
+      developer.log('📡 ApiService: POST $uri', name: 'ApiService');
+      developer.log('📡 ApiService: RequiresAuth: $requiresAuth, HasToken: ${_token != null}', name: 'ApiService');
+      if (body != null) {
+        developer.log('📡 ApiService: Request body: ${body.keys.toList()}', name: 'ApiService');
+      }
+
       final response = await http
           .post(
             uri,
@@ -99,14 +122,19 @@ class ApiService {
           )
           .timeout(Duration(seconds: AppConstants.apiTimeout));
 
+      developer.log('📡 ApiService: Response status: ${response.statusCode}', name: 'ApiService');
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e) {
+      developer.log('❌ ApiService: SocketException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on HttpException {
+    } on HttpException catch (e) {
+      developer.log('❌ ApiService: HttpException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on FormatException {
+    } on FormatException catch (e) {
+      developer.log('❌ ApiService: FormatException: $e', name: 'ApiService');
       throw ApiException('Invalid response format');
     } catch (e) {
+      developer.log('❌ ApiService: Exception: $e', name: 'ApiService');
       throw ApiException(e.toString());
     }
   }
@@ -245,32 +273,134 @@ class ApiService {
 
   // Handle response
   Map<String, dynamic> _handleResponse(http.Response response) {
+    developer.log('🔍 ApiService: Handling response with status ${response.statusCode}', name: 'ApiService');
+    developer.log('🔍 ApiService: Response body preview: ${response.body.length > 200 ? response.body.substring(0, 200) : response.body}', name: 'ApiService');
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      developer.log('✅ ApiService: Success response', name: 'ApiService');
       if (response.body.isEmpty) {
         return {'success': true};
       }
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      developer.log('✅ ApiService: Response keys: ${decoded.keys.toList()}', name: 'ApiService');
+      return decoded;
     } else if (response.statusCode == 401) {
-      // Unauthorized - token expired
-      clearTokens();
-      throw UnauthorizedException(AppConstants.errorUnauthorized);
+      developer.log('⚠️ ApiService: 401 Unauthorized', name: 'ApiService');
+
+      // Try to get the error message from response body
+      String errorMessage = AppConstants.errorUnauthorized;
+      try {
+        if (response.body.isNotEmpty) {
+          final body = jsonDecode(response.body);
+
+          // Try different error formats
+          if (body['error'] != null && body['error'] is Map) {
+            // Format: { error: { message: "..." } }
+            final errorObj = body['error'] as Map<String, dynamic>;
+            errorMessage = errorObj['message'] ?? errorMessage;
+          } else if (body['error'] != null && body['error'] is String) {
+            // Format: { error: "..." }
+            errorMessage = body['error'];
+          } else if (body['message'] != null) {
+            // Format: { message: "..." }
+            errorMessage = body['message'];
+          }
+
+          developer.log('⚠️ ApiService: 401 Error message: $errorMessage', name: 'ApiService');
+        }
+      } catch (e) {
+        developer.log('⚠️ ApiService: Could not parse 401 error body: $e', name: 'ApiService');
+      }
+
+      // Only clear tokens if this is for an authenticated request
+      // Don't clear tokens on login failure
+      if (_token != null) {
+        developer.log('⚠️ ApiService: Clearing tokens due to 401', name: 'ApiService');
+        clearTokens();
+      }
+
+      throw UnauthorizedException(errorMessage);
     } else if (response.statusCode == 403) {
+      developer.log('⚠️ ApiService: 403 Forbidden', name: 'ApiService');
       throw ApiException('Access forbidden');
     } else if (response.statusCode == 404) {
+      developer.log('⚠️ ApiService: 404 Not Found', name: 'ApiService');
       throw ApiException('Resource not found');
     } else if (response.statusCode == 422) {
+      developer.log('⚠️ ApiService: 422 Validation Error', name: 'ApiService');
+      developer.log('⚠️ ApiService: Response body: ${response.body}', name: 'ApiService');
       // Validation error
-      final body = jsonDecode(response.body);
-      throw ValidationException(
-        body['message'] ?? 'Validation failed',
-        body['errors'],
-      );
+      try {
+        final body = jsonDecode(response.body);
+
+        // Try different error response formats
+        String errorMessage = 'Validation failed';
+        Map<String, dynamic>? errors;
+
+        // Format 1: Standard { message, errors }
+        if (body['message'] != null) {
+          errorMessage = body['message'];
+        }
+
+        // Format 2: Nested error object { error: { message, details } }
+        if (body['error'] != null && body['error'] is Map) {
+          final errorObj = body['error'] as Map<String, dynamic>;
+          if (errorObj['message'] != null) {
+            errorMessage = errorObj['message'];
+          }
+
+          // Check for details array
+          if (errorObj['details'] != null && errorObj['details'] is List) {
+            final details = errorObj['details'] as List;
+            if (details.isNotEmpty) {
+              // Extract first error message
+              final firstDetail = details.first;
+              if (firstDetail is Map && firstDetail['message'] != null) {
+                errorMessage = firstDetail['message'].toString();
+              }
+
+              // Build error map for display
+              errors = {};
+              for (var detail in details) {
+                if (detail is Map && detail['path'] != null && detail['message'] != null) {
+                  final path = detail['path'].toString().split('.').last;
+                  errors[path] = detail['message'];
+                }
+              }
+            }
+          }
+        }
+
+        // Format 3: Direct errors object
+        if (body['errors'] != null && body['errors'] is Map) {
+          errors = body['errors'] as Map<String, dynamic>;
+          if (errors.isNotEmpty) {
+            final firstError = errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              errorMessage = firstError.first.toString();
+            } else if (firstError is String) {
+              errorMessage = firstError;
+            }
+          }
+        }
+
+        developer.log('⚠️ ApiService: Parsed validation message: $errorMessage', name: 'ApiService');
+        developer.log('⚠️ ApiService: Parsed validation errors: $errors', name: 'ApiService');
+
+        throw ValidationException(errorMessage, errors);
+      } catch (e) {
+        if (e is ValidationException) rethrow;
+        developer.log('⚠️ ApiService: Failed to parse validation error: $e', name: 'ApiService');
+        throw ValidationException('Invalid input. Please check your information.');
+      }
     } else if (response.statusCode >= 500) {
+      developer.log('❌ ApiService: ${response.statusCode} Server Error', name: 'ApiService');
       throw ApiException('Server error. Please try again later.');
     } else {
       final body = response.body.isNotEmpty
           ? jsonDecode(response.body)
           : {'message': 'Unknown error'};
+      developer.log('❌ ApiService: ${response.statusCode} Error: ${body['message']}', name: 'ApiService');
       throw ApiException(body['message'] ?? AppConstants.errorGeneric);
     }
   }

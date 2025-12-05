@@ -133,6 +133,8 @@ export class AuthService {
     otpExpiresIn?: number;
   }> {
     try {
+      logger.info('Login attempt', { email, passwordLength: password?.length });
+
       // Get user
       const users = await db.query<User>(
         `SELECT id, email, phone, country_code, password_hash, is_active,
@@ -141,24 +143,38 @@ export class AuthService {
         [email]
       );
 
+      logger.info('User query result', { found: users.length, email });
+
       if (users.length === 0) {
+        logger.warn('No user found', { email });
         throw new Error('INVALID_CREDENTIALS');
       }
 
       const user = users[0];
+      logger.info('User found', {
+        userId: user.id,
+        email: user.email,
+        isActive: user.is_active,
+        hasPasswordHash: !!user.password_hash,
+        passwordHashLength: user.password_hash?.length
+      });
 
       // Check if account is locked
       if (user.locked_until && new Date(user.locked_until) > new Date()) {
+        logger.warn('Account locked', { userId: user.id, lockedUntil: user.locked_until });
         throw new Error('ACCOUNT_LOCKED');
       }
 
       // Check if account is active
       if (!user.is_active) {
+        logger.warn('Account inactive', { userId: user.id });
         throw new Error('ACCOUNT_INACTIVE');
       }
 
       // Verify password
+      logger.info('Attempting password verification', { userId: user.id });
       const isValidPassword = await PasswordUtils.compare(password, user.password_hash);
+      logger.info('Password verification result', { userId: user.id, isValid: isValidPassword });
 
       if (!isValidPassword) {
         // Increment failed attempts

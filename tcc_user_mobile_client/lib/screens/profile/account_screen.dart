@@ -602,18 +602,40 @@ class _AccountScreenState extends State<AccountScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: languages.map((language) {
-            return RadioListTile<String>(
+            final isSelected = language == _selectedLanguage;
+            return ListTile(
               title: Text(language),
-              value: language,
-              groupValue: _selectedLanguage,
-              onChanged: (value) {
+              trailing: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? AppColors.primaryBlue : Colors.grey,
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primaryBlue,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              onTap: () {
                 setState(() {
-                  _selectedLanguage = value!;
+                  _selectedLanguage = language;
                 });
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Language changed to $value'),
+                    content: Text('Language changed to $language'),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -642,17 +664,39 @@ class _AccountScreenState extends State<AccountScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: themes.map((theme) {
-            return RadioListTile<String>(
+            final isSelected = theme == themeProvider.themeDisplayName;
+            return ListTile(
               title: Text(theme),
-              value: theme,
-              groupValue: themeProvider.themeDisplayName,
-              onChanged: (value) async {
-                await themeProvider.setThemeFromString(value!);
+              trailing: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? AppColors.primaryBlue : Colors.grey,
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primaryBlue,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              onTap: () async {
+                await themeProvider.setThemeFromString(theme);
                 if (dialogContext.mounted) {
                   Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(
-                      content: Text('Theme changed to $value'),
+                      content: Text('Theme changed to $theme'),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );

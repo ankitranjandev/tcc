@@ -81,13 +81,15 @@ class _AgentSearchScreenState extends State<AgentSearchScreen> {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error searching agents: $e'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error searching agents: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -409,7 +411,7 @@ class _AgentSearchScreenState extends State<AgentSearchScreen> {
                           Icon(Icons.star, size: 16, color: AppColors.secondaryYellow),
                           SizedBox(width: 4),
                           Text(
-                            '${agent.rating?.toStringAsFixed(1) ?? 'N/A'}',
+                            agent.rating?.toStringAsFixed(1) ?? 'N/A',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

@@ -89,6 +89,14 @@ class Sidebar extends StatelessWidget {
                 const SizedBox(height: AppTheme.space8),
                 _buildNavItem(
                   context,
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  label: 'Consumers',
+                  route: '/consumers',
+                ),
+                const SizedBox(height: AppTheme.space8),
+                _buildNavItem(
+                  context,
                   icon: Icons.store_outlined,
                   activeIcon: Icons.store,
                   label: 'Agents',

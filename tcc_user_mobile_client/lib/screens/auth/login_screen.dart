@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:developer' as developer;
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/responsive_helper.dart';
@@ -28,18 +29,32 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    developer.log('🔐 LoginScreen: Login button pressed', name: 'LoginScreen');
     if (_formKey.currentState!.validate()) {
+      developer.log('🔐 LoginScreen: Form validated, proceeding with login', name: 'LoginScreen');
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      developer.log('🔐 LoginScreen: AuthProvider obtained, calling login()', name: 'LoginScreen');
+
+      // Capture the current context's ScaffoldMessenger before async operation
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
       final success = await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
-      if (success && mounted) {
-        context.go('/dashboard');
-      } else if (mounted) {
+      developer.log('🔐 LoginScreen: Login result: $success', name: 'LoginScreen');
+      developer.log('🔐 LoginScreen: mounted: $mounted', name: 'LoginScreen');
+
+      if (success) {
+        developer.log('🔐 LoginScreen: Login successful', name: 'LoginScreen');
+        // Navigation will be handled by router redirect
+      } else {
+        // Show error even if widget is unmounted
         final errorMsg = authProvider.errorMessage ?? 'Invalid credentials. Please try again.';
-        ScaffoldMessenger.of(context).showSnackBar(
+        developer.log('🔐 LoginScreen: Login failed with error: $errorMsg', name: 'LoginScreen');
+        developer.log('🔐 LoginScreen: Showing SnackBar with error message', name: 'LoginScreen');
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(errorMsg),
             backgroundColor: AppColors.error,
@@ -48,12 +63,16 @@ class _LoginScreenState extends State<LoginScreen> {
               label: 'Dismiss',
               textColor: AppColors.white,
               onPressed: () {
+                developer.log('🔐 LoginScreen: Dismiss button pressed', name: 'LoginScreen');
                 authProvider.clearError();
               },
             ),
           ),
         );
+        developer.log('🔐 LoginScreen: SnackBar displayed', name: 'LoginScreen');
       }
+    } else {
+      developer.log('🔐 LoginScreen: Form validation failed', name: 'LoginScreen');
     }
   }
 
@@ -93,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     hintText: 'Enter your email',
@@ -101,6 +121,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
+                    }
+                    // Basic email validation
+                    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                    if (!emailRegex.hasMatch(value)) {
+                      return 'Please enter a valid email address';
                     }
                     return null;
                   },

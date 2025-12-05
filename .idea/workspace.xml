@@ -5,8 +5,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/deviceManager.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tcc_agent_client/android/TCC Final Scope.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/routes/app_router.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/routes/app_router.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/sidebar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/sidebar.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/config/app_constants.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/config/app_constants.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/user_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/user_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/providers/auth_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/providers/auth_provider.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/agent/agent_search_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/agent/agent_search_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/login_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/login_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/otp_verification_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/otp_verification_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/phone_number_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/phone_number_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/bill_review_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/bill_review_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/payment_method_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/payment_method_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/profile/account_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/profile/account_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/api_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/api_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/auth_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/auth_service.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -252,25 +252,6 @@ class _TopbarState extends State<Topbar> {
   }
 
   void _showNotifications(BuildContext context) {
-    final RenderBox button = _notificationButtonKey.currentContext!.findRenderObject() as RenderBox;
-    final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu(
-      context: context,
-      position: position,
-      items: [],
-      elevation: 8,
-    ).then((_) {
-      // Menu closed
-    });
-
     // Show custom notification panel
     showDialog(
       context: context,

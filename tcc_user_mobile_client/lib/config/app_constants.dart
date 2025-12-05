@@ -1,10 +1,27 @@
+import 'dart:io';
+
 class AppConstants {
   // App Information
   static const String appName = 'TCC User';
   static const String appVersion = '1.0.0';
 
   // API Configuration
-  static const String baseUrl = 'http://localhost:3000/v1';
+  // 10.0.2.2 is the special IP for Android emulator to access host machine's localhost
+  // For iOS simulator, use 127.0.0.1 or localhost
+  // For physical devices, replace with your computer's IP address (e.g., 192.168.1.100)
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      // Android emulator uses 10.0.2.2 to access host machine's localhost
+      return 'http://10.0.2.2:3000/v1';
+    } else if (Platform.isIOS) {
+      // iOS simulator can use localhost
+      return 'http://127.0.0.1:3000/v1';
+    } else {
+      // Fallback for other platforms
+      return 'http://localhost:3000/v1';
+    }
+  }
+
   static const String apiVersion = 'v1';
 
   // Transaction Types

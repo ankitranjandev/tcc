@@ -197,7 +197,7 @@ class _UsersScreenState extends State<UsersScreen> {
             CircularProgressIndicator(color: AppColors.accentBlue),
             const SizedBox(height: AppTheme.space16),
             Text(
-              'Loading users...',
+              'Loading consumers...',
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ],
@@ -246,12 +246,12 @@ class _UsersScreenState extends State<UsersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Users Management',
+                      'Consumers Management',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: AppTheme.space4),
                     Text(
-                      'Manage and monitor all users',
+                      'Manage and monitor all consumers',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontSize: 14,
                           ),
@@ -269,7 +269,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           );
                         },
                         icon: const Icon(Icons.add),
-                        label: const Text('Add User'),
+                        label: const Text('Add Consumer'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentBlue,
                           foregroundColor: AppColors.white,
@@ -289,12 +289,12 @@ class _UsersScreenState extends State<UsersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Users Management',
+                          'Consumers Management',
                           style: Theme.of(context).textTheme.displaySmall,
                         ),
                         const SizedBox(height: AppTheme.space8),
                         Text(
-                          'Manage and monitor all users',
+                          'Manage and monitor all consumers',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -309,7 +309,7 @@ class _UsersScreenState extends State<UsersScreen> {
                         );
                       },
                       icon: const Icon(Icons.add),
-                      label: const Text('Add User'),
+                      label: const Text('Add Consumer'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.accentBlue,
                         foregroundColor: AppColors.white,
@@ -339,14 +339,14 @@ class _UsersScreenState extends State<UsersScreen> {
             children: [
               _buildStatCard(
                 context,
-                'Total Users',
+                'Total Consumers',
                 users.length.toString(),
                 Icons.people,
                 AppColors.accentBlue,
               ),
               _buildStatCard(
                 context,
-                'Active Users',
+                'Active Consumers',
                 users.where((u) => u.status.name == 'active').length.toString(),
                 Icons.check_circle,
                 AppColors.success,
@@ -734,7 +734,7 @@ class _UsersScreenState extends State<UsersScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Showing ${(_currentPage - 1) * _pageSize + 1}-${_currentPage * _pageSize > _totalUsers ? _totalUsers : _currentPage * _pageSize} of $_totalUsers users',
+                      'Showing ${(_currentPage - 1) * _pageSize + 1}-${_currentPage * _pageSize > _totalUsers ? _totalUsers : _currentPage * _pageSize} of $_totalUsers consumers',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14,

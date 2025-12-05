@@ -34,25 +34,74 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      // Combine registration data with phone number
-      final fullRegistrationData = {
-        'firstName': widget.registrationData?['firstName']?.toString() ?? '',
-        'lastName': widget.registrationData?['lastName']?.toString() ?? '',
-        'email': widget.registrationData?['email']?.toString() ?? '',
-        'password': widget.registrationData?['password']?.toString() ?? '',
-        'phone': _phoneController.text,
-        'countryCode': _countryCode,
-      };
+      // Capture the ScaffoldMessenger before async operation
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+      // Clean phone number - remove any spaces or special characters
+      final cleanedPhone = _phoneController.text.replaceAll(RegExp(r'[^\d]'), '');
+
+      debugPrint('📱 PhoneNumberScreen: Attempting registration');
+      debugPrint('📱 PhoneNumberScreen: firstName: ${widget.registrationData?['firstName']}');
+      debugPrint('📱 PhoneNumberScreen: lastName: ${widget.registrationData?['lastName']}');
+      debugPrint('📱 PhoneNumberScreen: phone: $cleanedPhone');
 
       // Register the user
-      final success = await authProvider.register(fullRegistrationData);
+      final success = await authProvider.register(
+        firstName: widget.registrationData?['firstName']?.toString() ?? '',
+        lastName: widget.registrationData?['lastName']?.toString() ?? '',
+        email: widget.registrationData?['email']?.toString() ?? '',
+        password: widget.registrationData?['password']?.toString() ?? '',
+        phone: cleanedPhone,
+        countryCode: _countryCode,
+      );
 
-      if (success && mounted) {
-        // Navigate to OTP verification
-        context.go('/otp-verification', extra: {
-          'phone': '$_countryCode ${_phoneController.text}',
-          'registrationData': fullRegistrationData,
+      debugPrint('📱 PhoneNumberScreen: Registration result: $success');
+      debugPrint('📱 PhoneNumberScreen: Error message: ${authProvider.errorMessage}');
+      debugPrint('📱 PhoneNumberScreen: mounted: $mounted');
+
+      if (success) {
+        debugPrint('📱 PhoneNumberScreen: Registration successful, attempting navigation');
+        // Use addPostFrameCallback to navigate after the current frame completes
+        // This ensures the widget tree has settled after notifyListeners()
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            debugPrint('📱 PhoneNumberScreen: Post-frame - navigating to OTP screen');
+            context.go('/otp-verification', extra: {
+              'phone': '$_countryCode $cleanedPhone',
+              'countryCode': _countryCode,
+              'registrationData': {
+                'firstName': widget.registrationData?['firstName']?.toString() ?? '',
+                'lastName': widget.registrationData?['lastName']?.toString() ?? '',
+                'email': widget.registrationData?['email']?.toString() ?? '',
+                'password': widget.registrationData?['password']?.toString() ?? '',
+                'phone': cleanedPhone,
+                'countryCode': _countryCode,
+              },
+            });
+            debugPrint('📱 PhoneNumberScreen: Navigation called');
+          } else {
+            debugPrint('📱 PhoneNumberScreen: Post-frame - widget not mounted');
+          }
         });
+      } else {
+        // Show error message
+        final errorMsg = authProvider.errorMessage ?? 'Registration failed. Please try again.';
+        debugPrint('📱 PhoneNumberScreen: Showing error SnackBar: $errorMsg');
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: AppColors.white,
+              onPressed: () {
+                authProvider.clearError();
+              },
+            ),
+          ),
+        );
+        debugPrint('📱 PhoneNumberScreen: SnackBar displayed');
       }
     }
   }
@@ -108,11 +157,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   children: [
                     // Country Code Dropdown
                     SizedBox(
-                      width: 120,
+                      width: 100,
                       child: DropdownButtonFormField<String>(
                         initialValue: _countryCode,
                         decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                           filled: true,
                           fillColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
                           border: OutlineInputBorder(
@@ -120,15 +169,25 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                             borderSide: BorderSide.none,
                           ),
                         ),
+                        isExpanded: true,
                         items: _countryCodes.map((item) {
                           return DropdownMenuItem<String>(
                             value: item['code'],
                             child: Text(
-                              '${item['country']} ${item['code']}',
+                              item['code']!,
                               style: TextStyle(fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           );
                         }).toList(),
+                        selectedItemBuilder: (BuildContext context) {
+                          return _countryCodes.map((item) {
+                            return Text(
+                              item['code']!,
+                              style: TextStyle(fontSize: 14),
+                            );
+                          }).toList();
+                        },
                         onChanged: (value) {
                           setState(() {
                             _countryCode = value!;
@@ -142,15 +201,20 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                       child: TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
+                        maxLength: 10,
                         decoration: InputDecoration(
-                          hintText: 'Mobile Number',
+                          hintText: 'Mobile Number (10 digits)',
+                          helperText: 'Enter 10-digit phone number',
+                          counterText: '',
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your phone number';
                           }
-                          if (value.length < 6) {
-                            return 'Please enter a valid phone number';
+                          // Remove any spaces or special characters
+                          final cleanedValue = value.replaceAll(RegExp(r'[^\d]'), '');
+                          if (cleanedValue.length != 10) {
+                            return 'Phone number must be exactly 10 digits';
                           }
                           return null;
                         },

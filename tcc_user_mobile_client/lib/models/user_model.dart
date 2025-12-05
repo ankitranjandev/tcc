@@ -21,6 +21,32 @@ class UserModel {
 
   String get fullName => '$firstName $lastName';
 
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] ?? '',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      profilePicture: json['profilePicture'],
+      walletBalance: (json['walletBalance'] ?? 0).toDouble(),
+      kycStatus: json['kycStatus'] ?? 'PENDING',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'phone': phone,
+      'profilePicture': profilePicture,
+      'walletBalance': walletBalance,
+      'kycStatus': kycStatus,
+    };
+  }
+
   factory UserModel.mock() {
     return UserModel(
       id: '1',

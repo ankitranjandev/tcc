@@ -35,7 +35,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // Store registration data temporarily for phone number screen
       final nameParts = _nameController.text.trim().split(' ');
       final firstName = nameParts.first;
-      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      // If no last name provided, use first name as last name to meet backend validation
+      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : firstName;
 
       if (mounted) {
         context.go('/phone-number', extra: {

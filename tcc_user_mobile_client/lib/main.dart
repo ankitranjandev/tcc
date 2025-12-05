@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:developer' as developer;
 import 'config/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
@@ -27,41 +28,84 @@ import 'screens/agent/agent_search_screen.dart';
 import 'models/investment_model.dart';
 import 'models/transaction_model.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const TCCApp());
 }
 
-class TCCApp extends StatelessWidget {
+class TCCApp extends StatefulWidget {
   const TCCApp({super.key});
+
+  @override
+  State<TCCApp> createState() => _TCCAppState();
+}
+
+class _TCCAppState extends State<TCCApp> {
+  late final AuthProvider _authProvider;
+  late final ThemeProvider _themeProvider;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    developer.log('🚀 TCCApp: Initializing app...', name: 'TCCApp');
+    _authProvider = AuthProvider();
+    _themeProvider = ThemeProvider();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    developer.log('🚀 TCCApp: Starting app initialization', name: 'TCCApp');
+    await _authProvider.initialize();
+    developer.log('🚀 TCCApp: AuthProvider initialized. isAuthenticated: ${_authProvider.isAuthenticated}', name: 'TCCApp');
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+      developer.log('🚀 TCCApp: App initialization complete', name: 'TCCApp');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider.value(value: _authProvider),
+        ChangeNotifierProvider.value(value: _themeProvider),
       ],
-      child: Consumer2<AuthProvider, ThemeProvider>(
-        builder: (context, auth, themeProvider, _) {
-          final router = GoRouter(
-            initialLocation: auth.isAuthenticated ? '/dashboard' : '/login',
-            redirect: (context, state) {
-              final isAuthenticated = auth.isAuthenticated;
-              final isAuthRoute = state.matchedLocation.startsWith('/login') ||
-                  state.matchedLocation.startsWith('/register') ||
-                  state.matchedLocation.startsWith('/otp') ||
-                  state.matchedLocation.startsWith('/forgot-password');
+      child: _isInitialized
+          ? Consumer2<AuthProvider, ThemeProvider>(
+              builder: (context, auth, themeProvider, _) {
+                final router = GoRouter(
+                  initialLocation: auth.isAuthenticated ? '/dashboard' : '/login',
+                  refreshListenable: auth,
+                  redirect: (context, state) {
+                    final isAuthenticated = auth.isAuthenticated;
 
-              if (!isAuthenticated && !isAuthRoute) {
-                return '/login';
-              }
+                    // Auth routes that require being NOT authenticated
+                    final isPreAuthRoute = state.matchedLocation.startsWith('/login') ||
+                        state.matchedLocation.startsWith('/register') ||
+                        state.matchedLocation.startsWith('/forgot-password');
 
-              if (isAuthenticated && isAuthRoute) {
-                return '/dashboard';
-              }
+                    // Onboarding routes that are part of registration flow (user is authenticated but needs to complete setup)
+                    final isOnboardingRoute = state.matchedLocation.startsWith('/phone-number') ||
+                        state.matchedLocation.startsWith('/otp') ||
+                        state.matchedLocation.startsWith('/kyc-verification') ||
+                        state.matchedLocation.startsWith('/bank-details');
 
-              return null;
-            },
+                    // If not authenticated and trying to access protected routes, redirect to login
+                    if (!isAuthenticated && !isPreAuthRoute && !isOnboardingRoute) {
+                      return '/login';
+                    }
+
+                    // If authenticated and trying to access pre-auth routes (login/register), redirect to dashboard
+                    // But allow onboarding routes even when authenticated
+                    if (isAuthenticated && isPreAuthRoute) {
+                      return '/dashboard';
+                    }
+
+                    return null;
+                  },
             routes: [
               GoRoute(
                 path: '/login',
@@ -181,16 +225,27 @@ class TCCApp extends StatelessWidget {
             ],
           );
 
-          return MaterialApp.router(
-            title: 'TCC - The Community Coin',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-            routerConfig: router,
-            debugShowCheckedModeBanner: false,
-          );
-        },
-      ),
+                return MaterialApp.router(
+                  title: 'TCC - The Community Coin',
+                  theme: AppTheme.lightTheme,
+                  darkTheme: AppTheme.darkTheme,
+                  themeMode: themeProvider.themeMode,
+                  routerConfig: router,
+                  debugShowCheckedModeBanner: false,
+                );
+              },
+            )
+          : MaterialApp(
+              title: 'TCC - The Community Coin',
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              debugShowCheckedModeBanner: false,
+              home: Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
     );
   }
 }

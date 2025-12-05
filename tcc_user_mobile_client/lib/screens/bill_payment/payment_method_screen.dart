@@ -312,15 +312,28 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 ],
               ),
             ),
-            Radio<String>(
-              value: method['id'],
-              groupValue: _selectedMethod,
-              onChanged: (value) {
-                setState(() {
-                  _selectedMethod = value;
-                });
-              },
-              activeColor: AppColors.primaryBlue,
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? AppColors.primaryBlue : Theme.of(context).dividerColor,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primaryBlue,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
           ],
         ),

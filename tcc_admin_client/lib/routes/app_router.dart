@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/users/users_screen.dart';
+import '../screens/consumers/consumers_screen.dart';
 import '../screens/agents/agents_screen.dart';
 import '../screens/transactions/transactions_screen.dart';
 import '../screens/investments/investments_screen.dart';
@@ -67,6 +68,16 @@ class AppRouter {
         builder: (context, state) => MainLayout(
           currentRoute: state.matchedLocation,
           child: const UsersScreen(),
+        ),
+      ),
+
+      // Consumers Route (With Layout)
+      GoRoute(
+        path: '/consumers',
+        name: 'consumers',
+        builder: (context, state) => MainLayout(
+          currentRoute: state.matchedLocation,
+          child: const ConsumersScreen(),
         ),
       ),
 

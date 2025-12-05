@@ -297,7 +297,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             mainAxisSpacing: AppTheme.space16,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: isMobile ? 2.5 : (isTablet ? 2.2 : 2.4),
+            childAspectRatio: isMobile ? 3.5 : (isTablet ? 2.8 : 3.0),
             children: [
               _buildStatCard(
                 'Total Transactions',

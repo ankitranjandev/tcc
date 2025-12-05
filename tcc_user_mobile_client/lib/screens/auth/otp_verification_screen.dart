@@ -45,16 +45,52 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   Future<void> _handleVerify() async {
     if (_currentOTP.length == 6) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.verifyOTP(_currentOTP);
 
-      if (success && mounted) {
+      // Capture the ScaffoldMessenger before async operation
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+      // Extract phone and country code from extra data
+      final phone = widget.extraData?['phone']?.toString() ?? '';
+      final countryCode = widget.extraData?['countryCode']?.toString() ?? '+232';
+
+      // Parse phone number if it's in format "+232 1234567"
+      String phoneNumber = phone;
+      String dialCode = countryCode;
+      if (phone.contains(' ')) {
+        final parts = phone.split(' ');
+        if (parts.length > 1) {
+          dialCode = parts[0];
+          phoneNumber = parts.sublist(1).join(' ');
+        }
+      }
+
+      final success = await authProvider.verifyOTP(
+        phone: phoneNumber,
+        countryCode: dialCode,
+        otp: _currentOTP,
+        purpose: 'REGISTRATION',
+      );
+
+      if (success) {
         // Navigate to KYC verification screen
-        context.go('/kyc-verification', extra: widget.extraData);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (mounted) {
+          context.go('/kyc-verification', extra: widget.extraData);
+        }
+      } else {
+        // Show error message
+        final errorMsg = authProvider.errorMessage ?? 'Invalid OTP. Please try again.';
+        scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Invalid OTP. Please try again.'),
+            content: Text(errorMsg),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: AppColors.white,
+              onPressed: () {
+                authProvider.clearError();
+              },
+            ),
           ),
         );
       }

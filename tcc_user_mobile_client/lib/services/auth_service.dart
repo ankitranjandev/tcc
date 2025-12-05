@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'api_service.dart';
 
 class AuthService {
@@ -14,6 +15,8 @@ class AuthService {
     String? referralCode,
   }) async {
     try {
+      developer.log('📤 AuthService: Registration request for email: $email', name: 'AuthService');
+
       final body = {
         'first_name': firstName,
         'last_name': lastName,
@@ -27,13 +30,18 @@ class AuthService {
         body['referral_code'] = referralCode;
       }
 
+      developer.log('📤 AuthService: Sending registration data', name: 'AuthService');
+
       final response = await _apiService.post(
         '/auth/register',
         body: body,
         requiresAuth: false,
       );
+
+      developer.log('✅ AuthService: Registration successful', name: 'AuthService');
       return {'success': true, 'data': response};
     } catch (e) {
+      developer.log('❌ AuthService: Registration error: $e', name: 'AuthService');
       return {'success': false, 'error': e.toString()};
     }
   }
@@ -76,7 +84,9 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    developer.log('📤 AuthService: Login request for email: $email', name: 'AuthService');
     try {
+      developer.log('📤 AuthService: Sending POST request to /auth/login', name: 'AuthService');
       final response = await _apiService.post(
         '/auth/login',
         body: {
@@ -86,16 +96,23 @@ class AuthService {
         requiresAuth: false,
       );
 
+      developer.log('📥 AuthService: Login response received: $response', name: 'AuthService');
+
       // Store tokens if login successful
       if (response['token'] != null && response['refreshToken'] != null) {
+        developer.log('📥 AuthService: Tokens found in response, storing them', name: 'AuthService');
         await _apiService.setTokens(
           response['token'],
           response['refreshToken'],
         );
+        developer.log('✅ AuthService: Tokens stored successfully', name: 'AuthService');
+      } else {
+        developer.log('⚠️ AuthService: No tokens in response', name: 'AuthService');
       }
 
       return {'success': true, 'data': response};
     } catch (e) {
+      developer.log('❌ AuthService: Login error: $e', name: 'AuthService');
       return {'success': false, 'error': e.toString()};
     }
   }
@@ -213,13 +230,16 @@ class AuthService {
 
   // Get user profile
   Future<Map<String, dynamic>> getProfile() async {
+    developer.log('📤 AuthService: Fetching user profile', name: 'AuthService');
     try {
       final response = await _apiService.get(
         '/users/profile',
         requiresAuth: true,
       );
+      developer.log('📥 AuthService: Profile response: $response', name: 'AuthService');
       return {'success': true, 'data': response};
     } catch (e) {
+      developer.log('❌ AuthService: Get profile error: $e', name: 'AuthService');
       return {'success': false, 'error': e.toString()};
     }
   }

@@ -83,6 +83,26 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
     }
   }
 
+  // Calculate service statistics from bill payments
+  Map<String, int> _getServiceStats() {
+    final stats = <String, int>{
+      'Electricity': 0,
+      'Water': 0,
+      'Internet': 0,
+      'Mobile': 0,
+      'DSTV': 0,
+    };
+
+    for (final payment in _billPayments) {
+      final billType = payment.billType;
+      if (stats.containsKey(billType)) {
+        stats[billType] = stats[billType]! + 1;
+      }
+    }
+
+    return stats;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
@@ -294,35 +314,41 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
                   ),
                 ),
                 SizedBox(height: isMobile ? AppTheme.space16 : AppTheme.space20),
-                if (isMobile || isTablet)
-                  GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: AppTheme.space12,
-                    mainAxisSpacing: AppTheme.space12,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 1.5,
-                    children: [
-                      _buildServiceCard('Electricity', Icons.flash_on, Colors.amber, 145),
-                      _buildServiceCard('Water', Icons.water_drop, Colors.blue, 89),
-                      _buildServiceCard('Internet', Icons.wifi, Colors.purple, 67),
-                      _buildServiceCard('Mobile', Icons.phone_android, Colors.green, 234),
-                      _buildServiceCard('DSTV', Icons.tv, Colors.red, 56),
-                    ],
-                  )
-                else
-                  Row(
-                    children: [
-                      _buildServiceCard('Electricity', Icons.flash_on, Colors.amber, 145),
-                      const SizedBox(width: AppTheme.space16),
-                      _buildServiceCard('Water', Icons.water_drop, Colors.blue, 89),
-                      const SizedBox(width: AppTheme.space16),
-                      _buildServiceCard('Internet', Icons.wifi, Colors.purple, 67),
-                      const SizedBox(width: AppTheme.space16),
-                      _buildServiceCard('Mobile', Icons.phone_android, Colors.green, 234),
-                      const SizedBox(width: AppTheme.space16),
-                      _buildServiceCard('DSTV', Icons.tv, Colors.red, 56),
-                  ],
+                Builder(
+                  builder: (context) {
+                    final stats = _getServiceStats();
+                    if (isMobile || isTablet) {
+                      return GridView.count(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: AppTheme.space12,
+                        mainAxisSpacing: AppTheme.space12,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        childAspectRatio: 1.5,
+                        children: [
+                          _buildServiceCard('Electricity', Icons.flash_on, Colors.amber, stats['Electricity']!),
+                          _buildServiceCard('Water', Icons.water_drop, Colors.blue, stats['Water']!),
+                          _buildServiceCard('Internet', Icons.wifi, Colors.purple, stats['Internet']!),
+                          _buildServiceCard('Mobile', Icons.phone_android, Colors.green, stats['Mobile']!),
+                          _buildServiceCard('DSTV', Icons.tv, Colors.red, stats['DSTV']!),
+                        ],
+                      );
+                    } else {
+                      return Row(
+                        children: [
+                          _buildServiceCard('Electricity', Icons.flash_on, Colors.amber, stats['Electricity']!),
+                          const SizedBox(width: AppTheme.space16),
+                          _buildServiceCard('Water', Icons.water_drop, Colors.blue, stats['Water']!),
+                          const SizedBox(width: AppTheme.space16),
+                          _buildServiceCard('Internet', Icons.wifi, Colors.purple, stats['Internet']!),
+                          const SizedBox(width: AppTheme.space16),
+                          _buildServiceCard('Mobile', Icons.phone_android, Colors.green, stats['Mobile']!),
+                          const SizedBox(width: AppTheme.space16),
+                          _buildServiceCard('DSTV', Icons.tv, Colors.red, stats['DSTV']!),
+                        ],
+                      );
+                    }
+                  },
                 ),
               ],
             ),
