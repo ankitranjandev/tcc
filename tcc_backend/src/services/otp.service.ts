@@ -68,6 +68,14 @@ export class OTPService {
     purpose: OTP['purpose']
   ): Promise<{ valid: boolean; error?: string }> {
     try {
+      logger.info('🔍 Verifying OTP', { phone, countryCode, otp, purpose });
+
+      // DEVELOPMENT MODE: Accept 000000 as a bypass OTP
+      if (config.env === 'development' && otp === '000000') {
+        logger.info('🔓 DEV MODE: Using bypass OTP 000000', { phone, countryCode, purpose });
+        return { valid: true };
+      }
+
       // Get the OTP
       const otpRecords = await db.query<OTP>(
         `SELECT * FROM otps
@@ -76,7 +84,24 @@ export class OTPService {
         [phone, countryCode, purpose]
       );
 
+      logger.info('🔍 OTP query result', {
+        phone,
+        countryCode,
+        purpose,
+        recordsFound: otpRecords.length,
+        records: otpRecords.map(r => ({
+          phone: r.phone,
+          countryCode: r.country_code,
+          purpose: r.purpose,
+          otp: r.otp,
+          expiresAt: r.expires_at,
+          isVerified: r.is_verified,
+          attempts: r.attempts
+        }))
+      });
+
       if (otpRecords.length === 0) {
+        logger.warn('⚠️ No OTP found', { phone, countryCode, purpose });
         return { valid: false, error: 'OTP not found or expired' };
       }
 

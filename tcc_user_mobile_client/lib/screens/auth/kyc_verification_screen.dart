@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +23,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
   final _kycService = KYCService();
   final _imagePicker = ImagePicker();
 
-  String _selectedDocumentType = 'NATIONAL_ID';
+  String _selectedDocumentType = 'National ID'; // Changed to match display name
   File? _frontImage;
   File? _backImage;
   File? _selfieImage;
@@ -201,9 +202,52 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
+  }
+
+  Future<void> _checkAuthentication() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // If user is null, try to load profile
+    if (authProvider.user == null) {
+      developer.log('⚠️ KYC Screen: User is null, loading profile...', name: 'KYCScreen');
+      await authProvider.loadUserProfile();
+    }
+
+    // If still null after loading, show error
+    if (mounted && authProvider.user == null) {
+      developer.log('❌ KYC Screen: User still null after loading profile', name: 'KYCScreen');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Authentication error. Please log in again.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      // Navigate back to login
+      Future.delayed(Duration(seconds: 2), () {
+        if (mounted) context.go('/login');
+      });
+    } else {
+      developer.log('✅ KYC Screen: User authenticated: ${authProvider.user?.email}', name: 'KYCScreen');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final userName = authProvider.user?.fullName ?? 'User';
+
+    // Show loading while checking authentication
+    if (authProvider.user == null && authProvider.isLoading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

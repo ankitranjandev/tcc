@@ -73,29 +73,40 @@ class ApiService {
   }) async {
     try {
       final uri = _buildUri(endpoint, queryParams);
-      developer.log('📡 ApiService: GET $uri', name: 'ApiService');
-      developer.log('📡 ApiService: RequiresAuth: $requiresAuth, HasToken: ${_token != null}', name: 'ApiService');
+      final headers = _getHeaders(includeAuth: requiresAuth);
+
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
+      developer.log('📡 GET REQUEST', name: 'ApiService');
+      developer.log('URL: $uri', name: 'ApiService');
+      developer.log('Headers: $headers', name: 'ApiService');
+      developer.log('RequiresAuth: $requiresAuth', name: 'ApiService');
+      developer.log('HasToken: ${_token != null}', name: 'ApiService');
+      if (_token != null) {
+        developer.log('Token Preview: ${_token!.substring(0, _token!.length > 30 ? 30 : _token!.length)}...', name: 'ApiService');
+      }
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
 
       final response = await http
-          .get(
-            uri,
-            headers: _getHeaders(includeAuth: requiresAuth),
-          )
+          .get(uri, headers: headers)
           .timeout(Duration(seconds: AppConstants.apiTimeout));
 
-      developer.log('📡 ApiService: Response status: ${response.statusCode}', name: 'ApiService');
+      developer.log('📥 GET RESPONSE', name: 'ApiService');
+      developer.log('Status: ${response.statusCode}', name: 'ApiService');
+      developer.log('Body: ${response.body}', name: 'ApiService');
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
+
       return _handleResponse(response);
     } on SocketException catch (e) {
-      developer.log('❌ ApiService: SocketException: $e', name: 'ApiService');
+      developer.log('❌ GET SocketException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException catch (e) {
-      developer.log('❌ ApiService: HttpException: $e', name: 'ApiService');
+      developer.log('❌ GET HttpException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
     } on FormatException catch (e) {
-      developer.log('❌ ApiService: FormatException: $e', name: 'ApiService');
+      developer.log('❌ GET FormatException: $e', name: 'ApiService');
       throw ApiException('Invalid response format');
     } catch (e) {
-      developer.log('❌ ApiService: Exception: $e', name: 'ApiService');
+      developer.log('❌ GET Exception: $e', name: 'ApiService');
       throw ApiException(e.toString());
     }
   }
@@ -108,33 +119,48 @@ class ApiService {
   }) async {
     try {
       final uri = _buildUri(endpoint);
-      developer.log('📡 ApiService: POST $uri', name: 'ApiService');
-      developer.log('📡 ApiService: RequiresAuth: $requiresAuth, HasToken: ${_token != null}', name: 'ApiService');
-      if (body != null) {
-        developer.log('📡 ApiService: Request body: ${body.keys.toList()}', name: 'ApiService');
+      final headers = _getHeaders(includeAuth: requiresAuth);
+
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
+      developer.log('📤 POST REQUEST', name: 'ApiService');
+      developer.log('URL: $uri', name: 'ApiService');
+      developer.log('Headers: $headers', name: 'ApiService');
+      developer.log('RequiresAuth: $requiresAuth', name: 'ApiService');
+      developer.log('HasToken: ${_token != null}', name: 'ApiService');
+      if (_token != null) {
+        developer.log('Token Preview: ${_token!.substring(0, _token!.length > 30 ? 30 : _token!.length)}...', name: 'ApiService');
       }
+      if (body != null) {
+        developer.log('Body Keys: ${body.keys.toList()}', name: 'ApiService');
+        developer.log('Body: ${jsonEncode(body)}', name: 'ApiService');
+      }
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
 
       final response = await http
           .post(
             uri,
-            headers: _getHeaders(includeAuth: requiresAuth),
+            headers: headers,
             body: body != null ? jsonEncode(body) : null,
           )
           .timeout(Duration(seconds: AppConstants.apiTimeout));
 
-      developer.log('📡 ApiService: Response status: ${response.statusCode}', name: 'ApiService');
+      developer.log('📥 POST RESPONSE', name: 'ApiService');
+      developer.log('Status: ${response.statusCode}', name: 'ApiService');
+      developer.log('Body: ${response.body}', name: 'ApiService');
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
+
       return _handleResponse(response);
     } on SocketException catch (e) {
-      developer.log('❌ ApiService: SocketException: $e', name: 'ApiService');
+      developer.log('❌ POST SocketException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException catch (e) {
-      developer.log('❌ ApiService: HttpException: $e', name: 'ApiService');
+      developer.log('❌ POST HttpException: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
     } on FormatException catch (e) {
-      developer.log('❌ ApiService: FormatException: $e', name: 'ApiService');
+      developer.log('❌ POST FormatException: $e', name: 'ApiService');
       throw ApiException('Invalid response format');
     } catch (e) {
-      developer.log('❌ ApiService: Exception: $e', name: 'ApiService');
+      developer.log('❌ POST Exception: $e', name: 'ApiService');
       throw ApiException(e.toString());
     }
   }
@@ -231,33 +257,57 @@ class ApiService {
   }) async {
     try {
       final uri = _buildUri(endpoint);
+      developer.log('📤 ApiService: Uploading file to $uri', name: 'ApiService');
+      developer.log('📤 ApiService: File path: $filePath', name: 'ApiService');
+      developer.log('📤 ApiService: Field name: $fieldName', name: 'ApiService');
+      developer.log('📤 ApiService: RequiresAuth: $requiresAuth', name: 'ApiService');
+      developer.log('📤 ApiService: Has token: ${_token != null}', name: 'ApiService');
+
+      if (_token != null) {
+        developer.log('📤 ApiService: Token preview: ${_token!.substring(0, _token!.length > 30 ? 30 : _token!.length)}...', name: 'ApiService');
+      } else {
+        developer.log('⚠️ ApiService: NO TOKEN AVAILABLE FOR UPLOAD!', name: 'ApiService');
+      }
+
       final request = http.MultipartRequest('POST', uri);
 
       // Add headers
       if (requiresAuth && _token != null) {
         request.headers['Authorization'] = 'Bearer $_token';
+        developer.log('📤 ApiService: Added Authorization header', name: 'ApiService');
       }
 
       // Add file
       final file = await http.MultipartFile.fromPath(fieldName, filePath);
       request.files.add(file);
+      developer.log('📤 ApiService: Added file: ${file.filename} (${file.length} bytes)', name: 'ApiService');
 
       // Add additional fields
       if (additionalFields != null) {
         request.fields.addAll(additionalFields);
+        developer.log('📤 ApiService: Added fields: ${additionalFields.keys.toList()}', name: 'ApiService');
       }
 
+      developer.log('📤 ApiService: Sending upload request...', name: 'ApiService');
       final streamedResponse = await request.send().timeout(
             Duration(seconds: AppConstants.imageUploadTimeout),
           );
       final response = await http.Response.fromStream(streamedResponse);
 
+      developer.log('📤 ApiService: Upload response status: ${response.statusCode}', name: 'ApiService');
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        developer.log('❌ ApiService: Upload failed with body: ${response.body}', name: 'ApiService');
+      }
+
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e) {
+      developer.log('❌ ApiService: SocketException during upload: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on HttpException {
+    } on HttpException catch (e) {
+      developer.log('❌ ApiService: HttpException during upload: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);
     } catch (e) {
+      developer.log('❌ ApiService: Exception during upload: $e', name: 'ApiService');
       throw ApiException(e.toString());
     }
   }

@@ -107,6 +107,12 @@ export class AuthService {
       );
 
       // Generate and send OTP
+      logger.info('📤 Creating OTP for registration', {
+        phone: data.phone,
+        countryCode: data.country_code,
+        purpose: 'REGISTRATION'
+      });
+
       const { expiresIn } = await OTPService.createOTP(
         data.phone,
         data.country_code,

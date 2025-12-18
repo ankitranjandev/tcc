@@ -224,6 +224,43 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Resend OTP
+  Future<bool> resendOTP({
+    required String phone,
+    required String countryCode,
+  }) async {
+    developer.log('🟡 AuthProvider: Resend OTP requested for phone: $phone', name: 'AuthProvider');
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.resendOTP(
+        phone: phone,
+        countryCode: countryCode,
+      );
+
+      developer.log('🟡 AuthProvider: Resend OTP result: ${result['success']}', name: 'AuthProvider');
+
+      _isLoading = false;
+      if (result['success'] == true) {
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['error'] ?? 'Failed to resend OTP';
+        developer.log('🔴 AuthProvider: Resend OTP failed: $_errorMessage', name: 'AuthProvider');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      developer.log('🔴 AuthProvider: Resend OTP exception: $e', name: 'AuthProvider');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Clear error message
   void clearError() {
     _errorMessage = null;

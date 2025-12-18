@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../models/investment_model.dart';
-import '../bill_payment/payment_method_screen.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/investment_service.dart';
 
 class InvestmentProductDetailScreen extends StatefulWidget {
   final InvestmentProduct product;
@@ -733,21 +735,273 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
     );
   }
 
-  void _processInvestment(BuildContext context) {
+  Future<void> _processInvestment(BuildContext context) async {
     // Calculate total amount including insurance if selected
     final double insuranceAmount = _includeInsurance ? (_totalInvestment * 0.02) : 0;
     final double totalAmount = _totalInvestment + insuranceAmount;
 
-    // Navigate to payment method screen
-    Navigator.push(
+    // Get user's wallet balance
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final walletBalance = authProvider.user?.walletBalance ?? 0;
+
+    // Check if user has sufficient balance
+    if (walletBalance < totalAmount) {
+      _showInsufficientBalanceDialog(context, totalAmount, walletBalance);
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await _showInvestmentConfirmationDialog(
       context,
-      MaterialPageRoute(
-        builder: (context) => PaymentMethodScreen(
-          billType: 'Investment',
-          provider: widget.product.name,
-          amount: totalAmount,
-          accountNumber: 'INV-${widget.product.id}',
+      totalAmount,
+      walletBalance,
+    );
+
+    if (confirmed == true) {
+      await _createInvestment(context, totalAmount);
+    }
+  }
+
+  void _showInsufficientBalanceDialog(
+    BuildContext context,
+    double required,
+    double available,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Insufficient Balance'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('You don\'t have enough TCC coins for this investment.'),
+            SizedBox(height: 16),
+            Text('Required: Le ${required.toStringAsFixed(2)}'),
+            Text('Available: Le ${available.toStringAsFixed(2)}'),
+            Text(
+              'Shortfall: Le ${(required - available).toStringAsFixed(2)}',
+              style: TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/dashboard'); // Navigate to wallet to add funds
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+            ),
+            child: Text('Add Funds', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _showInvestmentConfirmationDialog(
+    BuildContext context,
+    double totalAmount,
+    double walletBalance,
+  ) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirm Investment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You are about to invest in ${widget.product.name}',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            SizedBox(height: 16),
+            _buildConfirmationRow('Investment Amount', 'Le ${_totalInvestment.toStringAsFixed(2)}'),
+            if (_includeInsurance)
+              _buildConfirmationRow(
+                'Insurance (2%)',
+                'Le ${(_totalInvestment * 0.02).toStringAsFixed(2)}',
+              ),
+            Divider(height: 24),
+            _buildConfirmationRow(
+              'Total Amount',
+              'Le ${totalAmount.toStringAsFixed(2)}',
+              isHighlight: true,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'New Balance: Le ${(walletBalance - totalAmount).toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Payment will be deducted from your TCC wallet',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.success,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+            ),
+            child: Text('Confirm Investment', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _createInvestment(BuildContext context, double totalAmount) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Processing investment...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final investmentService = InvestmentService();
+      final result = await investmentService.createInvestment(
+        categoryId: widget.product.id,
+        amount: totalAmount,
+        tenureMonths: _period.toInt(),
+      );
+
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+
+      if (result['success'] == true) {
+        // Reload user profile to update wallet balance
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.loadUserProfile();
+
+        if (context.mounted) {
+          _showSuccessDialog(context, totalAmount);
+        }
+      } else {
+        if (context.mounted) {
+          _showErrorDialog(context, result['error'] ?? 'Failed to create investment');
+        }
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) {
+        _showErrorDialog(context, e.toString());
+      }
+    }
+  }
+
+  void _showSuccessDialog(BuildContext context, double amount) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: AppColors.success, size: 28),
+            SizedBox(width: 8),
+            Text('Investment Successful!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Your investment of Le ${amount.toStringAsFixed(2)} has been created successfully.'),
+            SizedBox(height: 16),
+            Text(
+              'You can view your investment in the Portfolio section.',
+              style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/dashboard'); // Go back to dashboard
+            },
+            child: Text('Done'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/dashboard'); // Navigate to portfolio
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+            ),
+            child: Text('View Portfolio', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String error) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.error, color: AppColors.error, size: 28),
+            SizedBox(width: 8),
+            Text('Investment Failed'),
+          ],
+        ),
+        content: Text(error),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+            ),
+            child: Text('OK', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

@@ -106,10 +106,16 @@ class _TCCAppState extends State<TCCApp> {
     return GoRouter(
       initialLocation: '/login', // Will be redirected based on auth state
       refreshListenable: _authProvider,
+      observers: [NavigationLogger()],
       redirect: (context, state) {
         final isAuthenticated = _authProvider.isAuthenticated;
 
-        developer.log('🔀 Router: Redirecting from ${state.matchedLocation}, isAuthenticated: $isAuthenticated, isInitialized: $_isInitialized', name: 'Router');
+        developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Router');
+        developer.log('🔀 ROUTE REDIRECT', name: 'Router');
+        developer.log('From: ${state.matchedLocation}', name: 'Router');
+        developer.log('Authenticated: $isAuthenticated', name: 'Router');
+        developer.log('Initialized: $_isInitialized', name: 'Router');
+        developer.log('User: ${_authProvider.user?.email ?? 'null'}', name: 'Router');
 
         // Don't redirect until initialization is complete
         if (!_isInitialized) {
@@ -130,18 +136,21 @@ class _TCCAppState extends State<TCCApp> {
 
         // If not authenticated and trying to access protected routes, redirect to login
         if (!isAuthenticated && !isPreAuthRoute && !isOnboardingRoute) {
-          developer.log('🔀 Router: Not authenticated, redirecting to /login', name: 'Router');
+          developer.log('🔀 Not authenticated, redirecting to /login', name: 'Router');
+          developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Router');
           return '/login';
         }
 
         // If authenticated and trying to access pre-auth routes (login/register), redirect to dashboard
         // But allow onboarding routes even when authenticated
         if (isAuthenticated && isPreAuthRoute) {
-          developer.log('🔀 Router: Authenticated, redirecting to /dashboard', name: 'Router');
+          developer.log('🔀 Authenticated, redirecting to /dashboard', name: 'Router');
+          developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Router');
           return '/dashboard';
         }
 
-        developer.log('🔀 Router: No redirect needed', name: 'Router');
+        developer.log('🔀 No redirect needed', name: 'Router');
+        developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Router');
         return null;
       },
       routes: [
@@ -305,5 +314,44 @@ class _TCCAppState extends State<TCCApp> {
               ),
             ),
     );
+  }
+}
+
+// Navigation observer for logging route changes
+class NavigationLogger extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
+    developer.log('➡️ PUSH', name: 'Navigation');
+    developer.log('To: ${route.settings.name}', name: 'Navigation');
+    developer.log('From: ${previousRoute?.settings.name ?? 'null'}', name: 'Navigation');
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
+    developer.log('⬅️ POP', name: 'Navigation');
+    developer.log('From: ${route.settings.name}', name: 'Navigation');
+    developer.log('To: ${previousRoute?.settings.name ?? 'null'}', name: 'Navigation');
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
+    developer.log('🔄 REPLACE', name: 'Navigation');
+    developer.log('New: ${newRoute?.settings.name}', name: 'Navigation');
+    developer.log('Old: ${oldRoute?.settings.name}', name: 'Navigation');
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
+  }
+
+  @override
+  void didRemove(Route route, Route? previousRoute) {
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
+    developer.log('🗑️ REMOVE', name: 'Navigation');
+    developer.log('Route: ${route.settings.name}', name: 'Navigation');
+    developer.log('Previous: ${previousRoute?.settings.name ?? 'null'}', name: 'Navigation');
+    developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'Navigation');
   }
 }

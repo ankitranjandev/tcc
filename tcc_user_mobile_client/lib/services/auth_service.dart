@@ -56,12 +56,16 @@ class AuthService {
       );
 
       // Store tokens if registration with OTP is successful
-      if (otp != null && response['token'] != null && response['refreshToken'] != null) {
-        developer.log('✅ AuthService: Registration with OTP successful, storing tokens', name: 'AuthService');
-        await _apiService.setTokens(
-          response['token'],
-          response['refreshToken'],
-        );
+      // Backend returns response wrapped in 'data' field
+      if (otp != null && response['data'] != null) {
+        final data = response['data'];
+        if (data['access_token'] != null && data['refresh_token'] != null) {
+          developer.log('✅ AuthService: Registration with OTP successful, storing tokens', name: 'AuthService');
+          await _apiService.setTokens(
+            data['access_token'],
+            data['refresh_token'],
+          );
+        }
       }
 
       developer.log('✅ AuthService: Registration successful', name: 'AuthService');
@@ -93,12 +97,20 @@ class AuthService {
       );
 
       // Store tokens if verification successful
-      if (response['token'] != null && response['refreshToken'] != null) {
-        developer.log('✅ AuthService: OTP verified, storing tokens', name: 'AuthService');
-        await _apiService.setTokens(
-          response['token'],
-          response['refreshToken'],
-        );
+      // Backend returns response wrapped in 'data' field
+      if (response['data'] != null) {
+        final data = response['data'];
+        if (data['access_token'] != null && data['refresh_token'] != null) {
+          developer.log('✅ AuthService: OTP verified, storing tokens', name: 'AuthService');
+          await _apiService.setTokens(
+            data['access_token'],
+            data['refresh_token'],
+          );
+        } else {
+          developer.log('⚠️ AuthService: No tokens in OTP verification response data', name: 'AuthService');
+        }
+      } else {
+        developer.log('⚠️ AuthService: No data field in OTP verification response', name: 'AuthService');
       }
 
       return {'success': true, 'data': response};
@@ -128,15 +140,21 @@ class AuthService {
       developer.log('📥 AuthService: Login response received: $response', name: 'AuthService');
 
       // Store tokens if login successful
-      if (response['token'] != null && response['refreshToken'] != null) {
-        developer.log('📥 AuthService: Tokens found in response, storing them', name: 'AuthService');
-        await _apiService.setTokens(
-          response['token'],
-          response['refreshToken'],
-        );
-        developer.log('✅ AuthService: Tokens stored successfully', name: 'AuthService');
+      // Backend returns response wrapped in 'data' field
+      if (response['data'] != null) {
+        final data = response['data'];
+        if (data['access_token'] != null && data['refresh_token'] != null) {
+          developer.log('📥 AuthService: Tokens found in response, storing them', name: 'AuthService');
+          await _apiService.setTokens(
+            data['access_token'],
+            data['refresh_token'],
+          );
+          developer.log('✅ AuthService: Tokens stored successfully', name: 'AuthService');
+        } else {
+          developer.log('⚠️ AuthService: No tokens in login response data', name: 'AuthService');
+        }
       } else {
-        developer.log('⚠️ AuthService: No tokens in response', name: 'AuthService');
+        developer.log('⚠️ AuthService: No data field in login response', name: 'AuthService');
       }
 
       return {'success': true, 'data': response};

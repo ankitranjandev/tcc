@@ -65,19 +65,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         }
       }
 
-      // First, verify the OTP
-      // Note: We're not using verifyOTP from auth provider since it assumes user is already registered
-      // Instead, we'll complete registration which should verify OTP and register in one step
-
-      // Complete registration with OTP verification
-      final success = await authProvider.register(
-        firstName: registrationData?['firstName']?.toString() ?? '',
-        lastName: registrationData?['lastName']?.toString() ?? '',
-        email: registrationData?['email']?.toString() ?? '',
-        password: registrationData?['password']?.toString() ?? '',
+      // Verify OTP to complete registration and get authentication tokens
+      final success = await authProvider.verifyOTP(
         phone: phoneNumber,
         countryCode: dialCode,
         otp: _currentOTP,
+        purpose: 'REGISTRATION',
       );
 
       if (success) {
@@ -106,19 +99,54 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     }
   }
 
-  void _handleResendOTP() {
+  Future<void> _handleResendOTP() async {
     if (_resendTimer == 0) {
-      setState(() {
-        _resendTimer = 22;
-      });
-      _startResendTimer();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('OTP resent successfully'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final phone = widget.extraData?['phone']?.toString() ?? '';
+      final countryCode = widget.extraData?['countryCode']?.toString() ?? '+232';
+
+      // Parse phone number if it's in format "+232 1234567"
+      String phoneNumber = phone;
+      String dialCode = countryCode;
+      if (phone.contains(' ')) {
+        final parts = phone.split(' ');
+        if (parts.length > 1) {
+          dialCode = parts[0];
+          phoneNumber = parts.sublist(1).join(' ');
+        }
+      }
+
+      // Call resend OTP API
+      final success = await authProvider.resendOTP(
+        phone: phoneNumber,
+        countryCode: dialCode,
       );
+
+      if (success) {
+        setState(() {
+          _resendTimer = 60; // Reset to 60 seconds
+        });
+        _startResendTimer();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('OTP has been resent to your phone'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.errorMessage ?? 'Failed to resend OTP'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 
