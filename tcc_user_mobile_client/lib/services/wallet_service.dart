@@ -141,4 +141,20 @@ class WalletService {
       return {'success': false, 'error': e.toString()};
     }
   }
+
+  // Create Stripe payment intent
+  Future<Map<String, dynamic>> createPaymentIntent({
+    required double amount,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/wallet/create-payment-intent',
+        body: {'amount': amount},
+        requiresAuth: true,
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }

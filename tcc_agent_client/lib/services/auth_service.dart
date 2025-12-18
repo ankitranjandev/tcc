@@ -1,9 +1,16 @@
+import 'dart:developer' as developer;
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../models/agent_model.dart';
 import '../config/app_constants.dart';
 import 'api_service.dart';
+import 'storage_service.dart';
 
 class AuthService {
   final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
 
   // Login (supports both agent and admin login)
   Future<AuthResult> login({
@@ -11,8 +18,17 @@ class AuthService {
     required String password,
     bool isAdminLogin = false,
   }) async {
+    developer.log(
+      '🔐 [AUTH_SERVICE] Login attempt:\n'
+      '  Email/Phone: $emailOrPhone\n'
+      '  isAdminLogin: $isAdminLogin\n'
+      '  isDemoMode: ${AppConstants.isDemoMode}',
+      name: 'TCC.AuthService',
+    );
+
     // Demo Mode - bypass API call
     if (AppConstants.isDemoMode && !isAdminLogin) {
+      developer.log('🎭 [AUTH_SERVICE] Using demo mode', name: 'TCC.AuthService');
       await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
 
       // Create mock agent with verified status
@@ -52,6 +68,21 @@ class AuthService {
 
     // Real API Mode
     try {
+      // Validate inputs
+      if (emailOrPhone.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: isAdminLogin ? 'Email is required' : 'Email or phone number is required',
+        );
+      }
+
+      if (password.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'Password is required',
+        );
+      }
+
       // Determine endpoint based on login type
       final endpoint = isAdminLogin
           ? AppConstants.adminLoginEndpoint
@@ -74,33 +105,76 @@ class AuthService {
         requiresAuth: false,
       );
 
+      // Extract data from response (server sends {success: true, data: {...}})
+      final responseData = response['data'] as Map<String, dynamic>?;
+
+      if (responseData == null) {
+        return AuthResult(
+          success: false,
+          error: 'Invalid response from server. Please try again.',
+        );
+      }
+
       // Admin login uses 'access_token', regular login uses 'token'
-      final token = (response['access_token'] ?? response['token']) as String?;
-      final refreshToken = response['refresh_token'] as String?;
+      final token = (responseData['access_token'] ?? responseData['token']) as String?;
+      final refreshToken = responseData['refresh_token'] as String?;
 
       if (token == null || refreshToken == null) {
-        throw Exception('Invalid response: missing authentication tokens');
+        return AuthResult(
+          success: false,
+          error: 'Invalid response from server. Please try again.',
+        );
       }
 
       // Admin login returns 'admin' field, regular login returns 'agent' field
-      final userData = response['admin'] ?? response['agent'];
+      final userData = responseData['admin'] ?? responseData['user'] ?? responseData['agent'];
       if (userData == null) {
-        throw Exception('Invalid response: missing user data');
+        return AuthResult(
+          success: false,
+          error: 'Invalid response from server. Please try again.',
+        );
       }
 
       final agent = AgentModel.fromJson(userData);
 
       await _apiService.setTokens(token, refreshToken);
 
+      developer.log(
+        '✅ [AUTH_SERVICE] Login successful:\n'
+        '  Agent: ${agent.fullName}\n'
+        '  Status: ${agent.status}\n'
+        '  ID: ${agent.id}',
+        name: 'TCC.AuthService',
+      );
+
       return AuthResult(
         success: true,
         agent: agent,
         token: token,
       );
-    } catch (e) {
+    } on UnauthorizedException {
+      developer.log('❌ [AUTH_SERVICE] Login failed: Unauthorized', name: 'TCC.AuthService');
+      return AuthResult(
+        success: false,
+        error: 'Invalid credentials. Please check your email/phone and password.',
+      );
+    } on ApiException catch (e) {
+      developer.log('❌ [AUTH_SERVICE] Login failed: ApiException - ${e.toString()}', name: 'TCC.AuthService');
       return AuthResult(
         success: false,
         error: e.toString(),
+      );
+    } on ValidationException catch (e) {
+      developer.log('❌ [AUTH_SERVICE] Login failed: ValidationException - ${e.toString()}', name: 'TCC.AuthService');
+      return AuthResult(
+        success: false,
+        error: e.toString(),
+      );
+    } catch (e) {
+      developer.log('❌ [AUTH_SERVICE] Login failed: Unknown error - ${e.toString()}', name: 'TCC.AuthService');
+      return AuthResult(
+        success: false,
+        error: 'Login failed: ${e.toString()}',
       );
     }
   }
@@ -115,6 +189,42 @@ class AuthService {
     String? profilePictureUrl,
   }) async {
     try {
+      // Validate inputs
+      if (firstName.isEmpty || firstName.length < 2) {
+        return AuthResult(
+          success: false,
+          error: 'First name must be at least 2 characters',
+        );
+      }
+
+      if (lastName.isEmpty || lastName.length < 2) {
+        return AuthResult(
+          success: false,
+          error: 'Last name must be at least 2 characters',
+        );
+      }
+
+      if (email.isEmpty || !RegExp(AppConstants.emailPattern).hasMatch(email)) {
+        return AuthResult(
+          success: false,
+          error: 'Please enter a valid email address',
+        );
+      }
+
+      if (mobileNumber.isEmpty || mobileNumber.length < 8) {
+        return AuthResult(
+          success: false,
+          error: 'Please enter a valid mobile number',
+        );
+      }
+
+      if (password.isEmpty || password.length < AppConstants.minPasswordLength) {
+        return AuthResult(
+          success: false,
+          error: 'Password must be at least ${AppConstants.minPasswordLength} characters',
+        );
+      }
+
       final response = await _apiService.post(
         AppConstants.registerEndpoint,
         body: {
@@ -128,15 +238,41 @@ class AuthService {
         requiresAuth: false,
       );
 
+      // Extract message from response
+      final message = response['message'] as String?;
+
       return AuthResult(
         success: true,
-        message: response['message'] ?? AppConstants.successRegistration,
+        message: message ?? AppConstants.successRegistration,
         otpRequired: true,
+      );
+    } on ApiException catch (e) {
+      // Check for specific error messages
+      final errorMsg = e.toString();
+      if (errorMsg.toLowerCase().contains('email') && errorMsg.toLowerCase().contains('exist')) {
+        return AuthResult(
+          success: false,
+          error: 'This email is already registered. Please use a different email or login.',
+        );
+      } else if (errorMsg.toLowerCase().contains('mobile') && errorMsg.toLowerCase().contains('exist')) {
+        return AuthResult(
+          success: false,
+          error: 'This mobile number is already registered. Please use a different number or login.',
+        );
+      }
+      return AuthResult(
+        success: false,
+        error: errorMsg,
+      );
+    } on ValidationException catch (e) {
+      return AuthResult(
+        success: false,
+        error: e.toString(),
       );
     } catch (e) {
       return AuthResult(
         success: false,
-        error: e.toString(),
+        error: 'Registration failed: ${e.toString()}',
       );
     }
   }
@@ -147,6 +283,21 @@ class AuthService {
     required String otp,
   }) async {
     try {
+      // Validate inputs
+      if (mobileNumber.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'Mobile number is required',
+        );
+      }
+
+      if (otp.isEmpty || otp.length != AppConstants.otpLength) {
+        return AuthResult(
+          success: false,
+          error: 'Please enter a valid ${AppConstants.otpLength}-digit OTP',
+        );
+      }
+
       final response = await _apiService.post(
         AppConstants.verifyOtpEndpoint,
         body: {
@@ -156,28 +307,59 @@ class AuthService {
         requiresAuth: false,
       );
 
-      final token = response['token'] as String?;
-      final refreshToken = response['refresh_token'] as String?;
+      // Extract data from response
+      final responseData = response['data'] as Map<String, dynamic>?;
 
-      if (token != null && refreshToken != null) {
-        final agent = AgentModel.fromJson(response['agent']);
-        await _apiService.setTokens(token, refreshToken);
+      if (responseData != null) {
+        final token = (responseData['access_token'] ?? responseData['token']) as String?;
+        final refreshToken = responseData['refresh_token'] as String?;
 
-        return AuthResult(
-          success: true,
-          agent: agent,
-          token: token,
-        );
+        if (token != null && refreshToken != null) {
+          final userData = responseData['user'] ?? responseData['agent'];
+          if (userData != null) {
+            final agent = AgentModel.fromJson(userData);
+            await _apiService.setTokens(token, refreshToken);
+
+            return AuthResult(
+              success: true,
+              agent: agent,
+              token: token,
+            );
+          }
+        }
       }
 
+      final message = response['message'] as String?;
       return AuthResult(
         success: true,
-        message: response['message'] ?? 'OTP verified successfully',
+        message: message ?? 'OTP verified successfully',
+      );
+    } on ApiException catch (e) {
+      final errorMsg = e.toString();
+      if (errorMsg.toLowerCase().contains('invalid') || errorMsg.toLowerCase().contains('incorrect')) {
+        return AuthResult(
+          success: false,
+          error: 'Invalid OTP. Please check and try again.',
+        );
+      } else if (errorMsg.toLowerCase().contains('expired')) {
+        return AuthResult(
+          success: false,
+          error: 'OTP has expired. Please request a new one.',
+        );
+      }
+      return AuthResult(
+        success: false,
+        error: errorMsg,
+      );
+    } on ValidationException catch (e) {
+      return AuthResult(
+        success: false,
+        error: e.toString(),
       );
     } catch (e) {
       return AuthResult(
         success: false,
-        error: e.toString(),
+        error: 'OTP verification failed: ${e.toString()}',
       );
     }
   }
@@ -187,6 +369,13 @@ class AuthService {
     required String mobileNumber,
   }) async {
     try {
+      if (mobileNumber.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'Mobile number is required',
+        );
+      }
+
       final response = await _apiService.post(
         AppConstants.resendOtpEndpoint,
         body: {
@@ -195,15 +384,74 @@ class AuthService {
         requiresAuth: false,
       );
 
+      final message = response['message'] as String?;
       return AuthResult(
         success: true,
-        message: response['message'] ?? AppConstants.successOtpSent,
+        message: message ?? AppConstants.successOtpSent,
       );
-    } catch (e) {
+    } on ApiException catch (e) {
+      final errorMsg = e.toString();
+      if (errorMsg.toLowerCase().contains('too many')) {
+        return AuthResult(
+          success: false,
+          error: 'Too many OTP requests. Please wait before trying again.',
+        );
+      }
+      return AuthResult(
+        success: false,
+        error: errorMsg,
+      );
+    } on ValidationException catch (e) {
       return AuthResult(
         success: false,
         error: e.toString(),
       );
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to resend OTP: ${e.toString()}',
+      );
+    }
+  }
+
+  // Upload KYC document
+  Future<String?> uploadKycDocument(File imageFile) async {
+    try {
+      // Create multipart request
+      final uri = Uri.parse('${_apiService.baseUrl}/uploads');
+      final request = http.MultipartRequest('POST', uri);
+
+      // Add auth headers
+      final token = await _storageService.getAccessToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // Add file
+      final file = await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      );
+      request.files.add(file);
+
+      // Add file type
+      request.fields['file_type'] = 'KYC_DOCUMENT';
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['data']['url'];
+      } else {
+        developer.log('Upload failed: ${response.body}', name: 'AuthService');
+        return null;
+      }
+    } catch (e) {
+      developer.log('Error uploading KYC document: $e', name: 'AuthService');
+      return null;
     }
   }
 
@@ -216,6 +464,42 @@ class AuthService {
     required String accountHolderName,
   }) async {
     try {
+      // Validate inputs
+      if (nationalIdUrl.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'National ID document is required',
+        );
+      }
+
+      if (bankName.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'Bank name is required',
+        );
+      }
+
+      if (branchAddress.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'Branch address is required',
+        );
+      }
+
+      if (ifscCode.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'IFSC code is required',
+        );
+      }
+
+      if (accountHolderName.isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'Account holder name is required',
+        );
+      }
+
       final response = await _apiService.post(
         '/kyc/submit',
         body: {
@@ -230,17 +514,39 @@ class AuthService {
         requiresAuth: true,
       );
 
-      final agent = AgentModel.fromJson(response['agent']);
+      // Extract data from response
+      final responseData = response['data'] as Map<String, dynamic>?;
+      final message = response['message'] as String?;
+
+      AgentModel? agent;
+      if (responseData != null && responseData['agent'] != null) {
+        agent = AgentModel.fromJson(responseData['agent']);
+      }
 
       return AuthResult(
         success: true,
         agent: agent,
-        message: response['message'] ?? 'KYC submitted successfully. Awaiting admin verification.',
+        message: message ?? 'KYC submitted successfully. Awaiting admin verification.',
+      );
+    } on UnauthorizedException {
+      return AuthResult(
+        success: false,
+        error: 'Session expired. Please login again.',
+      );
+    } on ApiException catch (e) {
+      return AuthResult(
+        success: false,
+        error: e.toString(),
+      );
+    } on ValidationException catch (e) {
+      return AuthResult(
+        success: false,
+        error: e.toString(),
       );
     } catch (e) {
       return AuthResult(
         success: false,
-        error: e.toString(),
+        error: 'KYC submission failed: ${e.toString()}',
       );
     }
   }
@@ -258,9 +564,10 @@ class AuthService {
         requiresAuth: false,
       );
 
+      final message = response['message'] as String?;
       return AuthResult(
         success: true,
-        message: response['message'] ?? AppConstants.successOtpSent,
+        message: message ?? AppConstants.successOtpSent,
         otpRequired: true,
       );
     } catch (e) {
@@ -288,9 +595,10 @@ class AuthService {
         requiresAuth: false,
       );
 
+      final message = response['message'] as String?;
       return AuthResult(
         success: true,
-        message: response['message'] ?? AppConstants.successPasswordReset,
+        message: message ?? AppConstants.successPasswordReset,
       );
     } catch (e) {
       return AuthResult(
@@ -341,7 +649,17 @@ class AuthService {
         requiresAuth: true,
       );
 
-      return AgentModel.fromJson(response['agent']);
+      // Extract data from response
+      final responseData = response['data'] as Map<String, dynamic>?;
+
+      if (responseData != null && responseData['agent'] != null) {
+        return AgentModel.fromJson(responseData['agent']);
+      } else if (response['agent'] != null) {
+        // Fallback to direct agent field
+        return AgentModel.fromJson(response['agent']);
+      }
+
+      return null;
     } catch (e) {
       return null;
     }

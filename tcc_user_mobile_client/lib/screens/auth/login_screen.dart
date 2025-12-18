@@ -17,13 +17,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _emailOrPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _emailOrPhoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       final success = await authProvider.login(
-        _emailController.text.trim(),
+        _emailOrPhoneController.text.trim(),
         _passwordController.text,
       );
 
@@ -110,22 +110,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 5)),
                 TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _emailOrPhoneController,
+                  keyboardType: TextInputType.text,
                   autocorrect: false,
                   decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    labelText: 'Email or Phone Number',
+                    hintText: 'Enter your email or phone number',
+                    prefixIcon: Icon(Icons.person_outline),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return 'Please enter your email or phone number';
                     }
-                    // Basic email validation
+                    // Check if it's an email or phone number
                     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                    if (!emailRegex.hasMatch(value)) {
-                      return 'Please enter a valid email address';
+                    final phoneRegex = RegExp(r'^\d{10,15}$');
+
+                    if (!emailRegex.hasMatch(value) && !phoneRegex.hasMatch(value.replaceAll(RegExp(r'[\s\-\(\)]'), ''))) {
+                      return 'Please enter a valid email or phone number';
                     }
                     return null;
                   },

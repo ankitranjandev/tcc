@@ -6,6 +6,8 @@ class AgentModel {
   final String mobileNumber;
   final String? profilePictureUrl;
   final String status; // active, inactive, busy, pending_verification, verified, rejected
+  final String? kycStatus; // PENDING, SUBMITTED, APPROVED, REJECTED
+  final String? rejectionReason;
   final AgentBankDetails? bankDetails;
   final String? nationalIdUrl;
   final double walletBalance;
@@ -24,6 +26,8 @@ class AgentModel {
     required this.mobileNumber,
     this.profilePictureUrl,
     required this.status,
+    this.kycStatus,
+    this.rejectionReason,
     this.bankDetails,
     this.nationalIdUrl,
     required this.walletBalance,
@@ -51,6 +55,8 @@ class AgentModel {
       mobileNumber: json['mobile_number'] ?? json['phone_number'] ?? '',
       profilePictureUrl: json['profile_picture_url'],
       status: json['status'] ?? 'pending_verification',
+      kycStatus: json['kyc_status'] ?? json['verification_status'],
+      rejectionReason: json['rejection_reason'] ?? json['verification_notes'],
       bankDetails: json['bank_details'] != null
           ? AgentBankDetails.fromJson(json['bank_details'])
           : null,
@@ -82,6 +88,8 @@ class AgentModel {
       'mobile_number': mobileNumber,
       'profile_picture_url': profilePictureUrl,
       'status': status,
+      'kyc_status': kycStatus,
+      'rejection_reason': rejectionReason,
       'bank_details': bankDetails?.toJson(),
       'national_id_url': nationalIdUrl,
       'wallet_balance': walletBalance,
@@ -102,6 +110,8 @@ class AgentModel {
     String? mobileNumber,
     String? profilePictureUrl,
     String? status,
+    String? kycStatus,
+    String? rejectionReason,
     AgentBankDetails? bankDetails,
     String? nationalIdUrl,
     double? walletBalance,
@@ -120,6 +130,8 @@ class AgentModel {
       mobileNumber: mobileNumber ?? this.mobileNumber,
       profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
       status: status ?? this.status,
+      kycStatus: kycStatus ?? this.kycStatus,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
       bankDetails: bankDetails ?? this.bankDetails,
       nationalIdUrl: nationalIdUrl ?? this.nationalIdUrl,
       walletBalance: walletBalance ?? this.walletBalance,

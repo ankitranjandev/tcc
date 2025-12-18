@@ -32,76 +32,31 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
   Future<void> _handleSendOTP() async {
     if (_formKey.currentState!.validate()) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-      // Capture the ScaffoldMessenger before async operation
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-
       // Clean phone number - remove any spaces or special characters
       final cleanedPhone = _phoneController.text.replaceAll(RegExp(r'[^\d]'), '');
 
-      debugPrint('📱 PhoneNumberScreen: Attempting registration');
+      debugPrint('📱 PhoneNumberScreen: Preparing to send OTP');
       debugPrint('📱 PhoneNumberScreen: firstName: ${widget.registrationData?['firstName']}');
       debugPrint('📱 PhoneNumberScreen: lastName: ${widget.registrationData?['lastName']}');
       debugPrint('📱 PhoneNumberScreen: phone: $cleanedPhone');
 
-      // Register the user
-      final success = await authProvider.register(
-        firstName: widget.registrationData?['firstName']?.toString() ?? '',
-        lastName: widget.registrationData?['lastName']?.toString() ?? '',
-        email: widget.registrationData?['email']?.toString() ?? '',
-        password: widget.registrationData?['password']?.toString() ?? '',
-        phone: cleanedPhone,
-        countryCode: _countryCode,
-      );
-
-      debugPrint('📱 PhoneNumberScreen: Registration result: $success');
-      debugPrint('📱 PhoneNumberScreen: Error message: ${authProvider.errorMessage}');
-      debugPrint('📱 PhoneNumberScreen: mounted: $mounted');
-
-      if (success) {
-        debugPrint('📱 PhoneNumberScreen: Registration successful, attempting navigation');
-        // Use addPostFrameCallback to navigate after the current frame completes
-        // This ensures the widget tree has settled after notifyListeners()
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            debugPrint('📱 PhoneNumberScreen: Post-frame - navigating to OTP screen');
-            context.go('/otp-verification', extra: {
-              'phone': '$_countryCode $cleanedPhone',
-              'countryCode': _countryCode,
-              'registrationData': {
-                'firstName': widget.registrationData?['firstName']?.toString() ?? '',
-                'lastName': widget.registrationData?['lastName']?.toString() ?? '',
-                'email': widget.registrationData?['email']?.toString() ?? '',
-                'password': widget.registrationData?['password']?.toString() ?? '',
-                'phone': cleanedPhone,
-                'countryCode': _countryCode,
-              },
-            });
-            debugPrint('📱 PhoneNumberScreen: Navigation called');
-          } else {
-            debugPrint('📱 PhoneNumberScreen: Post-frame - widget not mounted');
-          }
+      // Navigate directly to OTP verification screen
+      // Registration will be completed after OTP verification
+      debugPrint('📱 PhoneNumberScreen: Navigating to OTP screen');
+      if (mounted) {
+        context.go('/otp-verification', extra: {
+          'phone': '$_countryCode $cleanedPhone',
+          'countryCode': _countryCode,
+          'registrationData': {
+            'firstName': widget.registrationData?['firstName']?.toString() ?? '',
+            'lastName': widget.registrationData?['lastName']?.toString() ?? '',
+            'email': widget.registrationData?['email']?.toString() ?? '',
+            'password': widget.registrationData?['password']?.toString() ?? '',
+            'phone': cleanedPhone,
+            'countryCode': _countryCode,
+          },
         });
-      } else {
-        // Show error message
-        final errorMsg = authProvider.errorMessage ?? 'Registration failed. Please try again.';
-        debugPrint('📱 PhoneNumberScreen: Showing error SnackBar: $errorMsg');
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: AppColors.white,
-              onPressed: () {
-                authProvider.clearError();
-              },
-            ),
-          ),
-        );
-        debugPrint('📱 PhoneNumberScreen: SnackBar displayed');
+        debugPrint('📱 PhoneNumberScreen: Navigation to OTP screen complete');
       }
     }
   }
@@ -112,7 +67,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/register'),
         ),
       ),
       body: SafeArea(

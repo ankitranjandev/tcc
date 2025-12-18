@@ -3,6 +3,7 @@ import { PoolClient } from 'pg';
 import db from '../database';
 import { OTPService } from './otp.service';
 import logger from '../utils/logger';
+import config from '../config';
 import {
   Wallet,
   TransactionType,
@@ -11,6 +12,10 @@ import {
   DepositSource,
   KYCStatus,
 } from '../types';
+import {
+  createStripeCustomer,
+  createPaymentIntent as createStripePaymentIntent,
+} from './stripe.service';
 
 export class WalletService {
   /**
@@ -167,6 +172,122 @@ export class WalletService {
       return result;
     } catch (error) {
       logger.error('Error processing deposit', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create Stripe payment intent for wallet deposit
+   */
+  static async createPaymentIntent(
+    userId: string,
+    amount: number,
+    ipAddress?: string
+  ): Promise<{
+    clientSecret: string;
+    paymentIntentId: string;
+    transactionId: string;
+    amount: number;
+    currency: string;
+  }> {
+    try {
+      // Validate amount
+      if (amount <= 0) {
+        throw new Error('INVALID_AMOUNT');
+      }
+
+      // Get wallet to ensure it exists
+      const wallet = await this.getBalance(userId);
+
+      // Get user details
+      const users = await db.query(
+        'SELECT id, email, first_name, last_name, phone, stripe_customer_id FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (users.length === 0) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const user = users[0];
+
+      // Create or get Stripe customer
+      let stripeCustomerId = user.stripe_customer_id;
+
+      if (!stripeCustomerId) {
+        const stripeCustomer = await createStripeCustomer(
+          user.id,
+          user.email,
+          `${user.first_name} ${user.last_name}`,
+          user.phone
+        );
+        stripeCustomerId = stripeCustomer.id;
+
+        // Update user with Stripe customer ID
+        await db.query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [
+          stripeCustomerId,
+          userId,
+        ]);
+      }
+
+      // Generate transaction ID
+      const transactionId = this.generateTransactionId();
+
+      // Create pending transaction in database
+      const result = await db.transaction(async (client: PoolClient) => {
+        // Create Stripe payment intent
+        const paymentIntent = await createStripePaymentIntent(
+          amount,
+          userId,
+          transactionId,
+          stripeCustomerId
+        );
+
+        // Insert transaction record
+        await client.query(
+          `INSERT INTO transactions (
+            transaction_id, type, to_user_id, amount, fee, net_amount,
+            status, payment_method, deposit_source, metadata,
+            stripe_payment_intent_id, ip_address
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          [
+            transactionId,
+            TransactionType.DEPOSIT,
+            userId,
+            amount,
+            0, // No fee for deposits
+            amount,
+            TransactionStatus.PENDING,
+            PaymentMethod.MOBILE_MONEY, // Using mobile money as payment method for Stripe
+            DepositSource.INTERNET_BANKING,
+            JSON.stringify({
+              paymentGateway: 'stripe',
+              paymentIntentId: paymentIntent.id,
+            }),
+            paymentIntent.id,
+            ipAddress || null,
+          ]
+        );
+
+        return {
+          clientSecret: paymentIntent.client_secret,
+          paymentIntentId: paymentIntent.id,
+          transactionId,
+          amount,
+          currency: config.stripe.currency,
+        };
+      });
+
+      logger.info('Payment intent created', {
+        userId,
+        transactionId,
+        amount,
+        paymentIntentId: result.paymentIntentId,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Error creating payment intent', error);
       throw error;
     }
   }

@@ -83,6 +83,7 @@ class AuthProvider with ChangeNotifier {
     required String countryCode,
     required String password,
     String? referralCode,
+    String? otp,
   }) async {
     developer.log('🟢 AuthProvider: Register started for email: $email', name: 'AuthProvider');
     _isLoading = true;
@@ -90,7 +91,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      developer.log('🟢 AuthProvider: Calling authService.register()', name: 'AuthProvider');
+      developer.log('🟢 AuthProvider: Calling authService.register() with OTP: ${otp != null}', name: 'AuthProvider');
       final result = await _authService.register(
         firstName: firstName,
         lastName: lastName,
@@ -99,6 +100,7 @@ class AuthProvider with ChangeNotifier {
         countryCode: countryCode,
         password: password,
         referralCode: referralCode,
+        otp: otp,
       );
 
       _isLoading = false;
@@ -107,6 +109,14 @@ class AuthProvider with ChangeNotifier {
 
       if (result['success'] == true) {
         developer.log('🟢 AuthProvider: Registration successful', name: 'AuthProvider');
+
+        // If OTP was provided and registration was successful, load user profile
+        if (otp != null) {
+          developer.log('🟢 AuthProvider: Registration with OTP successful, loading user profile', name: 'AuthProvider');
+          await loadUserProfile();
+          _isAuthenticated = true;
+        }
+
         notifyListeners();
         return true;
       } else {

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "545764390154",
+    "project_id": "tcc-app-ebb14",
+    "storage_bucket": "tcc-app-ebb14.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:545764390154:android:705ceb9948e89e4bd4f6f3",
+        "android_client_info": {
+          "package_name": "com.tcc.tcc_agent_client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpUtuj2geHYsXfCWJS3GlxlmzKvCgPFPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:545764390154:android:f05c2828c4b614bed4f6f3",
+        "android_client_info": {
+          "package_name": "com.tcc.tcc_user_mobile_client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpUtuj2geHYsXfCWJS3GlxlmzKvCgPFPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -156,4 +156,10 @@ router.get('/bill-payments', AdminController.getBillPayments);
 // Investments
 router.get('/investments', AdminController.getInvestments);
 
+// Wallet management
+router.post('/wallet/adjust-balance', AdminController.adjustWalletBalance);
+router.get('/wallet/audit-trail', AdminController.getAllAuditTrail);
+router.get('/wallet/audit-trail/stats', AdminController.getAuditStatistics);
+router.get('/wallet/audit-trail/:userId', AdminController.getUserAuditTrail);
+
 export default router;

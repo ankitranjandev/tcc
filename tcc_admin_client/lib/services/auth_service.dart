@@ -86,7 +86,11 @@ class AuthService {
       }
     }
 
-    return ApiResponse.error(message: response.message ?? 'Login failed');
+    // Return the actual error message from the response
+    return ApiResponse.error(
+      message: response.error?.message ?? response.message ?? 'Login failed',
+      code: response.error?.code,
+    );
   }
 
   // Note: 2FA is included in login response, no separate verify endpoint needed

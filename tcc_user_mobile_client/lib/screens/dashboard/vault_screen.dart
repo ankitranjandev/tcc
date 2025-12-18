@@ -3,7 +3,6 @@ import '../../config/app_colors.dart';
 import 'home_screen.dart';
 import 'portfolio_screen.dart';
 import '../notifications/notification_screen.dart';
-import '../wallet/wallet_screen.dart';
 
 class VaultScreen extends StatefulWidget {
   const VaultScreen({super.key});
@@ -86,17 +85,6 @@ class _VaultScreenState extends State<VaultScreen> with SingleTickerProviderStat
                   // Icons
                   Row(
                     children: [
-                      IconButton(
-                        icon: Icon(Icons.account_balance_wallet_outlined),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => WalletScreen(),
-                            ),
-                          );
-                        },
-                      ),
                       IconButton(
                         icon: Icon(Icons.notifications_outlined),
                         onPressed: () {

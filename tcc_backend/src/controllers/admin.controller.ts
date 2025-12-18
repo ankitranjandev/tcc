@@ -3,6 +3,7 @@ import { AuthRequest, TransactionStatus, UserRole, KYCStatus } from '../types';
 import { AdminService } from '../services/admin.service';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+import { AuditTrailService } from '../services/audit-trail.service';
 
 export class AdminController {
   /**
@@ -34,19 +35,43 @@ export class AdminController {
       );
     } catch (error: any) {
       logger.error('Admin login error', error);
+
+      // Provide detailed error messages for different scenarios
       if (error.message === 'INVALID_CREDENTIALS') {
-        return ApiResponseUtil.unauthorized(res, 'Invalid email or password');
+        return ApiResponseUtil.unauthorized(res, 'Invalid email or password. Please check your credentials and try again.');
       }
       if (error.message === 'ACCOUNT_LOCKED') {
-        return ApiResponseUtil.forbidden(res, 'Account is temporarily locked due to too many failed attempts');
+        const remainingTime = error.remainingTime ? ` Please try again in ${error.remainingTime} minutes.` : '';
+        return ApiResponseUtil.forbidden(
+          res,
+          `Account is temporarily locked due to too many failed login attempts.${remainingTime} If you need immediate assistance, please contact support.`
+        );
       }
       if (error.message === 'ACCOUNT_INACTIVE') {
-        return ApiResponseUtil.forbidden(res, 'Account is inactive');
+        return ApiResponseUtil.forbidden(
+          res,
+          'Your account has been deactivated. Please contact the system administrator to reactivate your account.'
+        );
       }
       if (error.message === 'INVALID_TOTP_CODE') {
-        return ApiResponseUtil.unauthorized(res, 'Invalid TOTP code');
+        return ApiResponseUtil.unauthorized(
+          res,
+          'Invalid 2FA verification code. Please check your authenticator app and ensure the time is synced correctly.'
+        );
       }
-      return ApiResponseUtil.internalError(res);
+      if (error.message === 'TOTP_REQUIRED') {
+        return ApiResponseUtil.unauthorized(
+          res,
+          'Two-factor authentication is required for this account. Please provide the verification code from your authenticator app.'
+        );
+      }
+
+      // Generic error for unexpected issues
+      logger.error('Unexpected admin login error:', error);
+      return ApiResponseUtil.internalError(
+        res,
+        'An unexpected error occurred during login. Please try again later or contact support if the problem persists.'
+      );
     }
   }
 
@@ -731,6 +756,148 @@ export class AdminController {
       return ApiResponseUtil.success(res, result);
     } catch (error: any) {
       logger.error('Get agent performance report error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Manually adjust user wallet balance
+   */
+  static async adjustWalletBalance(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const adminId = req.user?.id;
+      if (!adminId) {
+        return ApiResponseUtil.unauthorized(res);
+      }
+
+      const { user_id, amount, reason, notes } = req.body;
+
+      const result = await AuditTrailService.adjustBalance(
+        user_id,
+        adminId,
+        amount,
+        reason,
+        notes,
+        req.ip
+      );
+
+      return ApiResponseUtil.success(
+        res,
+        {
+          wallet: {
+            id: result.wallet.id,
+            user_id: result.wallet.user_id,
+            balance: parseFloat(result.wallet.balance),
+            currency: result.wallet.currency,
+            last_transaction_at: result.wallet.last_transaction_at,
+          },
+          transaction: {
+            id: result.transaction.id,
+            transaction_id: result.transaction.transaction_id,
+            type: result.transaction.type,
+            amount: parseFloat(result.transaction.amount),
+            status: result.transaction.status,
+            description: result.transaction.description,
+          },
+          audit: {
+            id: result.auditEntry.id,
+            action_type: result.auditEntry.action_type,
+            amount: parseFloat(result.auditEntry.amount.toString()),
+            balance_before: parseFloat(result.auditEntry.balance_before.toString()),
+            balance_after: parseFloat(result.auditEntry.balance_after.toString()),
+            reason: result.auditEntry.reason,
+            notes: result.auditEntry.notes,
+          },
+        },
+        `Wallet balance ${amount > 0 ? 'credited' : 'debited'} successfully`
+      );
+    } catch (error: any) {
+      logger.error('Adjust wallet balance error', error);
+
+      if (error.message === 'INVALID_AMOUNT') {
+        return ApiResponseUtil.badRequest(res, 'Invalid amount. Amount cannot be zero.');
+      }
+
+      if (error.message === 'REASON_REQUIRED') {
+        return ApiResponseUtil.badRequest(res, 'Reason is required for balance adjustment');
+      }
+
+      if (error.message === 'WALLET_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Wallet not found');
+      }
+
+      if (error.message === 'INSUFFICIENT_BALANCE') {
+        return ApiResponseUtil.badRequest(res, 'Insufficient balance for debit operation');
+      }
+
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Get audit trail for a specific user
+   */
+  static async getUserAuditTrail(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { userId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = (page - 1) * limit;
+
+      const result = await AuditTrailService.getAuditTrailForUser(userId, limit, offset);
+
+      return ApiResponseUtil.success(res, {
+        entries: result.entries,
+        pagination: {
+          page,
+          limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / limit),
+        },
+      });
+    } catch (error: any) {
+      logger.error('Get user audit trail error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Get all audit trail entries
+   */
+  static async getAllAuditTrail(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = (page - 1) * limit;
+      const actionType = req.query.action_type as any;
+
+      const result = await AuditTrailService.getAllAuditTrail(limit, offset, actionType);
+
+      return ApiResponseUtil.success(res, {
+        entries: result.entries,
+        pagination: {
+          page,
+          limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / limit),
+        },
+      });
+    } catch (error: any) {
+      logger.error('Get all audit trail error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Get audit trail statistics
+   */
+  static async getAuditStatistics(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const stats = await AuditTrailService.getAuditStatistics();
+
+      return ApiResponseUtil.success(res, { statistics: stats });
+    } catch (error: any) {
+      logger.error('Get audit statistics error', error);
       return ApiResponseUtil.internalError(res);
     }
   }

@@ -147,4 +147,7 @@ class PaginatedResponse<T> {
 
   bool get hasNextPage => page < totalPages;
   bool get hasPreviousPage => page > 1;
+
+  // Alias for compatibility
+  List<T> get items => data;
 }

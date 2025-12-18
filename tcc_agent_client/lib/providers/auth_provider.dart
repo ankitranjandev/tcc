@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import '../models/agent_model.dart';
 import '../services/auth_service.dart';
@@ -19,27 +20,45 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   bool get isVerified => _agent?.isVerified ?? false;
   bool get isPendingVerification => _agent?.isPendingVerification ?? false;
+  AuthService get authService => _authService;
 
   // Initialize - check if user is already logged in
   Future<void> initialize() async {
+    developer.log('🔄 [AUTH_PROVIDER] Initializing...', name: 'TCC.AuthProvider');
     _isLoading = true;
     notifyListeners();
 
     try {
       await _apiService.initialize();
+      developer.log('✅ [AUTH_PROVIDER] API service initialized', name: 'TCC.AuthProvider');
+
       final isAuth = await _authService.isAuthenticated();
+      developer.log('🔍 [AUTH_PROVIDER] isAuthenticated check: $isAuth', name: 'TCC.AuthProvider');
 
       if (isAuth) {
         final agent = await _authService.getCurrentAgent();
         if (agent != null) {
           _agent = agent;
           _isAuthenticated = true;
+          developer.log(
+            '✅ [AUTH_PROVIDER] Agent loaded:\n'
+            '  Name: ${agent.fullName}\n'
+            '  Status: ${agent.status}\n'
+            '  isPendingVerification: $isPendingVerification',
+            name: 'TCC.AuthProvider',
+          );
+        } else {
+          developer.log('⚠️ [AUTH_PROVIDER] isAuth=true but agent is null', name: 'TCC.AuthProvider');
         }
+      } else {
+        developer.log('ℹ️ [AUTH_PROVIDER] No existing session found', name: 'TCC.AuthProvider');
       }
     } catch (e) {
+      developer.log('❌ [AUTH_PROVIDER] Initialize error: ${e.toString()}', name: 'TCC.AuthProvider');
       _error = e.toString();
     } finally {
       _isLoading = false;
+      developer.log('✅ [AUTH_PROVIDER] Initialize complete', name: 'TCC.AuthProvider');
       notifyListeners();
     }
   }
@@ -50,6 +69,13 @@ class AuthProvider with ChangeNotifier {
     required String password,
     bool isAdminLogin = false,
   }) async {
+    developer.log(
+      '🔐 [AUTH_PROVIDER] Login starting:\n'
+      '  Email/Phone: $emailOrPhone\n'
+      '  isAdminLogin: $isAdminLogin',
+      name: 'TCC.AuthProvider',
+    );
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -61,25 +87,48 @@ class AuthProvider with ChangeNotifier {
         isAdminLogin: isAdminLogin,
       );
 
+      developer.log(
+        '📦 [AUTH_PROVIDER] Login result received:\n'
+        '  Success: ${result.success}\n'
+        '  Has Agent: ${result.agent != null}\n'
+        '  Error: ${result.error ?? 'none'}',
+        name: 'TCC.AuthProvider',
+      );
+
       if (result.success && result.agent != null) {
         _agent = result.agent;
         _isAuthenticated = true;
         _error = null;
+
+        developer.log(
+          '✅ [AUTH_PROVIDER] Login successful, setting state:\n'
+          '  Agent: ${_agent?.fullName}\n'
+          '  Status: ${_agent?.status}\n'
+          '  isAuthenticated: $_isAuthenticated\n'
+          '  isPendingVerification: $isPendingVerification',
+          name: 'TCC.AuthProvider',
+        );
+
+        developer.log('🔔 [AUTH_PROVIDER] Calling notifyListeners()', name: 'TCC.AuthProvider');
         notifyListeners();
+        developer.log('✅ [AUTH_PROVIDER] notifyListeners() completed', name: 'TCC.AuthProvider');
         return true;
       } else {
         _error = result.error ?? 'Login failed';
         _isAuthenticated = false;
+        developer.log('❌ [AUTH_PROVIDER] Login failed: $_error', name: 'TCC.AuthProvider');
         notifyListeners();
         return false;
       }
     } catch (e) {
+      developer.log('❌ [AUTH_PROVIDER] Login exception: ${e.toString()}', name: 'TCC.AuthProvider');
       _error = e.toString();
       _isAuthenticated = false;
       notifyListeners();
       return false;
     } finally {
       _isLoading = false;
+      developer.log('✅ [AUTH_PROVIDER] Login process complete', name: 'TCC.AuthProvider');
       notifyListeners();
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -69,17 +70,33 @@ class ApiService {
             uri,
             headers: _getHeaders(includeAuth: requiresAuth),
           )
-          .timeout(Duration(seconds: AppConstants.apiTimeout));
+          .timeout(
+            Duration(seconds: AppConstants.apiTimeout),
+            onTimeout: () {
+              throw TimeoutException(
+                AppConstants.errorTimeout,
+                Duration(seconds: AppConstants.apiTimeout),
+              );
+            },
+          );
 
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(AppConstants.errorTimeout);
     } on SocketException {
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException {
       throw ApiException(AppConstants.errorNetwork);
     } on FormatException {
-      throw ApiException('Invalid response format');
+      throw ApiException('Invalid response format. Please try again.');
+    } on ApiException {
+      rethrow;
+    } on UnauthorizedException {
+      rethrow;
+    } on ValidationException {
+      rethrow;
     } catch (e) {
-      throw ApiException(e.toString());
+      throw ApiException('Network error: ${e.toString()}');
     }
   }
 
@@ -97,17 +114,33 @@ class ApiService {
             headers: _getHeaders(includeAuth: requiresAuth),
             body: body != null ? jsonEncode(body) : null,
           )
-          .timeout(Duration(seconds: AppConstants.apiTimeout));
+          .timeout(
+            Duration(seconds: AppConstants.apiTimeout),
+            onTimeout: () {
+              throw TimeoutException(
+                AppConstants.errorTimeout,
+                Duration(seconds: AppConstants.apiTimeout),
+              );
+            },
+          );
 
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(AppConstants.errorTimeout);
     } on SocketException {
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException {
       throw ApiException(AppConstants.errorNetwork);
     } on FormatException {
-      throw ApiException('Invalid response format');
+      throw ApiException('Invalid response format. Please try again.');
+    } on ApiException {
+      rethrow;
+    } on UnauthorizedException {
+      rethrow;
+    } on ValidationException {
+      rethrow;
     } catch (e) {
-      throw ApiException(e.toString());
+      throw ApiException('Network error: ${e.toString()}');
     }
   }
 
@@ -125,17 +158,33 @@ class ApiService {
             headers: _getHeaders(includeAuth: requiresAuth),
             body: body != null ? jsonEncode(body) : null,
           )
-          .timeout(Duration(seconds: AppConstants.apiTimeout));
+          .timeout(
+            Duration(seconds: AppConstants.apiTimeout),
+            onTimeout: () {
+              throw TimeoutException(
+                AppConstants.errorTimeout,
+                Duration(seconds: AppConstants.apiTimeout),
+              );
+            },
+          );
 
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(AppConstants.errorTimeout);
     } on SocketException {
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException {
       throw ApiException(AppConstants.errorNetwork);
     } on FormatException {
-      throw ApiException('Invalid response format');
+      throw ApiException('Invalid response format. Please try again.');
+    } on ApiException {
+      rethrow;
+    } on UnauthorizedException {
+      rethrow;
+    } on ValidationException {
+      rethrow;
     } catch (e) {
-      throw ApiException(e.toString());
+      throw ApiException('Network error: ${e.toString()}');
     }
   }
 
@@ -153,17 +202,33 @@ class ApiService {
             headers: _getHeaders(includeAuth: requiresAuth),
             body: body != null ? jsonEncode(body) : null,
           )
-          .timeout(Duration(seconds: AppConstants.apiTimeout));
+          .timeout(
+            Duration(seconds: AppConstants.apiTimeout),
+            onTimeout: () {
+              throw TimeoutException(
+                AppConstants.errorTimeout,
+                Duration(seconds: AppConstants.apiTimeout),
+              );
+            },
+          );
 
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(AppConstants.errorTimeout);
     } on SocketException {
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException {
       throw ApiException(AppConstants.errorNetwork);
     } on FormatException {
-      throw ApiException('Invalid response format');
+      throw ApiException('Invalid response format. Please try again.');
+    } on ApiException {
+      rethrow;
+    } on UnauthorizedException {
+      rethrow;
+    } on ValidationException {
+      rethrow;
     } catch (e) {
-      throw ApiException(e.toString());
+      throw ApiException('Network error: ${e.toString()}');
     }
   }
 
@@ -179,17 +244,33 @@ class ApiService {
             uri,
             headers: _getHeaders(includeAuth: requiresAuth),
           )
-          .timeout(Duration(seconds: AppConstants.apiTimeout));
+          .timeout(
+            Duration(seconds: AppConstants.apiTimeout),
+            onTimeout: () {
+              throw TimeoutException(
+                AppConstants.errorTimeout,
+                Duration(seconds: AppConstants.apiTimeout),
+              );
+            },
+          );
 
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(AppConstants.errorTimeout);
     } on SocketException {
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException {
       throw ApiException(AppConstants.errorNetwork);
     } on FormatException {
-      throw ApiException('Invalid response format');
+      throw ApiException('Invalid response format. Please try again.');
+    } on ApiException {
+      rethrow;
+    } on UnauthorizedException {
+      rethrow;
+    } on ValidationException {
+      rethrow;
     } catch (e) {
-      throw ApiException(e.toString());
+      throw ApiException('Network error: ${e.toString()}');
     }
   }
 
@@ -221,16 +302,30 @@ class ApiService {
 
       final streamedResponse = await request.send().timeout(
             Duration(seconds: AppConstants.imageUploadTimeout),
+            onTimeout: () {
+              throw TimeoutException(
+                'Upload timeout. Please try again.',
+                Duration(seconds: AppConstants.imageUploadTimeout),
+              );
+            },
           );
       final response = await http.Response.fromStream(streamedResponse);
 
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException('Upload timeout. Please check your connection and try again.');
     } on SocketException {
       throw ApiException(AppConstants.errorNetwork);
     } on HttpException {
       throw ApiException(AppConstants.errorNetwork);
+    } on ApiException {
+      rethrow;
+    } on UnauthorizedException {
+      rethrow;
+    } on ValidationException {
+      rethrow;
     } catch (e) {
-      throw ApiException(e.toString());
+      throw ApiException('Upload failed: ${e.toString()}');
     }
   }
 
@@ -245,33 +340,101 @@ class ApiService {
 
   // Handle response
   Map<String, dynamic> _handleResponse(http.Response response) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (response.body.isEmpty) {
-        return {'success': true};
+    try {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.isEmpty) {
+          return {'success': true};
+        }
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else if (response.statusCode == 400) {
+        // Bad Request
+        final body = _parseResponseBody(response.body);
+        throw ApiException(_extractErrorMessage(body) ?? 'Invalid request. Please check your input.');
+      } else if (response.statusCode == 401) {
+        // Unauthorized - token expired or invalid credentials
+        clearTokens();
+        final body = _parseResponseBody(response.body);
+        throw UnauthorizedException(
+          _extractErrorMessage(body) ?? AppConstants.errorUnauthorized,
+        );
+      } else if (response.statusCode == 403) {
+        // Forbidden
+        final body = _parseResponseBody(response.body);
+        throw ApiException(
+          _extractErrorMessage(body) ?? 'Access forbidden. You do not have permission to perform this action.',
+        );
+      } else if (response.statusCode == 404) {
+        // Not Found
+        final body = _parseResponseBody(response.body);
+        throw ApiException(
+          _extractErrorMessage(body) ?? 'Resource not found. Please try again.',
+        );
+      } else if (response.statusCode == 409) {
+        // Conflict - duplicate entry
+        final body = _parseResponseBody(response.body);
+        throw ApiException(
+          _extractErrorMessage(body) ?? 'This record already exists.',
+        );
+      } else if (response.statusCode == 422) {
+        // Validation error
+        final body = _parseResponseBody(response.body);
+        throw ValidationException(
+          _extractErrorMessage(body) ?? 'Validation failed',
+          body['errors'] ?? (body['error'] != null ? body['error']['details'] : null),
+        );
+      } else if (response.statusCode == 429) {
+        // Too Many Requests
+        final body = _parseResponseBody(response.body);
+        throw ApiException(
+          _extractErrorMessage(body) ?? 'Too many requests. Please try again later.',
+        );
+      } else if (response.statusCode >= 500) {
+        // Server Error
+        final body = _parseResponseBody(response.body);
+        throw ApiException(
+          _extractErrorMessage(body) ?? 'Server error. Please try again later.',
+        );
+      } else {
+        // Other errors
+        final body = _parseResponseBody(response.body);
+        throw ApiException(_extractErrorMessage(body) ?? AppConstants.errorGeneric);
       }
-      return jsonDecode(response.body) as Map<String, dynamic>;
-    } else if (response.statusCode == 401) {
-      // Unauthorized - token expired
-      clearTokens();
-      throw UnauthorizedException(AppConstants.errorUnauthorized);
-    } else if (response.statusCode == 403) {
-      throw ApiException('Access forbidden');
-    } else if (response.statusCode == 404) {
-      throw ApiException('Resource not found');
-    } else if (response.statusCode == 422) {
-      // Validation error
-      final body = jsonDecode(response.body);
-      throw ValidationException(
-        body['message'] ?? 'Validation failed',
-        body['errors'],
-      );
-    } else if (response.statusCode >= 500) {
-      throw ApiException('Server error. Please try again later.');
-    } else {
-      final body = response.body.isNotEmpty
-          ? jsonDecode(response.body)
-          : {'message': 'Unknown error'};
-      throw ApiException(body['message'] ?? AppConstants.errorGeneric);
+    } catch (e) {
+      if (e is ApiException || e is UnauthorizedException || e is ValidationException) {
+        rethrow;
+      }
+      throw ApiException('Error processing response: ${e.toString()}');
+    }
+  }
+
+  // Extract error message from response body
+  // Handles both formats: {message: "..."} and {error: {message: "..."}}
+  String? _extractErrorMessage(Map<String, dynamic> body) {
+    // First, check if there's a nested error object with a message
+    if (body['error'] != null && body['error'] is Map) {
+      final errorObj = body['error'] as Map<String, dynamic>;
+      if (errorObj['message'] != null && errorObj['message'] is String) {
+        return errorObj['message'] as String;
+      }
+    }
+
+    // Otherwise, check for direct message field
+    if (body['message'] != null && body['message'] is String) {
+      return body['message'] as String;
+    }
+
+    return null;
+  }
+
+  // Parse response body safely
+  Map<String, dynamic> _parseResponseBody(String body) {
+    try {
+      if (body.isEmpty) {
+        return {'message': 'Unknown error'};
+      }
+      return jsonDecode(body) as Map<String, dynamic>;
+    } catch (e) {
+      return {'message': body.isNotEmpty ? body : 'Unknown error'};
     }
   }
 }

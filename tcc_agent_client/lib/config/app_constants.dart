@@ -11,7 +11,7 @@ class AppConstants {
   static const String apiVersion = 'v1';
 
   // API Endpoints - Auth
-  static const String loginEndpoint = '/auth/login';
+  static const String loginEndpoint = '/auth/login-direct';  // DEV: Using direct login (bypasses OTP)
   static const String adminLoginEndpoint = '/admin/login';
   static const String registerEndpoint = '/auth/register';
   static const String verifyOtpEndpoint = '/auth/verify-otp';
@@ -115,8 +115,8 @@ class AppConstants {
 
   // Error Messages
   static const String errorGeneric = 'Something went wrong. Please try again.';
-  static const String errorNetwork = 'Network error. Please check your connection.';
-  static const String errorTimeout = 'Request timed out. Please try again.';
+  static const String errorNetwork = 'No internet connection. Please check your network and try again.';
+  static const String errorTimeout = 'Request timed out. Please check your connection and try again.';
   static const String errorUnauthorized = 'Session expired. Please login again.';
   static const String errorInvalidCredentials = 'Invalid email or password.';
   static const String errorInvalidOtp = 'Invalid or expired OTP.';
@@ -125,6 +125,10 @@ class AppConstants {
   static const String errorStoragePermission = 'Storage permission denied.';
   static const String errorImageTooLarge = 'Image size too large. Maximum 5MB allowed.';
   static const String errorInsufficientBalance = 'Insufficient wallet balance.';
+  static const String errorServerUnavailable = 'Server is currently unavailable. Please try again later.';
+  static const String errorBadRequest = 'Invalid request. Please check your input and try again.';
+  static const String errorDuplicateEntry = 'This record already exists in the system.';
+  static const String errorNotFound = 'The requested resource was not found.';
 
   // Success Messages
   static const String successLogin = 'Login successful!';

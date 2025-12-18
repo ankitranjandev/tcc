@@ -24,6 +24,7 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
     (index) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+  final TextEditingController _phoneController = TextEditingController();
   bool _isLoading = false;
   int _resendTimer = 60;
   Timer? _timer;
@@ -42,6 +43,7 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
     for (var node in _focusNodes) {
       node.dispose();
     }
+    _phoneController.dispose();
     _timer?.cancel();
     super.dispose();
   }
@@ -85,6 +87,7 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
 
   Future<void> _handleVerifyOtp() async {
     final otp = _otpControllers.map((c) => c.text).join();
+    final phone = _phoneController.text.replaceAll(RegExp(r'[\s\-\(\)]'), '');
 
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -97,13 +100,22 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
       return;
     }
 
+    if (phone.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a valid 10-digit phone number'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(Duration(seconds: 2));
-
+    // For now, just navigate - OTP verification will happen on reset password screen
     setState(() {
       _isLoading = false;
     });
@@ -112,6 +124,8 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
       // Navigate to reset password screen
       context.push('/forgot-password/reset', extra: {
         'email': widget.email,
+        'phone': phone,
+        'countryCode': '+232', // Sierra Leone country code
         'otp': otp,
       });
     }
@@ -230,16 +244,25 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                               _focusNodes[index - 1].requestFocus();
                             }
 
-                            // Auto-verify when all digits are entered
-                            if (index == 5 && value.isNotEmpty) {
-                              _handleVerifyOtp();
-                            }
+                            // Don't auto-verify, let user click button after entering phone
                           },
                         ),
                       );
                     }),
                   ),
-                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 4)),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 3)),
+
+                  // Phone Number Input
+                  TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      hintText: 'Enter your 10-digit phone number',
+                      prefixIcon: Icon(Icons.phone_outlined),
+                    ),
+                  ),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 3)),
 
                   // Verify Button
                   ElevatedButton(

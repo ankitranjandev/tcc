@@ -3,6 +3,7 @@ import { AuthRequest } from '../types';
 import { WalletService } from '../services/wallet.service';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+import config from '../config';
 
 export class WalletController {
   /**
@@ -96,6 +97,67 @@ export class WalletController {
 
       if (error.message === 'WALLET_NOT_FOUND') {
         return ApiResponseUtil.notFound(res, 'Wallet not found');
+      }
+
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Create Stripe payment intent for wallet deposit
+   */
+  static async createPaymentIntent(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return ApiResponseUtil.unauthorized(res);
+      }
+
+      const { amount } = req.body;
+
+      // Validate amount
+      if (!amount || amount < config.limits.minDepositAmount) {
+        return ApiResponseUtil.badRequest(
+          res,
+          `Minimum deposit amount is ${config.limits.minDepositAmount}`
+        );
+      }
+
+      if (amount > config.limits.maxDepositAmount) {
+        return ApiResponseUtil.badRequest(
+          res,
+          `Maximum deposit amount is ${config.limits.maxDepositAmount}`
+        );
+      }
+
+      const result = await WalletService.createPaymentIntent(userId, amount, req.ip);
+
+      return ApiResponseUtil.success(res, {
+        client_secret: result.clientSecret,
+        payment_intent_id: result.paymentIntentId,
+        transaction_id: result.transactionId,
+        amount: result.amount,
+        currency: result.currency,
+        publishable_key: config.stripe.publishableKey,
+      }, 'Payment intent created successfully');
+    } catch (error: any) {
+      logger.error('Create payment intent error', error);
+
+      if (error.message === 'INVALID_AMOUNT') {
+        return ApiResponseUtil.badRequest(res, 'Invalid amount');
+      }
+
+      if (error.message === 'WALLET_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Wallet not found');
+      }
+
+      if (error.message === 'USER_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'User not found');
+      }
+
+      if (error.message.includes('STRIPE')) {
+        return ApiResponseUtil.badRequest(res, 'Payment processing error. Please try again.');
       }
 
       return ApiResponseUtil.internalError(res);

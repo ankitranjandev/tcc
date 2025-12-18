@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
-import '../../providers/auth_provider.dart';
+import '../../services/bank_account_service.dart';
 import '../../utils/responsive_helper.dart';
 
 class BankDetailsScreen extends StatefulWidget {
@@ -13,53 +13,68 @@ class BankDetailsScreen extends StatefulWidget {
 }
 
 class _BankDetailsScreenState extends State<BankDetailsScreen> {
+  final _bankAccountService = BankAccountService();
   final _formKey = GlobalKey<FormState>();
   final _bankNameController = TextEditingController();
+  final _accountNumberController = TextEditingController();
+  final _accountHolderNameController = TextEditingController();
   final _branchAddressController = TextEditingController();
   final _ifscCodeController = TextEditingController();
-  final _accountHolderNameController = TextEditingController();
 
-  bool _isLoading = false;
-  final String _nationalIdUrl = 'mock-url'; // From previous screen
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _bankNameController.dispose();
+    _accountNumberController.dispose();
+    _accountHolderNameController.dispose();
     _branchAddressController.dispose();
     _ifscCodeController.dispose();
-    _accountHolderNameController.dispose();
     super.dispose();
   }
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() => _isSubmitting = true);
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      final result = await _bankAccountService.createBankAccount(
+        bankName: _bankNameController.text.trim(),
+        accountNumber: _accountNumberController.text.trim(),
+        accountHolderName: _accountHolderNameController.text.trim(),
+        branchAddress: _branchAddressController.text.trim(),
+        routingNumber: _ifscCodeController.text.trim().toUpperCase(),
+        isPrimary: true,
+      );
 
-    final result = await authProvider.submitKyc(
-      nationalIdUrl: _nationalIdUrl,
-      bankName: _bankNameController.text.trim(),
-      branchAddress: _branchAddressController.text.trim(),
-      ifscCode: _ifscCodeController.text.trim().toUpperCase(),
-      accountHolderName: _accountHolderNameController.text.trim(),
-    );
+      if (!mounted) return;
 
-    if (!mounted) return;
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Bank details submitted successfully'),
+            backgroundColor: AppColors.successGreen,
+          ),
+        );
 
-    setState(() => _isLoading = false);
-
-    if (result.success) {
-      // Navigate to verification waiting screen
-      context.go('/verification-waiting');
-    } else {
+        // Navigate to verification waiting screen
+        context.go('/verification-waiting');
+      } else {
+        throw Exception(result['error'] ?? 'Failed to submit bank details');
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.error ?? 'Failed to submit KYC'),
+          content: Text('Failed to submit: ${e.toString()}'),
           backgroundColor: AppColors.errorRed,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -237,6 +252,39 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
 
                     const SizedBox(height: 20),
 
+                    // Account Number
+                    TextFormField(
+                      controller: _accountNumberController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Account Number',
+                        hintText: 'Enter account number',
+                        prefixIcon: Icon(Icons.credit_card, color: AppColors.primaryOrange),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.borderLight),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.primaryOrange, width: 2),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter account number';
+                        }
+                        if (value.length < 8 || value.length > 18) {
+                          return 'Account number must be 8-18 digits';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+
                     // Branch Address
                     TextFormField(
                       controller: _branchAddressController,
@@ -339,7 +387,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
 
                     // Submit Button
                     ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSubmit,
+                      onPressed: _isSubmitting ? null : _handleSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryOrange,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -348,7 +396,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                         ),
                         elevation: 2,
                       ),
-                      child: _isLoading
+                      child: _isSubmitting
                           ? const SizedBox(
                               height: 20,
                               width: 20,

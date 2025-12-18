@@ -52,8 +52,15 @@ class AppColors {
   static const Color textTertiary = gray600;
 
   // Background & Border Colors
+  static const Color background = gray100;
   static const Color backgroundLight = gray100;
   static const Color borderLight = gray300;
+  static const Color cardBackground = white;
+  static const Color warningYellow = Color(0xFFFFB300);
+
+  // Aliases for consistency
+  static const Color primary = primaryOrange;
+  static const Color secondary = secondaryTeal;
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(

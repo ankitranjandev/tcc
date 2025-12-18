@@ -94,6 +94,20 @@ class AppColors {
   static const Color gray50 = Color(0xFFFCFCFC);
   static const Color white = Color(0xFFFFFFFF);
 
+  // ==================== Additional Colors ====================
+  // Aliases for consistency across the codebase
+  static const Color primary = accentBlue;
+  static const Color secondary = accentPurple;
+  static const Color background = bgSecondary;
+  static const Color cardBackground = bgPrimary;
+  static const Color borderLight = gray300;
+  static const Color divider = gray300;
+  static const Color successGreen = success;
+  static const Color errorRed = error;
+  static const Color warningOrange = warning;
+  static const Color warningYellow = warning;
+  static const Color infoBlue = info;
+
   // ==================== Gradient Colors ====================
   /// Primary button gradient
   static const LinearGradient primaryGradient = LinearGradient(

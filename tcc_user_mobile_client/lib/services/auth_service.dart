@@ -1,6 +1,18 @@
 import 'dart:developer' as developer;
 import 'api_service.dart';
 
+// Helper function to extract error message from exceptions
+String _extractErrorMessage(dynamic error) {
+  if (error is ApiException) {
+    return error.message;
+  } else if (error is ValidationException) {
+    return error.message;
+  } else if (error is UnauthorizedException) {
+    return error.message;
+  }
+  return error.toString();
+}
+
 class AuthService {
   final ApiService _apiService = ApiService();
 
@@ -13,9 +25,10 @@ class AuthService {
     required String countryCode,
     required String password,
     String? referralCode,
+    String? otp,
   }) async {
     try {
-      developer.log('📤 AuthService: Registration request for email: $email', name: 'AuthService');
+      developer.log('📤 AuthService: Registration request for email: $email, with OTP: ${otp != null}', name: 'AuthService');
 
       final body = {
         'first_name': firstName,
@@ -30,6 +43,10 @@ class AuthService {
         body['referral_code'] = referralCode;
       }
 
+      if (otp != null && otp.isNotEmpty) {
+        body['otp'] = otp;
+      }
+
       developer.log('📤 AuthService: Sending registration data', name: 'AuthService');
 
       final response = await _apiService.post(
@@ -38,11 +55,20 @@ class AuthService {
         requiresAuth: false,
       );
 
+      // Store tokens if registration with OTP is successful
+      if (otp != null && response['token'] != null && response['refreshToken'] != null) {
+        developer.log('✅ AuthService: Registration with OTP successful, storing tokens', name: 'AuthService');
+        await _apiService.setTokens(
+          response['token'],
+          response['refreshToken'],
+        );
+      }
+
       developer.log('✅ AuthService: Registration successful', name: 'AuthService');
       return {'success': true, 'data': response};
     } catch (e) {
       developer.log('❌ AuthService: Registration error: $e', name: 'AuthService');
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -54,6 +80,7 @@ class AuthService {
     required String purpose, // REGISTRATION, LOGIN, PHONE_CHANGE, PASSWORD_RESET
   }) async {
     try {
+      developer.log('📤 AuthService: OTP verification request for phone: $phone', name: 'AuthService');
       final response = await _apiService.post(
         '/auth/verify-otp',
         body: {
@@ -67,6 +94,7 @@ class AuthService {
 
       // Store tokens if verification successful
       if (response['token'] != null && response['refreshToken'] != null) {
+        developer.log('✅ AuthService: OTP verified, storing tokens', name: 'AuthService');
         await _apiService.setTokens(
           response['token'],
           response['refreshToken'],
@@ -75,7 +103,8 @@ class AuthService {
 
       return {'success': true, 'data': response};
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      developer.log('❌ AuthService: OTP verification error: $e', name: 'AuthService');
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -113,7 +142,7 @@ class AuthService {
       return {'success': true, 'data': response};
     } catch (e) {
       developer.log('❌ AuthService: Login error: $e', name: 'AuthService');
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -133,7 +162,7 @@ class AuthService {
       );
       return {'success': true, 'data': response};
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -151,7 +180,7 @@ class AuthService {
       );
       return {'success': true, 'data': response};
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -175,7 +204,7 @@ class AuthService {
       );
       return {'success': true, 'data': response};
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -205,7 +234,7 @@ class AuthService {
 
       return {'success': true, 'data': response};
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -224,7 +253,7 @@ class AuthService {
     } catch (e) {
       // Even if API call fails, clear local tokens
       await _apiService.clearTokens();
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -240,7 +269,7 @@ class AuthService {
       return {'success': true, 'data': response};
     } catch (e) {
       developer.log('❌ AuthService: Get profile error: $e', name: 'AuthService');
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -265,7 +294,7 @@ class AuthService {
       );
       return {'success': true, 'data': response};
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 
@@ -285,7 +314,7 @@ class AuthService {
       );
       return {'success': true, 'data': response};
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../models/investment_model.dart';
-import '../../widgets/payment_bottom_sheet.dart';
+import '../bill_payment/payment_method_screen.dart';
 
 class InvestmentProductDetailScreen extends StatefulWidget {
   final InvestmentProduct product;
@@ -738,54 +738,16 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
     final double insuranceAmount = _includeInsurance ? (_totalInvestment * 0.02) : 0;
     final double totalAmount = _totalInvestment + insuranceAmount;
 
-    // Show payment bottom sheet
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PaymentBottomSheet(
-        amount: totalAmount,
-        title: 'Complete Investment',
-        description: 'Pay Le ${totalAmount.toStringAsFixed(0)} to invest in ${widget.product.name}${_includeInsurance ? ' (includes insurance)' : ''}',
-        metadata: {
-          'type': 'investment',
-          'includeInsurance': _includeInsurance.toString(),
-          'insuranceAmount': insuranceAmount.toString(),
-          'product_id': widget.product.id,
-          'product_name': widget.product.name,
-          'quantity': _quantity,
-          'period': _period,
-          'expected_return': _expectedReturn,
-        },
-        onSuccess: (result) {
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Investment successful! Check your portfolio.'),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          );
-
-          // Navigate back to home after a delay
-          Future.delayed(Duration(seconds: 2), () {
-            if (context.mounted) {
-              context.go('/dashboard');
-            }
-          });
-        },
-        onFailure: (result) {
-          // Show error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Investment failed. Please try again.'),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          );
-        },
+    // Navigate to payment method screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodScreen(
+          billType: 'Investment',
+          provider: widget.product.name,
+          amount: totalAmount,
+          accountNumber: 'INV-${widget.product.id}',
+        ),
       ),
     );
   }

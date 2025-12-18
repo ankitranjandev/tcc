@@ -5,6 +5,7 @@ import '../../services/dashboard_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/cards/stat_card.dart';
+import '../kyc/kyc_submissions_screen.dart';
 
 /// Dashboard Screen
 class DashboardScreen extends StatefulWidget {
@@ -167,7 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   context,
                   mobile: 1,
                   tablet: 2,
-                  desktop: 4,
+                  desktop: 5,
                 );
                 final spacing = isMobile ? AppTheme.space16 : AppTheme.space24;
                 final aspectRatio = isMobile ? 1.8 : 1.5;
@@ -209,6 +210,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.attach_money,
                       iconColor: AppColors.success,
                       change: null,
+                    ),
+                    StatCard(
+                      title: 'Pending KYC',
+                      value: Formatters.formatNumber(stats['pendingKycCount'] ?? 0),
+                      icon: Icons.pending_actions,
+                      iconColor: AppColors.warning,
+                      change: null,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const KYCSubmissionsScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 );

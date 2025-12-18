@@ -304,15 +304,22 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                 Icons.check_circle,
                 AppColors.success,
               ),
-              _buildStatCard(
-                context,
-                'Pending KYC',
-                consumers
-                    .where((c) => c.kycStatus.name == 'pending')
-                    .length
-                    .toString(),
-                Icons.pending,
-                AppColors.warning,
+              InkWell(
+                onTap: () {
+                  // Navigate to KYC Submissions screen with consumer filter
+                  Navigator.pushNamed(context, '/kyc-submissions');
+                },
+                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                child: _buildStatCard(
+                  context,
+                  'Pending KYC (Click to Review)',
+                  consumers
+                      .where((c) => c.kycStatus.name == 'pending')
+                      .length
+                      .toString(),
+                  Icons.pending,
+                  AppColors.warning,
+                ),
               ),
               _buildStatCard(
                 context,
@@ -830,6 +837,23 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                                             _viewConsumerDetails(consumer),
                                         tooltip: 'View Details',
                                       ),
+                                      if (consumer.kycStatus.name == 'pending' ||
+                                          consumer.kycStatus.name == 'underReview')
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.verified_user,
+                                            color: AppColors.warning,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            // Navigate to KYC review for this specific consumer
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/kyc-submissions',
+                                            );
+                                          },
+                                          tooltip: 'Review KYC',
+                                        ),
                                       IconButton(
                                         icon: Icon(
                                           consumer.status.name == 'active'
@@ -1106,6 +1130,20 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                 onPressed: () => _viewConsumerDetails(consumer),
                 tooltip: 'View Details',
               ),
+              if (consumer.kycStatus.name == 'pending' ||
+                  consumer.kycStatus.name == 'underReview')
+                IconButton(
+                  icon: Icon(
+                    Icons.verified_user,
+                    color: AppColors.warning,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    // Navigate to KYC review for this specific consumer
+                    Navigator.pushNamed(context, '/kyc-submissions');
+                  },
+                  tooltip: 'Review KYC',
+                ),
               IconButton(
                 icon: Icon(
                   consumer.status.name == 'active'

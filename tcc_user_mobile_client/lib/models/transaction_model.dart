@@ -19,6 +19,34 @@ class TransactionModel {
     this.accountInfo,
   });
 
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
+    return TransactionModel(
+      id: json['id'] ?? '',
+      type: json['type'] ?? '',
+      amount: (json['amount'] ?? 0).toDouble(),
+      status: json['status'] ?? '',
+      date: json['date'] != null
+          ? DateTime.parse(json['date'])
+          : DateTime.now(),
+      description: json['description'],
+      recipient: json['recipient'],
+      accountInfo: json['accountInfo'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'amount': amount,
+      'status': status,
+      'date': date.toIso8601String(),
+      'description': description,
+      'recipient': recipient,
+      'accountInfo': accountInfo,
+    };
+  }
+
   String get statusText {
     switch (status) {
       case 'COMPLETED':

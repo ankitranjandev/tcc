@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../config/app_colors.dart';
+import '../bill_payment/payment_method_screen.dart';
 
 class SendGiftScreen extends StatefulWidget {
   const SendGiftScreen({super.key});
@@ -13,12 +14,10 @@ class SendGiftScreen extends StatefulWidget {
 class _SendGiftScreenState extends State<SendGiftScreen> {
   final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
 
-  String _giftType = 'Money';
   String _sendVia = 'TCC ID';
   final _amountController = TextEditingController();
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -53,39 +52,6 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Gift Type Selection
-              Text(
-                'What would you like to gift?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  _buildGiftTypeCard(
-                    'Money',
-                    Icons.attach_money,
-                    Colors.green,
-                  ),
-                  SizedBox(width: 12),
-                  _buildGiftTypeCard(
-                    'Airtime',
-                    Icons.phone_android,
-                    Colors.blue,
-                  ),
-                  SizedBox(width: 12),
-                  _buildGiftTypeCard(
-                    'Voucher',
-                    Icons.card_giftcard,
-                    Colors.purple,
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 32),
-
               // Send Via Selection
               Text(
                 'Send via',
@@ -154,8 +120,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
 
               // Amount Section
               Text(
-                _giftType == 'Money' ? 'Gift Amount' :
-                _giftType == 'Airtime' ? 'Airtime Amount' : 'Voucher Value',
+                'Gift Amount',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -261,8 +226,6 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                       ),
                     ),
                     SizedBox(height: 12),
-                    _buildSummaryRow('Type', _giftType),
-                    SizedBox(height: 8),
                     _buildSummaryRow('Send via', _sendVia),
                     if (_amountController.text.isNotEmpty) ...[
                       SizedBox(height: 8),
@@ -283,82 +246,28 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _sendGift,
+                  onPressed: _sendGift,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.card_giftcard, color: AppColors.white),
-                            SizedBox(width: 8),
-                            Text(
-                              'Send Gift',
-                              style: TextStyle(
-                                color: AppColors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.card_giftcard, color: AppColors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Send Gift',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGiftTypeCard(String type, IconData icon, Color color) {
-    final isSelected = _giftType == type;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _giftType = type;
-          });
-        },
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? color.withValues(alpha: 0.1)
-                : Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? color : Theme.of(context).dividerColor,
-              width: isSelected ? 2 : 1,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? color : Theme.of(context).iconTheme.color,
-                size: 28,
-              ),
-              SizedBox(height: 8),
-              Text(
-                type,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? color : null,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -472,70 +381,24 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Parse the amount
+    final amount = double.tryParse(_amountController.text.replaceAll(',', ''));
+    if (amount == null || amount <= 0) {
+      _showError('Please enter a valid amount');
+      return;
+    }
 
-    // Simulate API call
-    await Future.delayed(Duration(seconds: 2));
-
-    setState(() {
-      _isLoading = false;
-    });
-
+    // Navigate to payment method screen
     if (mounted) {
-      // Show success dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentMethodScreen(
+            billType: 'Gift',
+            provider: _recipientController.text,
+            amount: amount,
+            accountNumber: _recipientController.text,
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle,
-                  color: AppColors.success,
-                  size: 48,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Gift Sent!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Your $_giftType gift of Le ${_amountController.text} has been sent successfully.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.go('/dashboard');
-              },
-              child: Text('Done'),
-            ),
-          ],
         ),
       );
     }

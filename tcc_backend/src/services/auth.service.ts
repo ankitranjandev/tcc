@@ -126,27 +126,42 @@ export class AuthService {
   /**
    * Login user - returns OTP requirement
    */
-  static async login(email: string, password: string): Promise<{
+  static async login(emailOrPhone: string, password: string): Promise<{
     requiresOTP: boolean;
     phone?: string;
     userId?: string;
     otpExpiresIn?: number;
   }> {
     try {
-      logger.info('Login attempt', { email, passwordLength: password?.length });
+      logger.info('Login attempt', { emailOrPhone, passwordLength: password?.length });
 
-      // Get user
-      const users = await db.query<User>(
-        `SELECT id, email, phone, country_code, password_hash, is_active,
-                locked_until, failed_login_attempts
-         FROM users WHERE email = $1`,
-        [email]
-      );
+      // Determine if input is email or phone
+      const isEmail = emailOrPhone.includes('@');
 
-      logger.info('User query result', { found: users.length, email });
+      // Get user by email or phone
+      let users: User[];
+      if (isEmail) {
+        users = await db.query<User>(
+          `SELECT id, email, phone, country_code, password_hash, is_active,
+                  locked_until, failed_login_attempts
+           FROM users WHERE email = $1`,
+          [emailOrPhone]
+        );
+      } else {
+        // Assume it's a phone number - try with common country codes or require full format
+        // For now, we'll try to match just the phone number without country code
+        users = await db.query<User>(
+          `SELECT id, email, phone, country_code, password_hash, is_active,
+                  locked_until, failed_login_attempts
+           FROM users WHERE phone = $1`,
+          [emailOrPhone]
+        );
+      }
+
+      logger.info('User query result', { found: users.length, emailOrPhone, isEmail });
 
       if (users.length === 0) {
-        logger.warn('No user found', { email });
+        logger.warn('No user found', { emailOrPhone });
         throw new Error('INVALID_CREDENTIALS');
       }
 
@@ -205,7 +220,7 @@ export class AuthService {
       // Mask phone number
       const maskedPhone = `****${user.phone.slice(-4)}`;
 
-      logger.info('Login OTP sent', { userId: user.id, email });
+      logger.info('Login OTP sent', { userId: user.id, emailOrPhone });
 
       return {
         requiresOTP: true,
@@ -477,6 +492,107 @@ export class AuthService {
       return { otpExpiresIn: expiresIn, retryAfter: 60 };
     } catch (error) {
       logger.error('Error in resendOTP', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Direct login without OTP - FOR DEVELOPMENT ONLY
+   * This method bypasses OTP verification and logs in the user directly
+   */
+  static async loginDirect(emailOrPhone: string, password: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    user: Partial<User>;
+  }> {
+    try {
+      // Only allow in development environment
+      if (config.env !== 'development') {
+        throw new Error('DIRECT_LOGIN_NOT_ALLOWED');
+      }
+
+      logger.info('Direct login attempt (DEV MODE)', { emailOrPhone });
+
+      // Determine if input is email or phone
+      const isEmail = emailOrPhone.includes('@');
+
+      // Get user by email or phone
+      let users: User[];
+      if (isEmail) {
+        users = await db.query<User>(
+          `SELECT id, first_name, last_name, email, phone, country_code, password_hash,
+                  is_active, role, kyc_status, profile_picture_url
+           FROM users WHERE email = $1`,
+          [emailOrPhone]
+        );
+      } else {
+        users = await db.query<User>(
+          `SELECT id, first_name, last_name, email, phone, country_code, password_hash,
+                  is_active, role, kyc_status, profile_picture_url
+           FROM users WHERE phone = $1`,
+          [emailOrPhone]
+        );
+      }
+
+      if (users.length === 0) {
+        throw new Error('INVALID_CREDENTIALS');
+      }
+
+      const user = users[0];
+
+      // Check if account is active
+      if (!user.is_active) {
+        throw new Error('ACCOUNT_INACTIVE');
+      }
+
+      // Verify password
+      const isValidPassword = await PasswordUtils.compare(password, user.password_hash);
+
+      if (!isValidPassword) {
+        throw new Error('INVALID_CREDENTIALS');
+      }
+
+      // Mark user as verified (skip OTP in dev mode)
+      await db.query(
+        'UPDATE users SET phone_verified = true, email_verified = true, is_verified = true, last_login_at = NOW() WHERE id = $1',
+        [user.id]
+      );
+
+      // Generate tokens
+      const accessToken = JWTUtils.generateAccessToken(user.id, user.role, user.email);
+      const refreshTokenValue = JWTUtils.generateRefreshToken(user.id, user.role, user.email);
+
+      // Store refresh token
+      await db.query(
+        `INSERT INTO refresh_tokens (user_id, token, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '${config.jwt.refreshExpiresIn}')`,
+        [user.id, refreshTokenValue]
+      );
+
+      logger.info('Direct login successful (DEV MODE)', { userId: user.id, emailOrPhone });
+
+      // Parse expiresIn to seconds (e.g., "1h" -> 3600)
+      const expiresInSeconds = config.jwt.expiresIn === '1h' ? 3600 : 3600;
+
+      return {
+        accessToken,
+        refreshToken: refreshTokenValue,
+        expiresIn: expiresInSeconds,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: user.phone,
+          country_code: user.country_code,
+          role: user.role,
+          kyc_status: user.kyc_status,
+          profile_picture_url: user.profile_picture_url,
+        },
+      };
+    } catch (error) {
+      logger.error('Error in loginDirect', error);
       throw error;
     }
   }

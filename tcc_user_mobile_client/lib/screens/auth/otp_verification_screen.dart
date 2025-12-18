@@ -49,7 +49,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       // Capture the ScaffoldMessenger before async operation
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-      // Extract phone and country code from extra data
+      // Extract registration data
+      final registrationData = widget.extraData?['registrationData'] as Map<String, dynamic>?;
       final phone = widget.extraData?['phone']?.toString() ?? '';
       final countryCode = widget.extraData?['countryCode']?.toString() ?? '+232';
 
@@ -64,11 +65,19 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         }
       }
 
-      final success = await authProvider.verifyOTP(
+      // First, verify the OTP
+      // Note: We're not using verifyOTP from auth provider since it assumes user is already registered
+      // Instead, we'll complete registration which should verify OTP and register in one step
+
+      // Complete registration with OTP verification
+      final success = await authProvider.register(
+        firstName: registrationData?['firstName']?.toString() ?? '',
+        lastName: registrationData?['lastName']?.toString() ?? '',
+        email: registrationData?['email']?.toString() ?? '',
+        password: registrationData?['password']?.toString() ?? '',
         phone: phoneNumber,
         countryCode: dialCode,
         otp: _currentOTP,
-        purpose: 'REGISTRATION',
       );
 
       if (success) {
@@ -78,7 +87,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         }
       } else {
         // Show error message
-        final errorMsg = authProvider.errorMessage ?? 'Invalid OTP. Please try again.';
+        final errorMsg = authProvider.errorMessage ?? 'Registration failed. Please try again.';
         scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(errorMsg),
@@ -119,10 +128,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: Padding(
@@ -171,7 +177,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               ),
               SizedBox(height: 16),
               GestureDetector(
-                onTap: () => context.pop(),
+                onTap: () => context.go('/phone-number'),
                 child: Text(
                   'Change phone number',
                   style: TextStyle(

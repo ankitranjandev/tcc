@@ -44,7 +44,8 @@ export class OTPService {
 
       // In development, log the OTP
       if (config.env === 'development') {
-        logger.debug('OTP for development', { phone, otp });
+        logger.info('🔐 OTP for development', { phone, otp, purpose });
+        console.log(`\n🔐 TEST OTP: ${otp} for ${countryCode}${phone} (${purpose})\n`);
       }
 
       return {

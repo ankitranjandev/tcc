@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _obscurePassword = true;
   bool _isLoading = false;
-  bool _isAdminLogin = false;
 
   @override
   void dispose() {
@@ -29,34 +29,81 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
 
+    if (!_formKey.currentState!.validate()) {
+      developer.log('❌ [LOGIN_SCREEN] Form validation failed', name: 'TCC.LoginScreen');
+      return;
+    }
+
+    developer.log('✅ [LOGIN_SCREEN] Form validation passed', name: 'TCC.LoginScreen');
     setState(() => _isLoading = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    developer.log(
+      '📞 [LOGIN_SCREEN] Calling authProvider.login():\n'
+      '  Email/Phone: ${_emailOrPhoneController.text.trim()}',
+      name: 'TCC.LoginScreen',
+    );
+
     final success = await authProvider.login(
       emailOrPhone: _emailOrPhoneController.text.trim(),
       password: _passwordController.text,
-      isAdminLogin: _isAdminLogin,
+      isAdminLogin: false,
     );
 
-    if (!mounted) return;
+    developer.log('📦 [LOGIN_SCREEN] Login result: $success', name: 'TCC.LoginScreen');
+
+    if (!mounted) {
+      developer.log('⚠️ [LOGIN_SCREEN] Widget not mounted, returning', name: 'TCC.LoginScreen');
+      return;
+    }
 
     setState(() => _isLoading = false);
 
     if (success) {
-      // Check if user needs to complete verification
-      if (authProvider.isPendingVerification) {
-        context.go('/verification-waiting');
-      } else {
-        context.go('/dashboard');
-      }
-    } else {
+      developer.log(
+        '✅ [LOGIN_SCREEN] Login successful:\n'
+        '  isPendingVerification: ${authProvider.isPendingVerification}\n'
+        '  Agent: ${authProvider.agent?.firstName ?? 'null'}',
+        name: 'TCC.LoginScreen',
+      );
+
+      // Show success message (router will handle navigation automatically)
+      developer.log('🎉 [LOGIN_SCREEN] Showing success message', name: 'TCC.LoginScreen');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? 'Login failed'),
+          content: Text(
+            'Welcome back, ${authProvider.agent?.firstName ?? 'Agent'}!',
+          ),
+          backgroundColor: AppColors.successGreen,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      developer.log('✅ [LOGIN_SCREEN] Router will handle automatic navigation', name: 'TCC.LoginScreen');
+    } else {
+      developer.log('❌ [LOGIN_SCREEN] Login failed: ${authProvider.error}', name: 'TCC.LoginScreen');
+      // Show detailed error message
+      final errorMessage = authProvider.error ?? 'Login failed. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(child: Text(errorMessage)),
+            ],
+          ),
           backgroundColor: AppColors.errorRed,
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Dismiss',
+            textColor: Colors.white,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
         ),
       );
     }
@@ -108,67 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 8),
 
                     Text(
-                      _isAdminLogin
-                          ? 'Sign in as Admin'
-                          : 'Sign in to continue as TCC Agent',
+                      'Sign in to continue as TCC Agent',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppColors.textSecondary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Admin Login Toggle
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _isAdminLogin
-                            ? AppColors.primaryOrange.withValues(alpha: 0.1)
-                            : AppColors.backgroundLight,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _isAdminLogin
-                              ? AppColors.primaryOrange
-                              : AppColors.borderLight,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _isAdminLogin ? Icons.admin_panel_settings : Icons.people,
-                            color: _isAdminLogin
-                                ? AppColors.primaryOrange
-                                : AppColors.textSecondary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Login as Admin',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 14,
-                                fontWeight: _isAdminLogin ? FontWeight.w600 : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                          Switch(
-                            value: _isAdminLogin,
-                            onChanged: (value) {
-                              setState(() => _isAdminLogin = value);
-                            },
-                            activeTrackColor: AppColors.primaryOrange.withValues(alpha: 0.5),
-                            thumbColor: WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return AppColors.primaryOrange;
-                                }
-                                return AppColors.gray400;
-                              },
-                            ),
-                          ),
-                        ],
                       ),
                     ),
 
@@ -180,8 +170,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: _isAdminLogin ? 'Email' : 'Email or Mobile Number',
-                        hintText: _isAdminLogin ? 'Enter your admin email' : 'Enter your email or mobile',
+                        labelText: 'Email or Mobile Number',
+                        hintText: 'Enter your email or mobile',
                         prefixIcon: Icon(Icons.person_outline, color: AppColors.primaryOrange),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),

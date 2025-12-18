@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:developer' as developer;
 import '../../config/app_colors.dart';
 import '../../utils/responsive_helper.dart';
 import '../../widgets/responsive_text.dart';
 import '../../widgets/responsive_builder.dart';
+import '../../services/auth_service.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
+  final String phone;
+  final String countryCode;
   final String otp;
 
   const ResetPasswordScreen({
     super.key,
     required this.email,
+    required this.phone,
+    required this.countryCode,
     required this.otp,
   });
 
@@ -23,6 +29,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -40,19 +47,31 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         _isLoading = true;
       });
 
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
+      developer.log('🔐 ResetPassword: Resetting password', name: 'ResetPassword');
 
-      setState(() {
-        _isLoading = false;
-      });
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-      if (mounted) {
-        // Show success dialog
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
+      try {
+        final result = await _authService.resetPassword(
+          phone: widget.phone,
+          countryCode: widget.countryCode,
+          otp: widget.otp,
+          newPassword: _passwordController.text,
+        );
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        developer.log('🔐 ResetPassword: Result: ${result['success']}', name: 'ResetPassword');
+
+        if (result['success'] == true) {
+          if (mounted) {
+            // Show success dialog
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -108,6 +127,33 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: Text('Sign In'),
               ),
             ],
+          ),
+            );
+          }
+        } else {
+          final error = result['error'] ?? 'Failed to reset password';
+          developer.log('🔐 ResetPassword: Error: $error', name: 'ResetPassword');
+
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text(error),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } catch (e) {
+        developer.log('🔐 ResetPassword: Exception: $e', name: 'ResetPassword');
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('An error occurred. Please try again.'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

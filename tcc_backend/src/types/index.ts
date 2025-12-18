@@ -99,6 +99,13 @@ export enum DocumentType {
   INSURANCE_POLICY = 'INSURANCE_POLICY',
 }
 
+export enum AuditActionType {
+  MANUAL_CREDIT = 'MANUAL_CREDIT',
+  MANUAL_DEBIT = 'MANUAL_DEBIT',
+  BALANCE_CORRECTION = 'BALANCE_CORRECTION',
+  REFUND = 'REFUND',
+}
+
 export interface User {
   id: string;
   role: UserRole;
@@ -124,6 +131,7 @@ export interface User {
   deletion_scheduled_for?: Date;
   referral_code?: string;
   referred_by?: string;
+  stripe_customer_id?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -180,6 +188,8 @@ export interface Transaction {
   reference?: string;
   description?: string;
   metadata?: any;
+  stripe_payment_intent_id?: string;
+  payment_gateway_response?: any;
   ip_address?: string;
   user_agent?: string;
   processed_at?: Date;
@@ -315,5 +325,20 @@ export interface Notification {
   data?: any;
   is_read: boolean;
   read_at?: Date;
+  created_at: Date;
+}
+
+export interface WalletAuditTrail {
+  id: string;
+  user_id: string;
+  admin_id: string;
+  action_type: AuditActionType;
+  amount: number;
+  balance_before: number;
+  balance_after: number;
+  reason: string;
+  notes?: string;
+  transaction_id?: string;
+  ip_address?: string;
   created_at: Date;
 }

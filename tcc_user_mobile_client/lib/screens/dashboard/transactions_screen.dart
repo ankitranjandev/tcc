@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../config/app_colors.dart';
-import '../../services/mock_data_service.dart';
+import '../../services/transaction_service.dart';
 import '../../models/transaction_model.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -15,7 +15,12 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final mockService = MockDataService();
+  final TransactionService _transactionService = TransactionService();
+
+  // Data state
+  List<TransactionModel> _allTransactions = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
   // Filter state
   Set<String> selectedTypes = {};
@@ -27,12 +32,48 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadTransactions();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTransactions() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final result = await _transactionService.getTransactionHistory(
+        limit: 100, // Load more transactions
+      );
+
+      if (result['success']) {
+        final data = result['data']['data'];
+        final transactionsData = data['transactions'] as List;
+
+        setState(() {
+          _allTransactions = transactionsData
+              .map((json) => TransactionModel.fromJson(json))
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = result['error'] ?? 'Failed to load transactions';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -75,23 +116,59 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: _isLoading && _allTransactions.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : _errorMessage != null && _allTransactions.isEmpty
+              ? _buildErrorState()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildTransactionList(_applyFilters(_allTransactions)),
+                    _buildTransactionList(_applyFilters(_allTransactions
+                        .where((t) => t.status == 'COMPLETED')
+                        .toList())),
+                    _buildTransactionList(_applyFilters(_allTransactions
+                        .where((t) => t.status == 'PENDING')
+                        .toList())),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildTransactionList(_applyFilters(mockService.recentTransactions)),
-          _buildTransactionList(_applyFilters(mockService.recentTransactions
-              .where((t) => t.status == 'COMPLETED')
-              .toList())),
-          _buildTransactionList(_applyFilters(mockService.recentTransactions
-              .where((t) => t.status == 'PENDING')
-              .toList())),
+          Icon(Icons.error_outline, size: 64, color: AppColors.error),
+          SizedBox(height: 16),
+          Text(
+            'Failed to load transactions',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            _errorMessage ?? 'Unknown error',
+            style: TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _loadTransactions,
+            icon: Icon(Icons.refresh),
+            label: Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildTransactionList(List<TransactionModel> transactions) {
-    if (transactions.isEmpty) {
+    if (transactions.isEmpty && !_isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -110,14 +187,17 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       );
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.all(16),
-      itemCount: transactions.length,
-      separatorBuilder: (context, index) => SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        return _buildTransactionCard(transaction);
-      },
+    return RefreshIndicator(
+      onRefresh: _loadTransactions,
+      child: ListView.separated(
+        padding: EdgeInsets.all(16),
+        itemCount: transactions.length,
+        separatorBuilder: (context, index) => SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final transaction = transactions[index];
+          return _buildTransactionCard(transaction);
+        },
+      ),
     );
   }
 

@@ -19,6 +19,8 @@ class AgentModel {
   final DateTime createdAt;
   final DateTime? lastActive;
   final bool hasBankDetails;
+  final String? nationalIdUrl;
+  final Map<String, dynamic>? bankDetails;
 
   AgentModel({
     required this.id,
@@ -40,9 +42,13 @@ class AgentModel {
     required this.createdAt,
     this.lastActive,
     required this.hasBankDetails,
+    this.nationalIdUrl,
+    this.bankDetails,
   });
 
   String get fullName => '$firstName $lastName';
+  String get mobileNumber => phone;
+  String get registrationNumber => businessRegistrationNumber;
 
   /// Create AgentModel from JSON
   factory AgentModel.fromJson(Map<String, dynamic> json) {
@@ -102,6 +108,8 @@ class AgentModel {
           ? DateTime.parse((json['last_active'] ?? json['last_login_at']) as String)
           : null,
       hasBankDetails: json['has_bank_details'] as bool? ?? false,
+      nationalIdUrl: json['national_id_url'] as String?,
+      bankDetails: json['bank_details'] as Map<String, dynamic>?,
     );
   }
 
@@ -127,6 +135,8 @@ class AgentModel {
       'created_at': createdAt.toIso8601String(),
       'last_active': lastActive?.toIso8601String(),
       'has_bank_details': hasBankDetails,
+      'national_id_url': nationalIdUrl,
+      'bank_details': bankDetails,
     };
   }
 
@@ -151,6 +161,8 @@ class AgentModel {
     DateTime? createdAt,
     DateTime? lastActive,
     bool? hasBankDetails,
+    String? nationalIdUrl,
+    Map<String, dynamic>? bankDetails,
   }) {
     return AgentModel(
       id: id ?? this.id,
@@ -173,6 +185,8 @@ class AgentModel {
       createdAt: createdAt ?? this.createdAt,
       lastActive: lastActive ?? this.lastActive,
       hasBankDetails: hasBankDetails ?? this.hasBankDetails,
+      nationalIdUrl: nationalIdUrl ?? this.nationalIdUrl,
+      bankDetails: bankDetails ?? this.bankDetails,
     );
   }
 }

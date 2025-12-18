@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/mock_data_service.dart';
-import '../../widgets/payment_bottom_sheet.dart';
-import '../../utils/responsive_helper.dart';
-import '../../widgets/responsive_builder.dart';
-import '../../widgets/responsive_text.dart';
+import '../../services/wallet_service.dart';
+import '../../services/investment_service.dart';
+import '../../services/metal_price_service.dart';
+import '../../services/currency_service.dart';
+import '../../models/currency_rate_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,294 +19,217 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final WalletService _walletService = WalletService();
+  final InvestmentService _investmentService = InvestmentService();
+  final MetalPriceService _metalPriceService = MetalPriceService();
+  final CurrencyService _currencyService = CurrencyService();
+
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  // Data
+  double _walletBalance = 0.0;
+  double _totalInvested = 0.0;
+  double _expectedReturns = 0.0;
+
+  // Market data
+  List<Map<String, dynamic>> _metalPrices = [];
+  CurrencyRatesResponse? _currencyRates;
+  bool _isLoadingMarketData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Fetch wallet balance
+      final walletResponse = await _walletService.getBalance();
+      if (walletResponse['success'] == true) {
+        final walletData = walletResponse['data'];
+        _walletBalance = (walletData['balance'] ?? 0).toDouble();
+      }
+
+      // Fetch investment portfolio
+      final portfolioResponse = await _investmentService.getPortfolio();
+      if (portfolioResponse['success'] == true) {
+        final portfolioData = portfolioResponse['data'];
+        _totalInvested = (portfolioData['total_invested'] ?? 0).toDouble();
+        _expectedReturns = (portfolioData['expected_returns'] ?? 0).toDouble();
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Load market data (don't block main loading)
+      _loadMarketData();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load data: $e';
+      });
+    }
+  }
+
+  Future<void> _loadMarketData() async {
+    setState(() {
+      _isLoadingMarketData = true;
+    });
+
+    try {
+      // Fetch metal prices
+      final metalPricesResult = await _metalPriceService.getFormattedMetalPricesForDisplay();
+
+      // Fetch currency rates
+      final currencyRatesResult = await _currencyService.getCurrencyRates(
+        baseCurrency: 'SLL',
+        currencies: ['USD', 'EUR', 'GBP'],
+      );
+
+      setState(() {
+        _metalPrices = metalPricesResult;
+        if (currencyRatesResult['success'] == true) {
+          _currencyRates = currencyRatesResult['data'] as CurrencyRatesResponse;
+        }
+        _isLoadingMarketData = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingMarketData = false;
+      });
+      // Don't show error for market data, just use fallback
+      debugPrint('Failed to load market data: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
-    final mockService = MockDataService();
-    final stats = mockService.dashboardStats;
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
-    final screenWidth = ResponsiveHelper.getScreenWidth(context);
-    final isTabletOrDesktop = screenWidth > ResponsiveHelper.mobileBreakpoint;
+    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 0);
+
+    // Show loading state
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryBlue),
+        ),
+      );
+    }
+
+    // Show error state
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: AppColors.error),
+              SizedBox(height: 16),
+              Text(_errorMessage!, style: TextStyle(color: AppColors.error)),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadData,
+                child: Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
-      body: SafeArea(
+      backgroundColor: Colors.grey[50],
+      body: RefreshIndicator(
+        onRefresh: _loadData,
         child: SingleChildScrollView(
-          child: ResponsiveContainer(
-            maxWidth: isTabletOrDesktop ? 1200 : double.infinity,
-            padding: EdgeInsets.zero,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Container(
-                  padding: ResponsiveHelper.getResponsivePadding(context),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ResponsiveText.body(
-                        'Welcome back,',
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                        ),
-                      ),
-                      ResponsiveText.headline(
-                        user?.firstName ?? 'User',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.headlineMedium?.color,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome Section
+              _buildWelcomeSection(user),
 
-                // Balance Card
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 3),
-                  ),
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(
-                      ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 3),
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryBlue.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ResponsiveText.body(
-                          'TCC Coin Balance',
-                          style: TextStyle(
-                            color: AppColors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                        SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
-                        ResponsiveText(
-                          currencyFormat.format(user?.walletBalance ?? 0),
-                          mobileFontSize: 28,
-                          tabletFontSize: 32,
-                          desktopFontSize: 36,
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 0.5)),
-                        ResponsiveText.caption(
-                          '\$1 = 1 Coin',
-                          style: TextStyle(
-                            color: AppColors.white.withValues(alpha: 0.7),
-                          ),
-                        ),
-                        SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 2.5)),
-                        ElevatedButton(
-                          onPressed: () => _showAddMoneyDialog(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.white,
-                            foregroundColor: AppColors.primaryBlue,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 4),
-                              vertical: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 1.5),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: ResponsiveText.body('Add Money'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              SizedBox(height: 20),
 
-                SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 3)),
-
-                // Quick Actions
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 3),
-                  ),
-                  child: ResponsiveBuilder(
-                    builder: (context, deviceType) {
-                      final isCompact = deviceType == DeviceType.mobile;
-                      return Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 2),
-                        runSpacing: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 2),
-                        children: [
-                          _buildQuickAction(
-                            context,
-                            'Transfer',
-                            Icons.swap_horiz,
-                            AppColors.primaryBlue,
-                            () => _showTransferBottomSheet(context),
-                            isCompact: isCompact,
-                          ),
-                          _buildQuickAction(
-                            context,
-                            'Bill Payment',
-                            Icons.receipt_long,
-                            AppColors.secondaryYellow,
-                            () => _showBillPaymentBottomSheet(context),
-                            isCompact: isCompact,
-                          ),
-                          _buildQuickAction(
-                            context,
-                            'Withdraw',
-                            Icons.arrow_upward,
-                            AppColors.secondaryGreen,
-                            () => _showWithdrawalBottomSheet(context),
-                            isCompact: isCompact,
-                          ),
-                          _buildQuickAction(
-                            context,
-                            'Find Agent',
-                            Icons.person_pin_circle,
-                            AppColors.warning,
-                            () => context.push('/agent-search'),
-                            isCompact: isCompact,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-
-              SizedBox(height: 24),
-
-              // Stats Cards
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        'Total Invested',
-                        currencyFormat.format(stats['totalInvested']),
-                        AppColors.yellowCardGradient,
-                        Icons.trending_up,
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatCard(
-                        'Expected Return',
-                        currencyFormat.format(stats['expectedReturns']),
-                        AppColors.greenCardGradient,
-                        Icons.account_balance_wallet,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 32),
-
-              // Investment Options
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'Explore Investments',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.headlineSmall?.color,
-                  ),
-                ),
-              ),
+              // TCC Coin Balance Card
+              _buildBalanceCard(currencyFormat),
 
               SizedBox(height: 16),
 
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    _buildInvestmentCard(
-                      context,
-                      'Agriculture',
-                      'Invest in farms and agricultural projects',
-                      Icons.agriculture,
-                      AppColors.secondaryGreen,
-                    ),
-                    SizedBox(height: 12),
-                    _buildInvestmentCard(
-                      context,
-                      'Minerals',
-                      'Invest in silver, gold, and platinum',
-                      Icons.diamond,
-                      AppColors.secondaryYellow,
-                    ),
-                    SizedBox(height: 12),
-                    _buildInvestmentCard(
-                      context,
-                      'Education',
-                      'Invest in educational institutions',
-                      Icons.school,
-                      AppColors.primaryBlue,
-                    ),
-                    SizedBox(height: 12),
-                    _buildInvestmentCard(
-                      context,
-                      'Currency',
-                      'Invest in foreign exchange and currencies',
-                      Icons.currency_exchange,
-                      AppColors.warning,
-                    ),
-                  ],
-                ),
-              ),
+              // Stats Cards Row
+              _buildStatsRow(currencyFormat),
 
-                SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 3)),
-              ],
-            ),
+              SizedBox(height: 20),
+
+              // Agent Locator Button
+              _buildAgentLocatorButton(),
+
+              SizedBox(height: 24),
+
+              // Currency Investment Card
+              _buildCurrencyCard(),
+
+              SizedBox(height: 24),
+
+              // Minerals Section
+              _buildMineralsSection(),
+
+              SizedBox(height: 24),
+
+              // Fixed Returns Banner
+              _buildFixedReturnsBanner(),
+
+              SizedBox(height: 24),
+
+              // Agro Business Section
+              _buildAgroSection(),
+
+              SizedBox(height: 24),
+
+              // Education Section
+              _buildEducationSection(),
+
+              SizedBox(height: 24),
+
+              // Grow your Wealth Footer
+              _buildFooterSection(),
+
+              SizedBox(height: 40),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String amount,
-    LinearGradient gradient,
-    IconData icon,
-  ) {
+  Widget _buildWelcomeSection(user) {
     return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      padding: EdgeInsets.fromLTRB(20, 50, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.white, size: 24),
-          SizedBox(height: 8),
           Text(
-            title,
+            'Welcome, ${user?.firstName ?? 'User'}',
             style: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.9),
-              fontSize: 12,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
           SizedBox(height: 4),
           Text(
-            amount,
+            'Explore and grow your wealth',
             style: TextStyle(
-              color: AppColors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -313,30 +237,193 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildInvestmentCard(
-    BuildContext context,
-    String title,
-    String description,
-    IconData icon,
-    Color color,
-  ) {
-    return Card(
-      child: InkWell(
-        onTap: () {
-          context.push('/investments/${title.toLowerCase()}');
-        },
+  Widget _buildBalanceCard(NumberFormat currencyFormat) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF5B86E5), Color(0xFF36D1DC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: EdgeInsets.all(16),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0xFF5B86E5).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'TCC Coin',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 14,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                currencyFormat.format(_walletBalance),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                '\$1 = 1 Coin',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          ElevatedButton(
+            onPressed: () => _showAddMoneyDialog(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Color(0xFF5B86E5),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              'Add Money',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsRow(NumberFormat currencyFormat) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFDC830), Color(0xFFF37335)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Invested',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    currencyFormat.format(_totalInvested),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Expected Return',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    currencyFormat.format(_expectedReturns),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgentLocatorButton() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      child: InkWell(
+        onTap: () => context.push('/agent-search'),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.success, AppColors.success.withValues(alpha: 0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.success.withValues(alpha: 0.3),
+                blurRadius: 15,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(12),
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: color, size: 28),
+                child: Icon(
+                  Icons.location_on,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               SizedBox(width: 16),
               Expanded(
@@ -344,28 +431,610 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      'Find Nearby Agent',
                       style: TextStyle(
-                        fontSize: 16,
+                        color: Colors.white,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
-                      description,
+                      'Locate TCC agents near you',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.5)),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white,
+                size: 20,
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCurrencyCard() {
+    // Get USD rate, fallback to mock data if not available
+    final usdRate = _currencyRates?.getRate('USD');
+    final displayRate = usdRate != null
+        ? NumberFormat('#,##0.0000').format(usdRate.rate)
+        : '0.0004';
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Invest in Foreign Currency',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              if (_isLoadingMarketData && _currencyRates == null)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primaryBlue,
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => context.push('/investments/currency'),
+            child: Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '1 Leone',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '\$$displayRate USD',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Live',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  // Placeholder for chart
+                  Container(
+                    width: 100,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Icon(Icons.show_chart, color: Colors.blue),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMineralsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Minerals',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Invest in rare minerals (e.g. Gold, Silver, Platinum)',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 12),
+        SizedBox(
+          height: 180,
+          child: _isLoadingMarketData && _metalPrices.isEmpty
+              ? Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                )
+              : ListView(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  scrollDirection: Axis.horizontal,
+                  children: _metalPrices.isEmpty
+                      ? [
+                          // Fallback to mock data if API fails
+                          _buildMineralCard('Gold', 'Le 234', 'Live', null),
+                          SizedBox(width: 12),
+                          _buildMineralCard('Silver', 'Le 150', 'Live', null),
+                          SizedBox(width: 12),
+                          _buildMineralCard('Platinum', 'Le 350', 'Live', null),
+                        ]
+                      : _metalPrices
+                          .map((metal) => Padding(
+                                padding: EdgeInsets.only(right: 12),
+                                child: _buildMineralCard(
+                                  metal['name'],
+                                  'Le ${NumberFormat('#,##0.00').format(metal['price'])}',
+                                  'Live',
+                                  metal,
+                                ),
+                              ))
+                          .toList(),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMineralCard(String name, String value, String percentage, Map<String, dynamic>? metalData) {
+    return GestureDetector(
+      onTap: () => context.push('/investments/minerals'),
+      child: Container(
+        width: 140,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image placeholder
+            Container(
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: Center(
+                child: Icon(Icons.diamond, size: 40, color: Colors.amber[700]),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        percentage,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.green,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Spacer(),
+                      // Mini chart placeholder
+                      SizedBox(
+                        width: 30,
+                        height: 15,
+                        child: CustomPaint(
+                          painter: MiniChartPainter(color: Colors.green),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFixedReturnsBanner() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Invest in Fixed Returns',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Row(
+            children: [
+              Icon(Icons.trending_up, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Icon(Icons.account_balance_wallet, color: Colors.white, size: 24),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgroSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Agro Business',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Invest in farming activity and all of the produce',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildAgroCard('Land Lease', 'Le 2,217', '+5% +5.6'),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildAgroCard('Processing', 'Le 2,217', '+5% +6.1'),
+                ),
+              ],
+            ),
+          ),
+        ],
+    );
+  }
+
+  Widget _buildAgroCard(String name, String value, String percentage) {
+    return GestureDetector(
+      onTap: () => context.push('/investments/agriculture'),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image placeholder
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: Center(
+                child: Icon(Icons.agriculture, size: 50, color: Colors.green[700]),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    percentage,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEducationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Education',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Invest in people\'s education and get huge profit',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildEducationCard('Institutions', 'Le 2,217', '+5% +5.6'),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildEducationCard('Dormitory', 'Le 2,217', '+5% +6.1'),
+                ),
+              ],
+            ),
+          ),
+        ],
+    );
+  }
+
+  Widget _buildEducationCard(String name, String value, String percentage) {
+    return GestureDetector(
+      onTap: () => context.push('/investments/education'),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image placeholder
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: Center(
+                child: Icon(Icons.school, size: 50, color: Colors.blue[700]),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    percentage,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooterSection() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Grow your Wealth\nwith TCC',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+              height: 1.3,
+            ),
+          ),
+          Row(
+            children: [
+              Icon(Icons.trending_up, color: AppColors.primaryBlue, size: 28),
+              SizedBox(width: 8),
+              Icon(Icons.account_balance, color: AppColors.secondaryYellow, size: 28),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -380,601 +1049,47 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => _AddMoneyBottomSheet(),
     );
   }
-
-  Widget _buildQuickAction(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onTap, {
-    bool isCompact = true,
-  }) {
-    final actionWidth = ResponsiveHelper.getResponsiveValue<double>(
-      context,
-      mobile: isCompact ? 100 : 120,
-      tablet: 140,
-      desktop: 160,
-    );
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: actionWidth,
-        padding: EdgeInsets.symmetric(
-          vertical: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 2),
-        ),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: EdgeInsets.all(
-                ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 1.5),
-              ),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: ResponsiveHelper.getResponsiveValue<double>(
-                  context,
-                  mobile: 24,
-                  tablet: 28,
-                  desktop: 32,
-                ),
-              ),
-            ),
-            SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
-            ResponsiveText.caption(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showTransferBottomSheet(BuildContext context) {
-    final amountController = TextEditingController();
-    final recipientController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Transfer Money',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Send money to another TCC user',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-              ),
-              SizedBox(height: 24),
-              TextField(
-                controller: recipientController,
-                decoration: InputDecoration(
-                  labelText: 'Recipient Phone Number',
-                  prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  hintText: '+232 XX XXX XXXX',
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  prefixText: 'Le ',
-                  prefixIcon: Icon(Icons.attach_money),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  hintText: 'Enter amount',
-                ),
-              ),
-              SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final amount = double.tryParse(amountController.text);
-                    final recipient = recipientController.text;
-
-                    if (recipient.isEmpty || amount == null || amount <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Please enter valid details'),
-                          backgroundColor: AppColors.error,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
-
-                    Navigator.pop(context);
-
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) => PaymentBottomSheet(
-                        amount: amount,
-                        title: 'Transfer Money',
-                        description: 'Transfer Le ${amount.toStringAsFixed(0)} to $recipient',
-                        metadata: {
-                          'type': 'transfer',
-                          'recipient': recipient,
-                          'amount': amount,
-                        },
-                        onSuccess: (result) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Transfer successful!'),
-                              backgroundColor: AppColors.success,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                        onFailure: (result) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Transfer failed. Please try again.'),
-                              backgroundColor: AppColors.error,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showBillPaymentBottomSheet(BuildContext context) {
-    final amountController = TextEditingController();
-    String selectedBiller = 'EDSA (Electricity)';
-
-    final billers = [
-      'EDSA (Electricity)',
-      'Guma Water (Water)',
-      'Africell (Mobile)',
-      'Orange (Mobile)',
-      'Airtel (Mobile)',
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  'Pay Bills',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Pay your utility and service bills',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                SizedBox(height: 24),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedBiller,
-                  decoration: InputDecoration(
-                    labelText: 'Select Biller',
-                    prefixIcon: Icon(Icons.business),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: billers.map((biller) {
-                    return DropdownMenuItem(
-                      value: biller,
-                      child: Text(biller),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedBiller = value!;
-                    });
-                  },
-                ),
-                SizedBox(height: 16),
-                TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Amount',
-                    prefixText: 'Le ',
-                    prefixIcon: Icon(Icons.attach_money),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    hintText: 'Enter amount',
-                  ),
-                ),
-                SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final amount = double.tryParse(amountController.text);
-
-                      if (amount == null || amount <= 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Please enter a valid amount'),
-                            backgroundColor: AppColors.error,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                        return;
-                      }
-
-                      Navigator.pop(context);
-
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => PaymentBottomSheet(
-                          amount: amount,
-                          title: 'Pay Bill',
-                          description: 'Pay Le ${amount.toStringAsFixed(0)} to $selectedBiller',
-                          metadata: {
-                            'type': 'bill_payment',
-                            'biller': selectedBiller,
-                            'amount': amount,
-                          },
-                          onSuccess: (result) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Bill payment successful!'),
-                                backgroundColor: AppColors.success,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          onFailure: (result) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Bill payment failed. Please try again.'),
-                                backgroundColor: AppColors.error,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showWithdrawalBottomSheet(BuildContext context) {
-    final amountController = TextEditingController();
-    String selectedMethod = 'Bank Transfer';
-
-    final withdrawalMethods = [
-      'Bank Transfer',
-      'Mobile Money',
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  'Withdraw Money',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Withdraw funds from your TCC wallet',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                SizedBox(height: 24),
-                TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Amount',
-                    prefixText: 'Le ',
-                    prefixIcon: Icon(Icons.attach_money),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    hintText: 'Enter amount',
-                  ),
-                ),
-                SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedMethod,
-                  decoration: InputDecoration(
-                    labelText: 'Withdrawal Method',
-                    prefixIcon: Icon(Icons.account_balance),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: withdrawalMethods.map((method) {
-                    return DropdownMenuItem(
-                      value: method,
-                      child: Text(method),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedMethod = value!;
-                    });
-                  },
-                ),
-                SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final amount = double.tryParse(amountController.text);
-
-                      if (amount == null || amount <= 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Please enter a valid amount'),
-                            backgroundColor: AppColors.error,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                        return;
-                      }
-
-                      Navigator.pop(context);
-
-                      // Show confirmation dialog
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          title: Text('Confirm Withdrawal'),
-                          content: Text(
-                            'Withdraw Le ${amount.toStringAsFixed(0)} to your $selectedMethod?\n\nProcessing may take 1-3 business days.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Withdrawal request submitted successfully!'),
-                                    backgroundColor: AppColors.success,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryBlue,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: Text('Confirm'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
+// Mini chart painter for trend lines
+class MiniChartPainter extends CustomPainter {
+  final Color color;
+
+  MiniChartPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.7);
+    path.lineTo(size.width * 0.3, size.height * 0.5);
+    path.lineTo(size.width * 0.6, size.height * 0.3);
+    path.lineTo(size.width, size.height * 0.1);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Add Money Bottom Sheet with Stripe integration
 class _AddMoneyBottomSheet extends StatefulWidget {
   @override
-  State<_AddMoneyBottomSheet> createState() => _AddMoneyBottomSheetState();
+  _AddMoneyBottomSheetState createState() => _AddMoneyBottomSheetState();
 }
 
 class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
   final TextEditingController _amountController = TextEditingController();
-  String _selectedMethod = 'Bank Transfer';
+  final WalletService _walletService = WalletService();
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  final List<Map<String, dynamic>> _paymentMethods = [
-    {
-      'name': 'Bank Transfer',
-      'icon': Icons.account_balance,
-      'description': 'Transfer from your bank account',
-    },
-    {
-      'name': 'Debit/Credit Card',
-      'icon': Icons.credit_card,
-      'description': 'Pay with your card',
-    },
-    {
-      'name': 'Mobile Money',
-      'icon': Icons.phone_android,
-      'description': 'Pay with mobile money',
-    },
-    {
-      'name': 'USSD',
-      'icon': Icons.dialpad,
-      'description': 'Pay via USSD code',
-    },
-  ];
+  final List<int> _quickAmounts = [1000, 5000, 10000, 25000];
 
   @override
   void dispose() {
@@ -982,288 +1097,257 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
     super.dispose();
   }
 
+  void _selectQuickAmount(int amount) {
+    setState(() {
+      _amountController.text = amount.toString();
+      _errorMessage = null;
+    });
+  }
+
+  Future<void> _processPayment() async {
+    final amountText = _amountController.text.trim();
+
+    if (amountText.isEmpty) {
+      setState(() => _errorMessage = 'Please enter an amount');
+      return;
+    }
+
+    final amount = double.tryParse(amountText);
+    if (amount == null || amount <= 0) {
+      setState(() => _errorMessage = 'Please enter a valid amount');
+      return;
+    }
+
+    if (amount < 1000) {
+      setState(() => _errorMessage = 'Minimum amount is Le 1,000');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Create payment intent
+      final result = await _walletService.createPaymentIntent(amount: amount);
+
+      if (!result['success']) {
+        throw Exception(result['error'] ?? 'Failed to create payment intent');
+      }
+
+      final data = result['data']['data'];
+      final clientSecret = data['client_secret'];
+
+      // Initialize Stripe payment sheet
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          merchantDisplayName: 'TCC',
+          paymentIntentClientSecret: clientSecret,
+          style: ThemeMode.light,
+          appearance: PaymentSheetAppearance(
+            colors: PaymentSheetAppearanceColors(
+              primary: Color(0xFF2C3E50),
+            ),
+          ),
+        ),
+      );
+
+      // Present payment sheet
+      await Stripe.instance.presentPaymentSheet();
+
+      // Payment successful
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment successful! Your wallet will be credited shortly.'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+
+        // Refresh the page to show updated balance
+        setState(() {});
+      }
+    } on StripeException catch (e) {
+      setState(() {
+        _isLoading = false;
+        if (e.error.code == FailureCode.Canceled) {
+          _errorMessage = 'Payment cancelled';
+        } else {
+          _errorMessage = e.error.message ?? 'Payment failed';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: Container(
-        padding: EdgeInsets.all(24),
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-
-              // Title
               Text(
                 'Add Money',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
-                'Add funds to your TCC wallet',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+              IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
               ),
-              SizedBox(height: 24),
+            ],
+          ),
+          SizedBox(height: 24),
 
-              // Amount Input
-              TextField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  prefixText: 'Le ',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  hintText: 'Enter amount',
-                ),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+          // Amount input
+          TextField(
+            controller: _amountController,
+            keyboardType: TextInputType.number,
+            style: TextStyle(fontSize: 18),
+            decoration: InputDecoration(
+              labelText: 'Amount (Le)',
+              hintText: 'Enter amount',
+              prefixText: 'Le ',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              SizedBox(height: 16),
-
-              // Quick amount buttons
-              Row(
-                children: [
-                  _buildQuickAmountButton('1,000'),
-                  SizedBox(width: 8),
-                  _buildQuickAmountButton('5,000'),
-                  SizedBox(width: 8),
-                  _buildQuickAmountButton('10,000'),
-                ],
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              SizedBox(height: 24),
-
-              // Payment Method
-              Text(
-                'Payment Method',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Color(0xFF2C3E50), width: 2),
               ),
-              SizedBox(height: 12),
+            ),
+          ),
+          SizedBox(height: 16),
 
-              // Payment methods list
-              ..._paymentMethods.map((method) => _buildPaymentMethodTile(method)),
-
-              SizedBox(height: 24),
-
-              // Add Money Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () => _processAddMoney(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+          // Quick amount buttons
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _quickAmounts.map((amount) {
+              final isSelected = _amountController.text == amount.toString();
+              return InkWell(
+                onTap: () => _selectQuickAmount(amount),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade300,
                     ),
                   ),
                   child: Text(
-                    'Continue',
+                    'Le ${amount.toStringAsFixed(0)}',
                     style: TextStyle(
-                      fontSize: 16,
+                      color: isSelected ? Colors.white : Colors.black87,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
+              );
+            }).toList(),
+          ),
+
+          if (_errorMessage != null) ...[
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
               ),
-              SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickAmountButton(String amount) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: () {
-          _amountController.text = amount.replaceAll(',', '');
-        },
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          side: BorderSide(color: AppColors.primaryBlue),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: Text(
-          'Le $amount',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.primaryBlue,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentMethodTile(Map<String, dynamic> method) {
-    final isSelected = _selectedMethod == method['name'];
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedMethod = method['name'];
-          });
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryBlue.withValues(alpha: 0.05) : Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? AppColors.primaryBlue : Theme.of(context).dividerColor,
-              width: isSelected ? 2 : 1,
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ],
+
+          SizedBox(height: 24),
+
+          // Pay button
+          ElevatedButton(
+            onPressed: _isLoading ? null : _processPayment,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF2C3E50),
+              padding: EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: _isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'Continue to Payment',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
-          child: Row(
+          SizedBox(height: 12),
+
+          // Info text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primaryBlue.withValues(alpha: 0.1) : Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  method['icon'],
-                  color: isSelected ? AppColors.primaryBlue : Theme.of(context).iconTheme.color,
-                  size: 24,
+              Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+              SizedBox(width: 4),
+              Text(
+                'Secured by Stripe',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
                 ),
               ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      method['name'],
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? AppColors.primaryBlue : Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      method['description'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isSelected)
-                Icon(
-                  Icons.check_circle,
-                  color: AppColors.primaryBlue,
-                  size: 24,
-                ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
-
-  void _processAddMoney(BuildContext context) {
-    if (_amountController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please enter an amount'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    final amount = double.tryParse(_amountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please enter a valid amount'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    // Close the current bottom sheet
-    Navigator.pop(context);
-
-    // Show payment bottom sheet
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PaymentBottomSheet(
-        amount: amount,
-        title: 'Add Money',
-        description: 'Add Le ${amount.toStringAsFixed(0)} to your TCC wallet',
-        metadata: {
-          'type': 'add_money',
-          'amount': amount,
-        },
-        onSuccess: (result) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Money added successfully!'),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-        onFailure: (result) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to add money. Please try again.'),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-
 }

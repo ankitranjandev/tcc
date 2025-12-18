@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../notifications/notification_screen.dart';
-import '../wallet/wallet_screen.dart';
 import '../bill_payment/bill_provider_screen.dart';
 
 class PayScreen extends StatelessWidget {
@@ -28,31 +27,16 @@ class PayScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.account_balance_wallet_outlined),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WalletScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.notifications_outlined),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => NotificationScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                    IconButton(
+                      icon: Icon(Icons.notifications_outlined),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NotificationScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:developer' as developer;
 import '../../config/app_colors.dart';
 import '../../utils/responsive_helper.dart';
 import '../../widgets/responsive_text.dart';
 import '../../widgets/responsive_builder.dart';
+import '../../services/auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -15,6 +17,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
   @override
@@ -29,18 +32,68 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _isLoading = true;
       });
 
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
+      developer.log('🔑 ForgotPassword: Requesting password reset for ${_emailController.text}', name: 'ForgotPassword');
 
-      setState(() {
-        _isLoading = false;
-      });
+      // Capture ScaffoldMessenger before async operation
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final email = _emailController.text.trim();
 
-      if (mounted) {
-        // Navigate to OTP verification screen
-        context.push('/forgot-password/verify-otp', extra: {
-          'email': _emailController.text,
+      try {
+        final result = await _authService.forgotPassword(email: email);
+
+        setState(() {
+          _isLoading = false;
         });
+
+        developer.log('🔑 ForgotPassword: Result: ${result['success']}', name: 'ForgotPassword');
+
+        if (result['success'] == true) {
+          final phone = result['data']['phone'];
+          developer.log('🔑 ForgotPassword: OTP sent to phone: $phone', name: 'ForgotPassword');
+
+          if (mounted) {
+            // Show success message
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Text('Verification code sent to $phone'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+
+            // Navigate to OTP verification screen with email
+            // The user will need to enter their phone number on the next screen
+            context.push('/forgot-password/verify-otp', extra: {
+              'email': email,
+              'maskedPhone': phone,
+            });
+          }
+        } else {
+          final error = result['error'] ?? 'Failed to send verification code';
+          developer.log('🔑 ForgotPassword: Error: $error', name: 'ForgotPassword');
+
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text(error),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } catch (e) {
+        developer.log('🔑 ForgotPassword: Exception: $e', name: 'ForgotPassword');
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('An error occurred. Please try again.'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     }
   }

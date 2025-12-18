@@ -2,10 +2,12 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import swaggerUi from 'swagger-ui-express';
 import config from './config';
 import logger from './utils/logger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { generalRateLimiter } from './middleware/rateLimit';
+import { swaggerSpec } from './config/swagger';
 
 class App {
   public app: Application;
@@ -38,7 +40,22 @@ class App {
       })
     );
 
-    // Body parsing middleware
+    // Stripe webhook route (must be before body parsing middleware)
+    // Webhook route needs raw body for signature verification
+    this.app.post(
+      '/webhooks/stripe',
+      express.raw({ type: 'application/json' }),
+      async (req, res, next) => {
+        try {
+          const { WebhookController } = await import('./controllers/webhook.controller');
+          return WebhookController.handleStripeWebhook(req, res);
+        } catch (error) {
+          next(error);
+        }
+      }
+    );
+
+    // Body parsing middleware (applied after webhook route)
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -93,6 +110,17 @@ class App {
       });
     });
 
+    // API Documentation
+    this.app.use(
+      `/${config.apiVersion}/docs`,
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'TCC API Documentation',
+      })
+    );
+    logger.info('API documentation registered at', { path: `/${config.apiVersion}/docs` });
+
     // Import and register route modules
     const apiPrefix = `/${config.apiVersion}`;
 
@@ -146,6 +174,21 @@ class App {
     const pollRoutes = await import('./routes/poll.routes');
     this.app.use(`${apiPrefix}/polls`, pollRoutes.default);
     logger.info('Poll routes registered');
+
+    // Upload routes
+    const uploadRoutes = await import('./routes/upload.routes');
+    this.app.use(`${apiPrefix}/uploads`, uploadRoutes.default);
+    logger.info('Upload routes registered');
+
+    // Bank account routes
+    const bankAccountRoutes = await import('./routes/bank-account.routes');
+    this.app.use(`${apiPrefix}/bank-accounts`, bankAccountRoutes.default);
+    logger.info('Bank account routes registered');
+
+    // Market data routes (metal prices, currency rates)
+    const marketRoutes = await import('./routes/market.routes');
+    this.app.use(`${apiPrefix}/market`, marketRoutes.default);
+    logger.info('Market routes registered');
 
     logger.info('Routes initialized');
 

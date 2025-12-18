@@ -5,28 +5,356 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Add" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/BUILD_VERIFICATION_SUMMARY.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CONSUMER_KYC_VERIFICATION_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CROSS_PLATFORM_STATUS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/EXPLORE_UI_REDESIGN_PLAN.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Explore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/FIREBASE_PUSH_NOTIFICATION_SETUP.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/IMPLEMENTATION_SUMMARY_FINAL.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LOGIN_ERROR_HANDLING_DOCUMENTATION.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/QUICK_START_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/STRIPE_INTEGRATION_COMPLETE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UNIFIED_KYC_VERIFICATION_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/VAULT_API_INTEGRATION_COMPLETE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/VAULT_API_INTEGRATION_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WINDOWS_LINUX_BUILD_READINESS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/quikbill/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/quikbill/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/quikbill/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/android/app/src/main/kotlin/com/tcc/tcc_admin_client/MainActivity.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/lib/config/app_text_styles.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/lib/providers/admin_provider.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/kyc/kyc_review_detail_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/kyc/kyc_review_dialog.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/kyc/kyc_submissions_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/lib/services/notification_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/pending_kyc_widget.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/android/app/google-services.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/android/app/src/main/kotlin/com/tcc/tcc_agent_client/MainActivity.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/lib/config/app_text_styles.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/kyc_status_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/legal/privacy_policy_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/legal/terms_and_conditions_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/lib/services/bank_account_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/lib/services/kyc_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_agent_client/lib/services/storage_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/config/swagger.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/agent-bank-details.controller.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/bank-account.controller.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/market.controller.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/upload.controller.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/webhook.controller.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/database/migrations/002_add_stripe_and_audit_trail.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/database/migrations/003_add_agent_bank_details.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/middleware/upload.middleware.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/routes/agent-bank-details.routes.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/routes/bank-account.routes.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/routes/market.routes.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/routes/upload.routes.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/routes/webhook.routes.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/services/agent-bank-details.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/services/audit-trail.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/services/bank-account.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/services/currency.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/services/file-upload.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/services/metalPrice.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_backend/src/services/stripe.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/.metadata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/PLATFORM_SUPPORT_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/android/app/google-services.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/.metadata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/analysis_options.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/build.gradle.kts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/debug/AndroidManifest.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/kotlin/com/domain/appname/MainActivity.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/drawable-v21/launch_background.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/drawable/launch_background.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/mipmap-hdpi/ic_launcher.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/mipmap-mdpi/ic_launcher.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/values-night/styles.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/main/res/values/styles.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/app/src/profile/AndroidManifest.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/build.gradle.kts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/gradle.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/android/settings.gradle.kts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Flutter/AppFrameworkInfo.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Flutter/Debug.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Flutter/Release.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcworkspace/contents.xcworkspacedata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/AppDelegate.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Base.lproj/LaunchScreen.storyboard" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Base.lproj/Main.storyboard" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Info.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/Runner/Runner-Bridging-Header.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/ios/RunnerTests/RunnerTests.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/lib/main.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/flutter/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/flutter/generated_plugin_registrant.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/flutter/generated_plugins.cmake" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/runner/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/runner/main.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/runner/my_application.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/linux/runner/my_application.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Flutter/Flutter-Debug.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Flutter/Flutter-Release.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner.xcworkspace/contents.xcworkspacedata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/AppDelegate.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Base.lproj/MainMenu.xib" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Configs/AppInfo.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Configs/Debug.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Configs/Release.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Configs/Warnings.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/DebugProfile.entitlements" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Info.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/MainFlutterWindow.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/Runner/Release.entitlements" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/macos/RunnerTests/RunnerTests.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/pubspec.lock" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/pubspec.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/test/widget_test.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/web/favicon.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/web/icons/Icon-192.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/web/icons/Icon-512.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/web/icons/Icon-maskable-192.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/web/icons/Icon-maskable-512.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/web/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/web/manifest.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/flutter/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/flutter/generated_plugin_registrant.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/flutter/generated_plugins.cmake" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/Runner.rc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/flutter_window.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/flutter_window.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/main.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/resource.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/resources/app_icon.ico" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/runner.exe.manifest" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/utils.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/utils.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/win32_window.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/appname/windows/runner/win32_window.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/image/Frame2186.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/image/Select Payment.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/currency_rate_model.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/metal_price_model.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_status_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/add_bank_account_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/upload_payment_details_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/home_screen.dart.backup" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/home_screen_old_api.dart.backup" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/bank_account_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/currency_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/metal_price_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/notification_service.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/widgets/currency_converter_widget.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/flutter/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/flutter/generated_plugin_registrant.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/flutter/generated_plugins.cmake" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/runner/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/runner/main.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/runner/my_application.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/linux/runner/my_application.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Flutter/Flutter-Debug.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Flutter/Flutter-Release.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Podfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Podfile.lock" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner.xcworkspace/contents.xcworkspacedata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/AppDelegate.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Base.lproj/MainMenu.xib" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Configs/AppInfo.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Configs/Debug.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Configs/Release.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Configs/Warnings.xcconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/DebugProfile.entitlements" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Info.plist" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/MainFlutterWindow.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Runner/Release.entitlements" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/RunnerTests/RunnerTests.swift" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/flutter/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/flutter/generated_plugin_registrant.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/flutter/generated_plugins.cmake" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/Runner.rc" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/flutter_window.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/flutter_window.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/main.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/resource.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/resources/app_icon.ico" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/runner.exe.manifest" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/utils.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/utils.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/win32_window.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tcc_user_mobile_client/windows/runner/win32_window.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/routes/app_router.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/routes/app_router.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/sidebar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/sidebar.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/.metadata" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/.metadata" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/android/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/android/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/android/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/android/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/ios/Runner/AppDelegate.swift" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/ios/Runner/AppDelegate.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/ios/Runner/Info.plist" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/ios/Runner/Info.plist" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/config/app_colors.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/config/app_colors.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/config/app_theme.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/config/app_theme.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/models/agent_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/models/agent_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/models/api_response_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/models/api_response_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/agents/agents_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/agents/agents_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/dashboard/dashboard_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/dashboard/dashboard_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/services/auth_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/services/auth_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/macos/Flutter/GeneratedPluginRegistrant.swift" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/.metadata" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/.metadata" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/android/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/android/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/android/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/android/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/ios/Runner/AppDelegate.swift" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/ios/Runner/AppDelegate.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/ios/Runner/Info.plist" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/ios/Runner/Info.plist" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/config/app_colors.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/config/app_colors.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/config/app_constants.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/config/app_constants.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/models/agent_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/models/agent_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/providers/auth_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/providers/auth_provider.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/bank_details_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/bank_details_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/kyc_verification_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/kyc_verification_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/login_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/login_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/register_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/register_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/verification_waiting_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/auth/verification_waiting_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/screens/splash_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/splash_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/services/api_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/services/api_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/services/auth_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/services/auth_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/app.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/config/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/config/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/auth.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/auth.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/kyc.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/kyc.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/wallet.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/wallet.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/routes/auth.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/routes/auth.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/routes/wallet.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/routes/wallet.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/admin.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/admin.service.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/otp.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/otp.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/wallet.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/wallet.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/types/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/android/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/android/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/android/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/android/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Podfile.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner/AppDelegate.swift" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner/AppDelegate.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner/Info.plist" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner/Info.plist" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/config/app_constants.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/config/app_constants.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/user_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/user_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/transaction_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/models/transaction_model.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/providers/auth_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/providers/auth_provider.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/agent/agent_search_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/agent/agent_search_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/bank_details_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/bank_details_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/forgot_password_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/forgot_password_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_verification_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_verification_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/login_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/login_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/otp_verification_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/otp_verification_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/phone_number_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/phone_number_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/bill_review_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/bill_review_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/reset_password_otp_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/reset_password_otp_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/reset_password_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/reset_password_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/payment_method_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/payment_method_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/profile/account_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/profile/account_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/api_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/api_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/payment_success_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/bill_payment/payment_success_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/home_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/home_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/pay_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/pay_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/transactions_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/transactions_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/vault_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/vault_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/gift/send_gift_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/gift/send_gift_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/investments/investment_product_detail_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/investments/investment_product_detail_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/wallet/wallet_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/wallet/wallet_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/auth_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/auth_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/kyc_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/kyc_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/wallet_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/services/wallet_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

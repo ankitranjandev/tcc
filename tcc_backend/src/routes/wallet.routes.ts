@@ -25,6 +25,12 @@ const depositSchema = z.object({
   }),
 });
 
+const paymentIntentSchema = z.object({
+  body: z.object({
+    amount: z.number().positive().min(100),
+  }),
+});
+
 const withdrawSchema = z.object({
   body: z.object({
     amount: z.number().positive().min(500),
@@ -57,6 +63,13 @@ router.get('/balance', authenticate, WalletController.getBalance);
  * @access  Private
  */
 router.post('/deposit', authenticate, validate(depositSchema), WalletController.deposit);
+
+/**
+ * @route   POST /wallet/create-payment-intent
+ * @desc    Create Stripe payment intent for deposit
+ * @access  Private
+ */
+router.post('/create-payment-intent', authenticate, validate(paymentIntentSchema), WalletController.createPaymentIntent);
 
 /**
  * @route   POST /wallet/withdraw/request-otp

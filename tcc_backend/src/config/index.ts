@@ -82,6 +82,12 @@ interface Config {
   agent: {
     baseCommissionRate: number;
   };
+  stripe: {
+    secretKey: string;
+    publishableKey: string;
+    webhookSecret: string;
+    currency: string;
+  };
 }
 
 const config: Config = {
@@ -179,6 +185,13 @@ const config: Config = {
 
   agent: {
     baseCommissionRate: parseFloat(process.env.AGENT_BASE_COMMISSION_RATE || '0.5'),
+  },
+
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    currency: process.env.STRIPE_CURRENCY || 'sll', // Sierra Leone Leone
   },
 };
 

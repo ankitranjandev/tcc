@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest, DocumentType, KYCStatus } from '../types';
 import { KYCService } from '../services/kyc.service';
+import { AgentBankDetailsService, BankDetailsSubmission } from '../services/agent-bank-details.service';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
 
@@ -20,8 +21,10 @@ export class KYCController {
         front_image_url,
         back_image_url,
         selfie_url,
+        bank_details,
       } = req.body;
 
+      // Submit KYC documents
       const result = await KYCService.submitKYC(
         userId,
         document_type as DocumentType,
@@ -31,11 +34,39 @@ export class KYCController {
         selfie_url
       );
 
+      // If bank details are provided and user is an agent, submit them
+      let bankDetailsResult = null;
+      if (bank_details && req.user?.role === 'AGENT') {
+        try {
+          // Use user ID as agent ID
+          const agentId = req.user.id;
+
+          const bankDetailsSubmission: BankDetailsSubmission = {
+            bank_name: bank_details.bank_name,
+            branch_address: bank_details.branch_address,
+            ifsc_code: bank_details.ifsc_code,
+            account_holder_name: bank_details.account_holder_name,
+            account_number: bank_details.account_number,
+            account_type: bank_details.account_type || 'SAVINGS'
+          };
+
+          bankDetailsResult = await AgentBankDetailsService.submitBankDetails(
+            agentId,
+            bankDetailsSubmission
+          );
+        } catch (bankError) {
+          logger.error('Failed to submit bank details during KYC', bankError);
+          // Don't fail the whole KYC submission if bank details fail
+          // Bank details can be submitted separately later
+        }
+      }
+
       return ApiResponseUtil.created(
         res,
         {
           submitted: result.submitted,
           documents_count: result.documents.length,
+          bank_details_submitted: bankDetailsResult !== null,
         },
         'KYC documents submitted successfully and are under review'
       );

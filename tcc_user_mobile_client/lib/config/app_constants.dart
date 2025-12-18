@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 
 class AppConstants {
   // App Information
@@ -10,19 +10,26 @@ class AppConstants {
   // For iOS simulator, use 127.0.0.1 or localhost
   // For physical devices, replace with your computer's IP address (e.g., 192.168.1.100)
   static String get baseUrl {
-    if (Platform.isAndroid) {
+    if (kIsWeb) {
+      // Web platforms use localhost
+      return 'http://localhost:3000/v1';
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
       // Android emulator uses 10.0.2.2 to access host machine's localhost
       return 'http://10.0.2.2:3000/v1';
-    } else if (Platform.isIOS) {
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       // iOS simulator can use localhost
       return 'http://127.0.0.1:3000/v1';
     } else {
-      // Fallback for other platforms
+      // Fallback for other platforms (macOS, Windows, Linux)
       return 'http://localhost:3000/v1';
     }
   }
 
   static const String apiVersion = 'v1';
+
+  // Stripe Configuration
+  // Replace with your actual Stripe publishable key
+  static const String stripePublishableKey = 'pk_test_your_stripe_publishable_key';
 
   // Transaction Types
   static const String transactionTypeDeposit = 'deposit';

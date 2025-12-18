@@ -8,6 +8,7 @@ import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
 import '../../widgets/dialogs/add_agent_dialog.dart';
+import '../kyc/kyc_review_dialog.dart';
 
 /// Agents List Screen
 class AgentsScreen extends StatefulWidget {
@@ -106,6 +107,20 @@ class _AgentsScreenState extends State<AgentsScreen> {
     }
   }
 
+  void _showKYCReviewDialog(AgentModel agent) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => KYCReviewDialog(
+        agent: agent,
+        onStatusChanged: () {
+          // Reload agents after status change
+          _loadAgents();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
@@ -178,25 +193,50 @@ class _AgentsScreenState extends State<AgentsScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: AppTheme.space16),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AddAgentDialog(
-                        onAgentAdded: _addAgent,
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // Navigate to KYC submissions with agent filter
+                          Navigator.pushNamed(context, '/kyc-submissions');
+                        },
+                        icon: const Icon(Icons.verified_user, size: 18),
+                        label: const Text('Review KYC'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.warning,
+                          side: BorderSide(color: AppColors.warning),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.space16,
+                            vertical: AppTheme.space12,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Agent'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.space24,
-                      vertical: AppTheme.space16,
                     ),
-                  ),
+                    const SizedBox(width: AppTheme.space12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AddAgentDialog(
+                              onAgentAdded: _addAgent,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add Agent'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: AppColors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.space16,
+                            vertical: AppTheme.space12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             )
@@ -218,25 +258,46 @@ class _AgentsScreenState extends State<AgentsScreen> {
                     ),
                   ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AddAgentDialog(
-                        onAgentAdded: _addAgent,
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        // Navigate to KYC submissions with agent filter
+                        Navigator.pushNamed(context, '/kyc-submissions');
+                      },
+                      icon: const Icon(Icons.verified_user),
+                      label: const Text('Review All KYC'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.warning,
+                        side: BorderSide(color: AppColors.warning),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.space20,
+                          vertical: AppTheme.space16,
+                        ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Agent'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.space24,
-                      vertical: AppTheme.space16,
                     ),
-                  ),
+                    const SizedBox(width: AppTheme.space12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AddAgentDialog(
+                            onAgentAdded: _addAgent,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Agent'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.space24,
+                          vertical: AppTheme.space16,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -270,12 +331,19 @@ class _AgentsScreenState extends State<AgentsScreen> {
                 Icons.check_circle,
                 AppColors.success,
               ),
-              _buildStatCard(
-                context,
-                'Pending Verification',
-                agents.where((a) => a.verificationStatus.name == 'PENDING').length.toString(),
-                Icons.pending,
-                AppColors.warning,
+              InkWell(
+                onTap: () {
+                  // Navigate to KYC Submissions screen with agent filter
+                  Navigator.pushNamed(context, '/kyc-submissions');
+                },
+                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                child: _buildStatCard(
+                  context,
+                  'Pending KYC (Click to Review)',
+                  agents.where((a) => a.verificationStatus.name == 'PENDING').length.toString(),
+                  Icons.pending,
+                  AppColors.warning,
+                ),
               ),
               _buildStatCard(
                 context,
@@ -731,13 +799,12 @@ class _AgentsScreenState extends State<AgentsScreen> {
                                   },
                                   tooltip: 'Edit Agent',
                                 ),
-                                if (agent.verificationStatus.name == 'PENDING')
+                                if (agent.verificationStatus.name == 'PENDING' ||
+                                    agent.verificationStatus.name == 'SUBMITTED')
                                   IconButton(
-                                    icon: Icon(Icons.check, color: AppColors.success, size: 20),
-                                    onPressed: () {
-                                      // TODO: Approve agent
-                                    },
-                                    tooltip: 'Approve',
+                                    icon: Icon(Icons.verified_user, color: AppColors.warning, size: 20),
+                                    onPressed: () => _showKYCReviewDialog(agent),
+                                    tooltip: 'Review KYC Documents',
                                   ),
                                 IconButton(
                                   icon: Icon(
@@ -1230,20 +1297,20 @@ class _AgentsScreenState extends State<AgentsScreen> {
                   ),
                 ),
               ),
-              if (agent.verificationStatus.name == 'PENDING') ...[
+              if (agent.verificationStatus.name == 'PENDING' || agent.verificationStatus.name == 'SUBMITTED') ...[
                 const SizedBox(width: AppTheme.space8),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: Approve agent
+                      _showKYCReviewDialog(agent);
                     },
-                    icon: Icon(Icons.check, size: 18, color: AppColors.white),
+                    icon: Icon(Icons.verified_user, size: 18, color: AppColors.white),
                     label: Text(
-                      'Approve',
+                      'Review KYC',
                       style: TextStyle(color: AppColors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
+                      backgroundColor: AppColors.warning,
                       padding: const EdgeInsets.symmetric(vertical: AppTheme.space12),
                     ),
                   ),

@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +20,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    developer.log('🎬 [SPLASH] initState called', name: 'TCC.Splash');
 
     _animationController = AnimationController(
       vsync: this,
@@ -40,26 +42,43 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     _animationController.forward();
+    developer.log('✅ [SPLASH] Animation started', name: 'TCC.Splash');
 
     _navigateToNextScreen();
   }
 
   Future<void> _navigateToNextScreen() async {
+    developer.log('⏰ [SPLASH] Starting 3 second delay', name: 'TCC.Splash');
     await Future.delayed(const Duration(seconds: 3));
 
-    if (!mounted) return;
+    if (!mounted) {
+      developer.log('⚠️ [SPLASH] Widget not mounted after delay', name: 'TCC.Splash');
+      return;
+    }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    developer.log(
+      '🔍 [SPLASH] Checking auth state:\n'
+      '  isAuthenticated: ${authProvider.isAuthenticated}\n'
+      '  isPendingVerification: ${authProvider.isPendingVerification}\n'
+      '  Agent: ${authProvider.agent?.firstName ?? 'null'}',
+      name: 'TCC.Splash',
+    );
+
     if (authProvider.isAuthenticated) {
       if (authProvider.isPendingVerification) {
+        developer.log('➡️ [SPLASH] Navigating to /verification-waiting', name: 'TCC.Splash');
         context.go('/verification-waiting');
       } else {
+        developer.log('➡️ [SPLASH] Navigating to /dashboard', name: 'TCC.Splash');
         context.go('/dashboard');
       }
     } else {
+      developer.log('➡️ [SPLASH] Navigating to /login', name: 'TCC.Splash');
       context.go('/login');
     }
+    developer.log('✅ [SPLASH] Navigation completed', name: 'TCC.Splash');
   }
 
   @override

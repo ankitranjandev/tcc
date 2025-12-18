@@ -32,6 +32,13 @@ export class AdminService {
       );
 
       if (users.length === 0) {
+        // Log attempt with non-existent email for security monitoring
+        logger.warn('Admin login attempt with non-existent email', {
+          email,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Return generic error to prevent email enumeration
         throw new Error('INVALID_CREDENTIALS');
       }
 
@@ -39,7 +46,10 @@ export class AdminService {
 
       // Check if account is locked
       if (admin.locked_until && new Date(admin.locked_until) > new Date()) {
-        throw new Error('ACCOUNT_LOCKED');
+        const remainingMinutes = Math.ceil((new Date(admin.locked_until).getTime() - Date.now()) / (1000 * 60));
+        const error: any = new Error('ACCOUNT_LOCKED');
+        error.remainingTime = remainingMinutes;
+        throw error;
       }
 
       // Check if account is active
@@ -59,6 +69,15 @@ export class AdminService {
           'UPDATE users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3',
           [attempts, lockedUntil, admin.id]
         );
+
+        // Log failed attempt for security monitoring
+        logger.warn('Failed admin login attempt', {
+          email,
+          adminId: admin.id,
+          attemptNumber: attempts,
+          isLocked: !!lockedUntil,
+          lockedUntil: lockedUntil?.toISOString(),
+        });
 
         throw new Error('INVALID_CREDENTIALS');
       }

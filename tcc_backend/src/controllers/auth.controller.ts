@@ -81,13 +81,14 @@ export class AuthController {
   }
 
   /**
-   * Login with email and password
+   * Login with email/phone and password
    */
   static async login(req: AuthRequest, res: Response): Promise<Response> {
     try {
-      const { email, password } = req.body;
+      const { email, email_or_phone, password } = req.body;
+      const loginIdentifier = email_or_phone || email;
 
-      const result = await AuthService.login(email, password);
+      const result = await AuthService.login(loginIdentifier, password);
 
       return ApiResponseUtil.success(res, {
         otp_sent: result.requiresOTP,
@@ -99,7 +100,7 @@ export class AuthController {
       logger.error('Login error', error);
 
       if (error.message === 'INVALID_CREDENTIALS') {
-        return ApiResponseUtil.unauthorized(res, 'Invalid email or password');
+        return ApiResponseUtil.unauthorized(res, 'Invalid email/phone or password');
       }
 
       if (error.message === 'ACCOUNT_LOCKED') {
@@ -133,6 +134,41 @@ export class AuthController {
 
       if (error.message === 'RATE_LIMIT_EXCEEDED') {
         return ApiResponseUtil.tooManyRequests(res, 'Please wait before requesting another OTP');
+      }
+
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Direct login without OTP - FOR DEVELOPMENT ONLY
+   */
+  static async loginDirect(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { email_or_phone, password } = req.body;
+
+      const result = await AuthService.loginDirect(email_or_phone, password);
+
+      return ApiResponseUtil.success(res, {
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+        token_type: 'Bearer',
+        expires_in: result.expiresIn,
+        user: result.user,
+      }, 'Login successful (DEV MODE - OTP bypassed)');
+    } catch (error: any) {
+      logger.error('Login direct error', error);
+
+      if (error.message === 'INVALID_CREDENTIALS') {
+        return ApiResponseUtil.unauthorized(res, 'Invalid email/phone or password');
+      }
+
+      if (error.message === 'ACCOUNT_INACTIVE') {
+        return ApiResponseUtil.forbidden(res, 'Account is inactive');
+      }
+
+      if (error.message === 'DIRECT_LOGIN_NOT_ALLOWED') {
+        return ApiResponseUtil.forbidden(res, 'Direct login is only allowed in development mode');
       }
 
       return ApiResponseUtil.internalError(res);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
+import '../bill_payment/payment_method_screen.dart';
+import '../../widgets/currency_converter_widget.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -42,6 +44,7 @@ class _WalletScreenState extends State<WalletScreen> {
           children: [
             _buildBalanceCard(),
             _buildQuickActions(),
+            _buildCurrencyConverter(),
             _buildRecentTransactions(),
             _buildLinkedAccounts(),
           ],
@@ -84,7 +87,7 @@ class _WalletScreenState extends State<WalletScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '₹ 1,25,450.00',
+                'Le 1,25,450.00',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -114,7 +117,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '₹ 5,00,000',
+                      'Le 5,00,000',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -143,7 +146,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '+ ₹ 45,000',
+                      '+ Le 45,000',
                       style: TextStyle(
                         color: Colors.greenAccent,
                         fontSize: 18,
@@ -240,6 +243,26 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  Widget _buildCurrencyConverter() {
+    return Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Currency Converter',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16),
+          CurrencyConverterWidget(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecentTransactions() {
     return Padding(
       padding: EdgeInsets.all(16),
@@ -275,28 +298,28 @@ class _WalletScreenState extends State<WalletScreen> {
             icon: Icons.arrow_downward,
             title: 'Received from John',
             subtitle: 'Dec 15, 2024',
-            amount: '+ ₹15,000',
+            amount: '+ Le 15,000',
             isCredit: true,
           ),
           _buildTransactionItem(
             icon: Icons.arrow_upward,
             title: 'Investment in Gold Fund',
             subtitle: 'Dec 14, 2024',
-            amount: '- ₹50,000',
+            amount: '- Le 50,000',
             isCredit: false,
           ),
           _buildTransactionItem(
             icon: Icons.card_giftcard,
             title: 'Gift to Jane',
             subtitle: 'Dec 13, 2024',
-            amount: '- ₹5,000',
+            amount: '- Le 5,000',
             isCredit: false,
           ),
           _buildTransactionItem(
             icon: Icons.arrow_downward,
             title: 'Returns from FD',
             subtitle: 'Dec 12, 2024',
-            amount: '+ ₹3,500',
+            amount: '+ Le 3,500',
             isCredit: true,
           ),
         ],
@@ -475,73 +498,125 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   void _showAddMoneyDialog() {
+    final TextEditingController amountController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Container(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Add Money',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 24),
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Amount',
-                prefixText: '₹ ',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Add Money to Wallet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Quick amounts',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                '1,000', '5,000', '10,000', '25,000'
-              ].map((amount) => ActionChip(
-                label: Text('₹$amount'),
-                onPressed: () {},
-              )).toList(),
-            ),
-            SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Money added successfully')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
+              SizedBox(height: 24),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: 'Le ',
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-                child: Text(
-                  'Add Money',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-          ],
+              SizedBox(height: 16),
+              Text(
+                'Quick amounts',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  '1000', '5000', '10000', '25000'
+                ].map((amount) => ActionChip(
+                  label: Text('Le $amount'),
+                  onPressed: () {
+                    amountController.text = amount;
+                  },
+                  backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
+                  labelStyle: TextStyle(color: AppColors.primaryBlue),
+                )).toList(),
+              ),
+              SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final amountText = amountController.text.trim();
+                    if (amountText.isEmpty) {
+                      ScaffoldMessenger.of(bottomSheetContext).showSnackBar(
+                        SnackBar(
+                          content: Text('Please enter an amount'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final amount = double.tryParse(amountText);
+                    if (amount == null || amount <= 0) {
+                      ScaffoldMessenger.of(bottomSheetContext).showSnackBar(
+                        SnackBar(
+                          content: Text('Please enter a valid amount'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Close bottom sheet
+                    Navigator.pop(bottomSheetContext);
+
+                    // Navigate to payment method screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PaymentMethodScreen(
+                          billType: 'Wallet Top-up',
+                          provider: 'TCC Wallet',
+                          amount: amount,
+                          accountNumber: 'WALLET-TOPUP',
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Continue',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -569,7 +644,7 @@ class _WalletScreenState extends State<WalletScreen> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Amount',
-                prefixText: '₹ ',
+                prefixText: 'Le ',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

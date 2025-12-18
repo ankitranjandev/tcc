@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
+import '../../services/bank_account_service.dart';
 
 class BankDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? extraData;
@@ -18,9 +19,11 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
   final _ifscCodeController = TextEditingController();
   final _accountHolderController = TextEditingController();
   final _branchAddressController = TextEditingController();
+  final _bankAccountService = BankAccountService();
 
   String _selectedCodeType = 'IFSC code';
   final List<String> _codeTypes = ['IFSC code', 'Routing number', 'Swift code'];
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -33,25 +36,85 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
   }
 
   void _handleSkip() {
-    context.go('/dashboard');
+    // Navigate to KYC status screen instead of dashboard
+    context.go('/kyc-status', extra: widget.extraData);
   }
 
-  void _handleContinue() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Bank details saved successfully (Mock)'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
+  Future<void> _handleContinue() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Determine which code type to submit
+      String? swiftCode;
+      String? routingNumber;
+
+      if (_selectedCodeType == 'Swift code') {
+        swiftCode = _ifscCodeController.text;
+      } else if (_selectedCodeType == 'Routing number') {
+        routingNumber = _ifscCodeController.text;
+      } else {
+        // IFSC code - can be stored as routing number for now
+        routingNumber = _ifscCodeController.text;
+      }
+
+      final result = await _bankAccountService.createBankAccount(
+        bankName: _bankNameController.text,
+        accountNumber: _accountNumberController.text,
+        accountHolderName: _accountHolderController.text,
+        branchAddress: _branchAddressController.text,
+        swiftCode: swiftCode,
+        routingNumber: routingNumber,
+        isPrimary: true,
       );
 
-      // Navigate to dashboard
-      Future.delayed(Duration(seconds: 1), () {
-        if (mounted) {
-          context.go('/dashboard');
-        }
-      });
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bank details saved successfully'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        // Navigate to KYC status screen
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (mounted) {
+            context.go('/kyc-status', extra: widget.extraData);
+          }
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to save bank details'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -65,11 +128,13 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: _handleSkip,
+            onPressed: _isSubmitting ? null : _handleSkip,
             child: Text(
               'Skip',
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                color: _isSubmitting
+                    ? Colors.grey.withValues(alpha: 0.5)
+                    : Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
                 fontSize: 14,
               ),
             ),
@@ -92,10 +157,19 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                     color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
                   ),
                 ),
+                SizedBox(height: 8),
+                Text(
+                  'Optional - You can add this later',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                  ),
+                ),
                 SizedBox(height: 32),
                 // Bank Name
                 TextFormField(
                   controller: _bankNameController,
+                  enabled: !_isSubmitting,
                   decoration: InputDecoration(
                     hintText: 'Bank Name',
                     prefixIcon: Icon(Icons.account_balance),
@@ -104,6 +178,9 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter bank name';
                     }
+                    if (value.length < 2) {
+                      return 'Bank name must be at least 2 characters';
+                    }
                     return null;
                   },
                 ),
@@ -111,6 +188,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                 // Account Number
                 TextFormField(
                   controller: _accountNumberController,
+                  enabled: !_isSubmitting,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     hintText: 'Account number',
@@ -119,6 +197,9 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter account number';
+                    }
+                    if (value.length < 5) {
+                      return 'Account number must be at least 5 characters';
                     }
                     return null;
                   },
@@ -132,7 +213,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                       child: Padding(
                         padding: EdgeInsets.only(right: type != _codeTypes.last ? 8 : 0),
                         child: GestureDetector(
-                          onTap: () {
+                          onTap: _isSubmitting ? null : () {
                             setState(() {
                               _selectedCodeType = type;
                             });
@@ -164,6 +245,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                 // IFSC Code / Routing / Swift Code
                 TextFormField(
                   controller: _ifscCodeController,
+                  enabled: !_isSubmitting,
                   decoration: InputDecoration(
                     hintText: _selectedCodeType,
                     prefixIcon: Icon(Icons.alternate_email),
@@ -179,6 +261,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                 // Account Holder Name
                 TextFormField(
                   controller: _accountHolderController,
+                  enabled: !_isSubmitting,
                   decoration: InputDecoration(
                     hintText: 'Account holder name',
                     prefixIcon: Icon(Icons.person_outline),
@@ -187,6 +270,9 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter account holder name';
                     }
+                    if (value.length < 2) {
+                      return 'Name must be at least 2 characters';
+                    }
                     return null;
                   },
                 ),
@@ -194,6 +280,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                 // Branch Address
                 TextFormField(
                   controller: _branchAddressController,
+                  enabled: !_isSubmitting,
                   decoration: InputDecoration(
                     hintText: 'Branch address',
                     prefixIcon: Icon(Icons.location_on_outlined),
@@ -208,17 +295,26 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                 ),
                 SizedBox(height: 48),
                 ElevatedButton(
-                  onPressed: _handleContinue,
+                  onPressed: _isSubmitting ? null : _handleContinue,
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: _isSubmitting
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          'Save Bank Details',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ],
             ),
