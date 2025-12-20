@@ -25,6 +25,13 @@ class UserModel {
   bool get isKycApproved => kycStatus.toUpperCase() == 'APPROVED';
   bool get isKycPending => kycStatus.toUpperCase() == 'PENDING';
   bool get isKycRejected => kycStatus.toUpperCase() == 'REJECTED';
+  bool get isKycInProgress {
+    final status = kycStatus.toUpperCase();
+    return status == 'PENDING' ||
+           status == 'PROCESSING' ||
+           status == 'IN_PROGRESS' ||
+           status == 'SUBMITTED';
+  }
   bool get canMakeTransactions => isKycApproved;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {

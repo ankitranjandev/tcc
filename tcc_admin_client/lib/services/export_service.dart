@@ -236,11 +236,21 @@ class ExportService {
   /// Download file from URL
   void _downloadFile(String url, String filename) {
     if (kIsWeb) {
+      // Construct full URL if it's a relative path
+      String fullUrl = url;
+      if (url.startsWith('/')) {
+        // Remove /v1 from the base URL since static files are served at root
+        final baseUrl = ApiService.baseUrl.replaceAll('/v1', '');
+        fullUrl = '$baseUrl$url';
+      }
+
+      debugPrint('Downloading file from: $fullUrl');
+
       final anchor = html.AnchorElement()
-        ..href = url
+        ..href = fullUrl
         ..target = 'blank'
         ..download = filename;
-      
+
       html.document.body!.children.add(anchor);
       anchor.click();
       html.document.body!.children.remove(anchor);

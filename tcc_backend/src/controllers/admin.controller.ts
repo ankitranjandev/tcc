@@ -945,4 +945,203 @@ export class AdminController {
       return ApiResponseUtil.internalError(res, error.message);
     }
   }
+
+  /**
+   * Export transactions data
+   */
+  static async exportTransactions(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { format = 'csv', search, status, type, startDate, endDate } = req.query;
+
+      // Validate format
+      const validFormats = ['csv', 'xlsx', 'pdf'];
+      if (!validFormats.includes(format as string)) {
+        return ApiResponseUtil.badRequest(res, 'Invalid export format. Supported formats: csv, xlsx, pdf');
+      }
+
+      // Import ExportService dynamically to avoid circular dependencies
+      const { ExportService } = await import('../services/export.service');
+
+      // Export transactions
+      const result = await ExportService.exportTransactions(format as 'csv' | 'xlsx' | 'pdf', {
+        search: search as string,
+        status: status as string,
+        type: type as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+      });
+
+      const downloadUrl = `/uploads/exports/${result.filename}`;
+
+      logger.info('Transactions export completed', {
+        format,
+        filename: result.filename,
+        adminId: req.user?.id,
+      });
+
+      return ApiResponseUtil.success(res, {
+        url: downloadUrl,
+        filename: result.filename,
+      });
+    } catch (error: any) {
+      logger.error('Export transactions error', error);
+      return ApiResponseUtil.internalError(res, error.message);
+    }
+  }
+
+  /**
+   * Export investments data
+   */
+  static async exportInvestments(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { format = 'csv', search, status, productId, startDate, endDate } = req.query;
+
+      const validFormats = ['csv', 'xlsx', 'pdf'];
+      if (!validFormats.includes(format as string)) {
+        return ApiResponseUtil.badRequest(res, 'Invalid export format. Supported formats: csv, xlsx, pdf');
+      }
+
+      const { ExportService } = await import('../services/export.service');
+
+      const result = await ExportService.exportInvestments(format as 'csv' | 'xlsx' | 'pdf', {
+        search: search as string,
+        status: status as string,
+        productId: productId as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+      });
+
+      const downloadUrl = `/uploads/exports/${result.filename}`;
+
+      logger.info('Investments export completed', {
+        format,
+        filename: result.filename,
+        adminId: req.user?.id,
+      });
+
+      return ApiResponseUtil.success(res, {
+        url: downloadUrl,
+        filename: result.filename,
+      });
+    } catch (error: any) {
+      logger.error('Export investments error', error);
+      return ApiResponseUtil.internalError(res, error.message);
+    }
+  }
+
+  /**
+   * Export bill payments data
+   */
+  static async exportBillPayments(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { format = 'csv', search, status, billerId, startDate, endDate } = req.query;
+
+      const validFormats = ['csv', 'xlsx', 'pdf'];
+      if (!validFormats.includes(format as string)) {
+        return ApiResponseUtil.badRequest(res, 'Invalid export format. Supported formats: csv, xlsx, pdf');
+      }
+
+      const { ExportService } = await import('../services/export.service');
+
+      const result = await ExportService.exportBillPayments(format as 'csv' | 'xlsx' | 'pdf', {
+        search: search as string,
+        status: status as string,
+        billerId: billerId as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+      });
+
+      const downloadUrl = `/uploads/exports/${result.filename}`;
+
+      logger.info('Bill payments export completed', {
+        format,
+        filename: result.filename,
+        adminId: req.user?.id,
+      });
+
+      return ApiResponseUtil.success(res, {
+        url: downloadUrl,
+        filename: result.filename,
+      });
+    } catch (error: any) {
+      logger.error('Export bill payments error', error);
+      return ApiResponseUtil.internalError(res, error.message);
+    }
+  }
+
+  /**
+   * Export e-voting data
+   */
+  static async exportEVoting(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { format = 'csv', electionId, status } = req.query;
+
+      const validFormats = ['csv', 'xlsx', 'pdf'];
+      if (!validFormats.includes(format as string)) {
+        return ApiResponseUtil.badRequest(res, 'Invalid export format. Supported formats: csv, xlsx, pdf');
+      }
+
+      const { ExportService } = await import('../services/export.service');
+
+      const result = await ExportService.exportEVoting(format as 'csv' | 'xlsx' | 'pdf', {
+        electionId: electionId as string,
+        status: status as string,
+      });
+
+      const downloadUrl = `/uploads/exports/${result.filename}`;
+
+      logger.info('E-voting export completed', {
+        format,
+        filename: result.filename,
+        adminId: req.user?.id,
+      });
+
+      return ApiResponseUtil.success(res, {
+        url: downloadUrl,
+        filename: result.filename,
+      });
+    } catch (error: any) {
+      logger.error('Export e-voting error', error);
+      return ApiResponseUtil.internalError(res, error.message);
+    }
+  }
+
+  /**
+   * Export reports data
+   */
+  static async exportReports(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { format = 'csv', reportType, startDate, endDate, ...additionalFilters } = req.query;
+
+      const validFormats = ['csv', 'xlsx', 'pdf'];
+      if (!validFormats.includes(format as string)) {
+        return ApiResponseUtil.badRequest(res, 'Invalid export format. Supported formats: csv, xlsx, pdf');
+      }
+
+      const { ExportService } = await import('../services/export.service');
+
+      const result = await ExportService.exportReports(format as 'csv' | 'xlsx' | 'pdf', {
+        reportType: reportType as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+        ...additionalFilters,
+      });
+
+      const downloadUrl = `/uploads/exports/${result.filename}`;
+
+      logger.info('Reports export completed', {
+        format,
+        filename: result.filename,
+        adminId: req.user?.id,
+      });
+
+      return ApiResponseUtil.success(res, {
+        url: downloadUrl,
+        filename: result.filename,
+      });
+    } catch (error: any) {
+      logger.error('Export reports error', error);
+      return ApiResponseUtil.internalError(res, error.message);
+    }
+  }
 }

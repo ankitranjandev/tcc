@@ -28,8 +28,7 @@ class AppConstants {
   static const String apiVersion = 'v1';
 
   // Stripe Configuration
-  // Replace with your actual Stripe publishable key
-  static const String stripePublishableKey = 'pk_test_your_stripe_publishable_key';
+  static const String stripePublishableKey = 'pk_test_51Sf11DFU6W2alheKWH7Dt3Zb2jE1iMxBSJXCtknmsYZXEKtBMjFumnhEx48i66Pdqp6ttNRtcy3vO6hGbpU1NEOG00QrGPsDjF';
 
   // Transaction Types
   static const String transactionTypeDeposit = 'deposit';

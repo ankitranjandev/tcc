@@ -10,6 +10,7 @@ import 'config/app_theme.dart';
 import 'config/app_constants.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/bank_account_provider.dart';
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -80,6 +81,7 @@ class TCCApp extends StatefulWidget {
 class _TCCAppState extends State<TCCApp> {
   late final AuthProvider _authProvider;
   late final ThemeProvider _themeProvider;
+  late final BankAccountProvider _bankAccountProvider;
   late final GoRouter _router;
   bool _isInitialized = false;
 
@@ -89,6 +91,7 @@ class _TCCAppState extends State<TCCApp> {
     developer.log('🚀 TCCApp: Initializing app...', name: 'TCCApp');
     _authProvider = AuthProvider();
     _themeProvider = ThemeProvider();
+    _bankAccountProvider = BankAccountProvider();
     _router = _createRouter();
     _initializeApp();
   }
@@ -291,6 +294,7 @@ class _TCCAppState extends State<TCCApp> {
       providers: [
         ChangeNotifierProvider.value(value: _authProvider),
         ChangeNotifierProvider.value(value: _themeProvider),
+        ChangeNotifierProvider.value(value: _bankAccountProvider),
       ],
       child: _isInitialized
           ? Consumer<ThemeProvider>(

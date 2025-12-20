@@ -1145,6 +1145,7 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
         paymentSheetParameters: SetupPaymentSheetParameters(
           merchantDisplayName: 'TCC',
           paymentIntentClientSecret: clientSecret,
+          returnURL: 'tccapp://stripe-redirect',
           style: ThemeMode.light,
           appearance: PaymentSheetAppearance(
             colors: PaymentSheetAppearanceColors(

@@ -129,6 +129,7 @@ router.post('/agents', AdminController.createAgent);
 
 // Transaction management
 router.get('/transactions', AdminController.getTransactions);
+router.get('/transactions/export', AdminController.exportTransactions);
 
 // Withdrawal management
 router.get('/withdrawals', validate(getWithdrawalsSchema), AdminController.getWithdrawals);
@@ -155,17 +156,23 @@ router.put(
 
 // Reports
 router.get('/reports', validate(generateReportSchema), AdminController.generateReport);
+router.get('/reports/export', AdminController.exportReports);
 router.get('/reports/transactions', AdminController.getTransactionReport);
 router.get('/reports/user-activity', AdminController.getUserActivityReport);
 router.get('/reports/revenue', AdminController.getRevenueReport);
 router.get('/reports/investments', AdminController.getInvestmentReport);
 router.get('/reports/agent-performance', AdminController.getAgentPerformanceReport);
 
+// E-Voting
+router.get('/e-voting/export', AdminController.exportEVoting);
+
 // Bill Payments
 router.get('/bill-payments', AdminController.getBillPayments);
+router.get('/bill-payments/export', AdminController.exportBillPayments);
 
 // Investments
 router.get('/investments', AdminController.getInvestments);
+router.get('/investments/export', AdminController.exportInvestments);
 
 // Wallet management
 router.post('/wallet/adjust-balance', AdminController.adjustWalletBalance);

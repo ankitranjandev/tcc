@@ -30,8 +30,8 @@ class KycGuard extends StatelessWidget {
         title: Text(
           user.isKycRejected
               ? 'KYC Verification Failed'
-              : user.isKycPending
-                  ? 'KYC Verification Pending'
+              : user.isKycInProgress
+                  ? 'KYC Verification in Progress'
                   : 'KYC Verification Required',
         ),
         leading: IconButton(
@@ -58,7 +58,7 @@ class KycGuard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: (user.isKycRejected
                           ? AppColors.error
-                          : user.isKycPending
+                          : user.isKycInProgress
                               ? AppColors.primaryBlue
                               : AppColors.warning)
                       .withValues(alpha: 0.1),
@@ -67,13 +67,13 @@ class KycGuard extends StatelessWidget {
                 child: Icon(
                   user.isKycRejected
                       ? Icons.cancel_outlined
-                      : user.isKycPending
+                      : user.isKycInProgress
                           ? Icons.pending_outlined
                           : Icons.verified_user_outlined,
                   size: 60,
                   color: user.isKycRejected
                       ? AppColors.error
-                      : user.isKycPending
+                      : user.isKycInProgress
                           ? AppColors.primaryBlue
                           : AppColors.warning,
                 ),
@@ -84,8 +84,8 @@ class KycGuard extends StatelessWidget {
               Text(
                 user.isKycRejected
                   ? 'KYC Verification Failed'
-                  : user.isKycPending
-                    ? 'KYC Verification Pending'
+                  : user.isKycInProgress
+                    ? 'KYC Verification in Progress'
                     : 'KYC Verification Required',
                 style: TextStyle(
                   fontSize: 24,
@@ -112,7 +112,7 @@ class KycGuard extends StatelessWidget {
                   if (user.isKycRejected) {
                     // Navigate to KYC resubmission
                     context.push('/kyc-verification');
-                  } else if (user.isKycPending) {
+                  } else if (user.isKycInProgress) {
                     // Navigate to KYC status screen
                     context.push('/kyc-status');
                   } else {
@@ -126,14 +126,14 @@ class KycGuard extends StatelessWidget {
                 child: Text(
                   user.isKycRejected
                     ? 'Resubmit Documents'
-                    : user.isKycPending
+                    : user.isKycInProgress
                       ? 'View Status'
                       : 'Complete KYC',
                   style: TextStyle(fontSize: 16),
                 ),
               ),
               
-              if (user.isKycPending) ...[
+              if (user.isKycInProgress) ...[
                 SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -167,6 +167,9 @@ class KycGuard extends StatelessWidget {
   String _getDefaultMessage(String kycStatus) {
     switch (kycStatus.toUpperCase()) {
       case 'PENDING':
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
         return 'Your KYC verification is currently being processed. This usually takes 1-2 business days. You\'ll be notified once it\'s complete.';
       case 'REJECTED':
         return 'Your KYC documents were not approved. Please review the requirements and submit clear, valid documents.';
@@ -206,7 +209,7 @@ mixin RequiresKyc<T extends StatefulWidget> on State<T> {
         content: Text(
           user?.isKycRejected == true
             ? 'Your KYC documents were rejected. Please resubmit valid documents to continue.'
-            : user?.isKycPending == true
+            : user?.isKycInProgress == true
               ? 'Your KYC verification is in progress. Please wait for approval to access this feature.'
               : 'Please complete your KYC verification to access this feature.'
         ),
@@ -215,9 +218,9 @@ mixin RequiresKyc<T extends StatefulWidget> on State<T> {
             onPressed: () => Navigator.of(context).pop(),
             child: Text('Cancel'),
           ),
-          if (user?.isKycRejected == true || 
-              (user?.kycStatus.toUpperCase() != 'PENDING' && 
-               user?.kycStatus.toUpperCase() != 'APPROVED'))
+          if (user?.isKycRejected == true ||
+              (user?.isKycInProgress != true &&
+               user?.isKycApproved != true))
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
