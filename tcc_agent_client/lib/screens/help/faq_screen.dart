@@ -64,7 +64,7 @@ class _FAQScreenState extends State<FAQScreen> {
     FAQItem(
       category: 'Transactions',
       question: 'What are the transaction limits?',
-      answer: 'Transaction limits vary by type:\n\n• Deposits: SLL 10,000 - 10,000,000\n• Withdrawals: SLL 10,000 - 5,000,000\n• Transfers: SLL 1,000 - 5,000,000\n\nLimits may be higher for verified customers. Contact support if you need to process larger amounts.',
+      answer: 'Transaction limits vary by type:\n\n• Deposits: TCC10,000 - 10,000,000\n• Withdrawals: TCC10,000 - 5,000,000\n• Transfers: TCC1,000 - 5,000,000\n\nLimits may be higher for verified customers. Contact support if you need to process larger amounts.',
     ),
     FAQItem(
       category: 'Transactions',
@@ -105,7 +105,7 @@ class _FAQScreenState extends State<FAQScreen> {
     FAQItem(
       category: 'Commissions',
       question: 'When can I withdraw my commissions?',
-      answer: 'You can withdraw commissions at any time, subject to:\n\n• Minimum withdrawal: SLL 50,000\n• Withdrawals to your linked bank account\n• Processing time: 1-2 business days\n\nGo to your wallet to initiate a withdrawal.',
+      answer: 'You can withdraw commissions at any time, subject to:\n\n• Minimum withdrawal: TCC50,000\n• Withdrawals to your linked bank account\n• Processing time: 1-2 business days\n\nGo to your wallet to initiate a withdrawal.',
     ),
 
     // Technical FAQs

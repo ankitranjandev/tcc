@@ -5,6 +5,7 @@ import '../../config/app_colors.dart';
 import '../../models/investment_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/investment_service.dart';
+import '../../widgets/kyc_guard.dart';
 
 class InvestmentProductDetailScreen extends StatefulWidget {
   final InvestmentProduct product;
@@ -18,7 +19,7 @@ class InvestmentProductDetailScreen extends StatefulWidget {
   State<InvestmentProductDetailScreen> createState() => _InvestmentProductDetailScreenState();
 }
 
-class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailScreen> {
+class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailScreen> with RequiresKyc {
   double _quantity = 1;
   double _period = 12; // in months
   bool _includeInsurance = false;
@@ -130,7 +131,7 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
 
               // Price
               Text(
-                'Le ${widget.product.price.toStringAsFixed(0)}',
+                'TCC${widget.product.price.toStringAsFixed(0)}',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -262,7 +263,7 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Le ${_totalInvestment.toStringAsFixed(0)}',
+                              'TCC${_totalInvestment.toStringAsFixed(0)}',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -407,7 +408,7 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
                           ),
                         ),
                         Text(
-                          'Le ${_expectedReturn.toStringAsFixed(0)}',
+                          'TCC${_expectedReturn.toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -455,7 +456,9 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    _showInvestmentConfirmation(context);
+                    checkKycAndProceed(() {
+                      _showInvestmentConfirmation(context);
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
@@ -565,12 +568,12 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
                 _buildConfirmationRow('Product', widget.product.name),
                 _buildConfirmationRow('Quantity', '${_quantity.toInt()} ${widget.product.unit}'),
                 _buildConfirmationRow('Period', '${(_period / 12).toStringAsFixed(1)} year${_period >= 24 ? 's' : ''}'),
-                _buildConfirmationRow('Investment', 'Le ${_totalInvestment.toStringAsFixed(0)}'),
+                _buildConfirmationRow('Investment', 'TCC${_totalInvestment.toStringAsFixed(0)}'),
                 if (_includeInsurance)
-                  _buildConfirmationRow('Insurance', 'Le ${(_totalInvestment * 0.02).toStringAsFixed(0)}'),
+                  _buildConfirmationRow('Insurance', 'TCC${(_totalInvestment * 0.02).toStringAsFixed(0)}'),
                 _buildConfirmationRow(
                   'Expected Return',
-                  'Le ${_expectedReturn.toStringAsFixed(0)}',
+                  'TCC${_expectedReturn.toStringAsFixed(0)}',
                   isHighlight: true
                 ),
 
@@ -758,6 +761,7 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
     );
 
     if (confirmed == true) {
+      if (!context.mounted) return;
       await _createInvestment(context, totalAmount);
     }
   }
@@ -826,16 +830,16 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             SizedBox(height: 16),
-            _buildConfirmationRow('Investment Amount', 'Le ${_totalInvestment.toStringAsFixed(2)}'),
+            _buildConfirmationRow('Investment Amount', 'TCC${_totalInvestment.toStringAsFixed(2)}'),
             if (_includeInsurance)
               _buildConfirmationRow(
                 'Insurance (2%)',
-                'Le ${(_totalInvestment * 0.02).toStringAsFixed(2)}',
+                'TCC${(_totalInvestment * 0.02).toStringAsFixed(2)}',
               ),
             Divider(height: 24),
             _buildConfirmationRow(
               'Total Amount',
-              'Le ${totalAmount.toStringAsFixed(2)}',
+              'TCC${totalAmount.toStringAsFixed(2)}',
               isHighlight: true,
             ),
             SizedBox(height: 8),
@@ -915,8 +919,10 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
 
       if (result['success'] == true) {
         // Reload user profile to update wallet balance
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        await authProvider.loadUserProfile();
+        if (context.mounted) {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          await authProvider.loadUserProfile();
+        }
 
         if (context.mounted) {
           _showSuccessDialog(context, totalAmount);

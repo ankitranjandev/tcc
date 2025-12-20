@@ -440,7 +440,7 @@ class MockDataService {
         },
         {
           'type': 'WITHDRAWAL_PENDING',
-          'message': 'New withdrawal request from Michael Brown (Le 80,000)',
+          'message': 'New withdrawal request from Michael Brown (TCC 80,000)',
           'timestamp': DateTime.now().subtract(const Duration(hours: 1)),
           'icon': 'payments',
           'color': 'warning',
@@ -454,14 +454,14 @@ class MockDataService {
         },
         {
           'type': 'DEPOSIT_PENDING',
-          'message': 'Deposit pending approval for Sarah Johnson (Le 50,000)',
+          'message': 'Deposit pending approval for Sarah Johnson (TCC 50,000)',
           'timestamp': DateTime.now().subtract(const Duration(minutes: 30)),
           'icon': 'account_balance',
           'color': 'warning',
         },
         {
           'type': 'INVESTMENT_MATURED',
-          'message': 'Investment matured for Michael Brown (Le 500,000)',
+          'message': 'Investment matured for Michael Brown (TCC 500,000)',
           'timestamp': DateTime.now().subtract(const Duration(days: 5)),
           'icon': 'trending_up',
           'color': 'success',

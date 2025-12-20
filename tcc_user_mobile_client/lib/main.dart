@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:developer' as developer;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'firebase_options.dart';
 import 'config/app_theme.dart';
 import 'config/app_constants.dart';
 import 'providers/auth_provider.dart';
@@ -40,7 +41,9 @@ void main() async {
   // Initialize Firebase (skip on web for now until firebase_options.dart is configured)
   if (!kIsWeb) {
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
       developer.log('✅ Firebase initialized', name: 'TCCApp');
 
       // Initialize Notification Service

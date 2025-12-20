@@ -3,6 +3,7 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../services/kyc_service.dart';
 import '../../utils/responsive.dart';
+import '../../widgets/dialogs/document_viewer_dialog.dart';
 
 class KYCReviewDetailScreen extends StatefulWidget {
   final String submissionId;
@@ -57,11 +58,11 @@ class _KYCReviewDetailScreenState extends State<KYCReviewDetailScreen> {
     });
 
     try {
-      final response = await _kycService.getKycSubmissionById(widget.userId);
+      final response = await _kycService.getKycSubmissionById(widget.submissionId);
 
       if (response.success && response.data != null) {
         setState(() {
-          _submissionDetails = response.data!['data'];
+          _submissionDetails = response.data!;
           _isLoading = false;
         });
       } else {
@@ -93,7 +94,7 @@ class _KYCReviewDetailScreenState extends State<KYCReviewDetailScreen> {
 
     try {
       final response = await _kycService.reviewKycSubmission(
-        submissionId: widget.userId,
+        submissionId: widget.submissionId,
         action: 'approve',
         remarks: 'KYC approved by admin',
       );
@@ -153,7 +154,7 @@ class _KYCReviewDetailScreenState extends State<KYCReviewDetailScreen> {
 
     try {
       final response = await _kycService.reviewKycSubmission(
-        submissionId: widget.userId,
+        submissionId: widget.submissionId,
         action: 'reject',
         remarks: reasons,
       );
@@ -520,7 +521,7 @@ class _KYCReviewDetailScreenState extends State<KYCReviewDetailScreen> {
 
   Widget _buildDocumentCard(Map<String, dynamic> doc, bool isMobile) {
     final documentType = doc['document_type'] ?? 'Unknown';
-    // documentUrl is available in doc['document_url'] if needed
+    final documentUrl = doc['document_url'] ?? '';
     final documentNumber = doc['document_number'] ?? '';
     final status = doc['status'] ?? 'PENDING';
 
@@ -537,14 +538,14 @@ class _KYCReviewDetailScreenState extends State<KYCReviewDetailScreen> {
           Row(
             children: [
               Icon(
-                Icons.description,
+                _getDocumentIcon(documentType),
                 size: 20,
                 color: AppColors.accentBlue,
               ),
               const SizedBox(width: AppTheme.space8),
               Expanded(
                 child: Text(
-                  documentType.replaceAll('_', ' '),
+                  _formatDocumentType(documentType),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -584,16 +585,18 @@ class _KYCReviewDetailScreenState extends State<KYCReviewDetailScreen> {
           ],
           const SizedBox(height: AppTheme.space12),
           OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Implement document viewer/download
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Document viewer coming soon'),
-                ),
-              );
-            },
-            icon: const Icon(Icons.open_in_new, size: 16),
-            label: const Text('View Document'),
+            onPressed: documentUrl.isNotEmpty
+                ? () {
+                    DocumentViewerDialog.show(
+                      context,
+                      documentUrl: documentUrl,
+                      documentType: documentType,
+                      documentNumber: documentNumber,
+                    );
+                  }
+                : null,
+            icon: const Icon(Icons.visibility, size: 16),
+            label: Text(documentUrl.isNotEmpty ? 'View Document' : 'No Document'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppTheme.space16,
@@ -604,6 +607,39 @@ class _KYCReviewDetailScreenState extends State<KYCReviewDetailScreen> {
         ],
       ),
     );
+  }
+
+  IconData _getDocumentIcon(String documentType) {
+    switch (documentType.toUpperCase()) {
+      case 'NATIONAL_ID':
+        return Icons.badge;
+      case 'PASSPORT':
+        return Icons.menu_book;
+      case 'DRIVERS_LICENSE':
+        return Icons.directions_car;
+      case 'VOTER_CARD':
+        return Icons.how_to_vote;
+      case 'BANK_RECEIPT':
+        return Icons.receipt_long;
+      case 'AGREEMENT':
+        return Icons.handshake;
+      case 'INSURANCE_POLICY':
+        return Icons.security;
+      case 'SELFIE':
+        return Icons.face;
+      default:
+        return Icons.description;
+    }
+  }
+
+  String _formatDocumentType(String documentType) {
+    return documentType
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+            : '')
+        .join(' ');
   }
 
   Widget _buildBankDetailsSection(bool isMobile) {

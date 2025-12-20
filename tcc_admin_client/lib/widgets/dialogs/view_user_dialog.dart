@@ -117,7 +117,7 @@ class ViewUserDialog extends StatelessWidget {
                 _buildDetailRow('KYC Status', user.kycStatus.displayName),
                 _buildDetailRow(
                   'Wallet Balance',
-                  'Le ${NumberFormat('#,##0.00').format(user.walletBalance)}',
+                  '${AppConstants.currencySymbol} ${NumberFormat('#,##0.00').format(user.walletBalance)}',
                 ),
                 _buildDetailRow(
                   'Created At',

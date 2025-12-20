@@ -35,7 +35,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
     final screenWidth = ResponsiveHelper.getScreenWidth(context);
     final isTabletOrDesktop = screenWidth > ResponsiveHelper.mobileBreakpoint;
 

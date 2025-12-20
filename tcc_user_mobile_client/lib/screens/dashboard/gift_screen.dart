@@ -2,21 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../notifications/notification_screen.dart';
+import '../../widgets/kyc_guard.dart';
 
 class GiftScreen extends StatelessWidget {
   const GiftScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
+    return KycGuard(
+      customMessage: 'Complete your KYC verification to send gifts to your loved ones.',
+      child: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
@@ -121,6 +124,7 @@ class GiftScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

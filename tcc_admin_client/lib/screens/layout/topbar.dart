@@ -341,7 +341,7 @@ class _TopbarState extends State<Topbar> {
                             context,
                             Icons.account_balance_wallet,
                             'Large Transaction Alert',
-                            'Transaction of Le 50,000 detected from user ID: USR123',
+                            'Transaction of TCC 50,000 detected from user ID: USR123',
                             DateTime.now().subtract(const Duration(hours: 2)),
                             false,
                             AppColors.warning,

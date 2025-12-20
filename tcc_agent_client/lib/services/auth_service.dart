@@ -40,7 +40,7 @@ class AuthService {
         mobileNumber: '+23276123456',
         profilePictureUrl: null,
         status: 'active', // Set to 'active' so user can access dashboard
-        walletBalance: 5000000.0, // 5 million SLL
+        walletBalance: 5000000.0, // 5 million TCC
         commissionRate: 2.5,
         createdAt: DateTime.now().subtract(const Duration(days: 30)),
         verifiedAt: DateTime.now().subtract(const Duration(days: 29)),

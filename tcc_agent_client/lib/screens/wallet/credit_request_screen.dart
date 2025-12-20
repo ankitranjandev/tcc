@@ -262,7 +262,7 @@ class _CreditRequestScreenState extends State<CreditRequestScreen> {
                       return 'Please enter valid amount';
                     }
                     if (amount < 100000) {
-                      return 'Minimum amount is SLL 100,000';
+                      return 'Minimum amount is TCC100,000';
                     }
                     return null;
                   },

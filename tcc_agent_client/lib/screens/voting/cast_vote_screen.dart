@@ -93,7 +93,7 @@ class _CastVoteScreenState extends State<CastVoteScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Voting charge: SLL ${widget.election.votingCharge.toStringAsFixed(0)} will be deducted from your wallet',
+                            'Voting charge: TCC${widget.election.votingCharge.toStringAsFixed(0)} will be deducted from your wallet',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.blue,
@@ -336,7 +336,7 @@ class _CastVoteScreenState extends State<CastVoteScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Voting charge of SLL ${widget.election.votingCharge.toStringAsFixed(0)} will be deducted from your wallet.',
+              'Voting charge of TCC${widget.election.votingCharge.toStringAsFixed(0)} will be deducted from your wallet.',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),

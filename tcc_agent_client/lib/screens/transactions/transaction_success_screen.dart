@@ -93,7 +93,7 @@ class TransactionSuccessScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'SLL ${amount.toStringAsFixed(2)}',
+                              'TCC${amount.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.bold,
@@ -125,7 +125,7 @@ class TransactionSuccessScreen extends StatelessWidget {
                             const SizedBox(height: 16),
                             _buildDetailRow(
                               'Your Commission',
-                              'SLL ${commission.toStringAsFixed(2)}',
+                              'TCC${commission.toStringAsFixed(2)}',
                               valueColor: AppColors.commissionGreen,
                             ),
                             const SizedBox(height: 16),
@@ -183,7 +183,7 @@ class TransactionSuccessScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'SLL ${commission.toStringAsFixed(2)}',
+                                  'TCC${commission.toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,

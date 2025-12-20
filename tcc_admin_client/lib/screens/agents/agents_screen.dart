@@ -3,11 +3,12 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/agent_model.dart';
 import '../../services/agent_management_service.dart';
-import '../../utils/csv_export.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
 import '../../widgets/dialogs/add_agent_dialog.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 import '../kyc/kyc_review_dialog.dart';
 
 /// Agents List Screen
@@ -20,6 +21,7 @@ class AgentsScreen extends StatefulWidget {
 
 class _AgentsScreenState extends State<AgentsScreen> {
   final _agentService = AgentManagementService();
+  final _exportService = ExportService();
   List<AgentModel> _agents = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -105,6 +107,32 @@ class _AgentsScreenState extends State<AgentsScreen> {
       });
       _loadAgents();
     }
+  }
+
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export Agents',
+        subtitle: 'Export agent data in your preferred format',
+        filters: {
+          if (_searchQuery.isNotEmpty) 'Search': _searchQuery,
+          if (_filterStatus != 'All') 'Status': _filterStatus,
+        },
+        onExport: (format) async {
+          final response = await _exportService.exportUsers(
+            format: format,
+            search: _searchQuery.isNotEmpty ? _searchQuery : null,
+            role: 'AGENT',
+            status: _filterStatus == 'All' ? null : _filterStatus,
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
+      ),
+    );
   }
 
   void _showKYCReviewDialog(AgentModel agent) {
@@ -428,7 +456,7 @@ class _AgentsScreenState extends State<AgentsScreen> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            CsvExport.exportAgents(agents);
+                            _showExportDialog();
                           },
                           icon: const Icon(Icons.download),
                           label: const Text('Export'),
@@ -498,7 +526,7 @@ class _AgentsScreenState extends State<AgentsScreen> {
                       // Export Button
                       OutlinedButton.icon(
                         onPressed: () {
-                          CsvExport.exportAgents(agents);
+                          _showExportDialog();
                         },
                         icon: const Icon(Icons.download),
                         label: const Text('Export'),

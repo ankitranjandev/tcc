@@ -12,7 +12,7 @@ class ExchangeRateWidget extends StatefulWidget {
   const ExchangeRateWidget({
     super.key,
     this.baseCurrency = 'USD',
-    this.targetCurrency = 'SLL',
+    this.targetCurrency = 'TCC',
     this.rate,
     this.isLive = true,
     this.onRefresh,
@@ -31,7 +31,7 @@ class _ExchangeRateWidgetState extends State<ExchangeRateWidget> {
   @override
   void initState() {
     super.initState();
-    _currentRate = widget.rate ?? 25000.0; // Default SLL rate
+    _currentRate = widget.rate ?? 25000.0; // Default TCC rate
     _lastUpdated = DateTime.now();
 
     if (widget.isLive) {
@@ -266,7 +266,7 @@ class ExchangeRateCompact extends StatelessWidget {
   const ExchangeRateCompact({
     super.key,
     this.baseCurrency = 'USD',
-    this.targetCurrency = 'SLL',
+    this.targetCurrency = 'TCC',
     this.rate = 25000.0,
   });
 
@@ -313,7 +313,7 @@ class ExchangeRateCalculator extends StatefulWidget {
   const ExchangeRateCalculator({
     super.key,
     this.baseCurrency = 'USD',
-    this.targetCurrency = 'SLL',
+    this.targetCurrency = 'TCC',
     this.rate = 25000.0,
   });
 

@@ -113,7 +113,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 0);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 0);
+    final tccFormat = NumberFormat.currency(symbol: 'TCC ', decimalDigits: 0);
 
     // Show loading state
     if (_isLoading) {
@@ -160,12 +161,12 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 20),
 
               // TCC Coin Balance Card
-              _buildBalanceCard(currencyFormat),
+              _buildBalanceCard(currencyFormat, tccFormat),
 
               SizedBox(height: 16),
 
               // Stats Cards Row
-              _buildStatsRow(currencyFormat),
+              _buildStatsRow(currencyFormat, tccFormat),
 
               SizedBox(height: 20),
 
@@ -217,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome, ${user?.firstName ?? 'User'}',
+            'Welcome, ${user?.firstName ?? 'Guest'}',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -237,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBalanceCard(NumberFormat currencyFormat) {
+  Widget _buildBalanceCard(NumberFormat currencyFormat, NumberFormat tccFormat) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20),
       padding: EdgeInsets.all(20),
@@ -271,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: 8),
               Text(
-                currencyFormat.format(_walletBalance),
+                tccFormat.format(_walletBalance),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -308,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatsRow(NumberFormat currencyFormat) {
+  Widget _buildStatsRow(NumberFormat currencyFormat, NumberFormat tccFormat) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -336,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    currencyFormat.format(_totalInvested),
+                    tccFormat.format(_totalInvested),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -371,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    currencyFormat.format(_expectedReturns),
+                    tccFormat.format(_expectedReturns),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -627,18 +628,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: _metalPrices.isEmpty
                       ? [
                           // Fallback to mock data if API fails
-                          _buildMineralCard('Gold', 'Le 234', 'Live', null),
+                          _buildMineralCard('Gold', 'TCC234', 'Live', null),
                           SizedBox(width: 12),
-                          _buildMineralCard('Silver', 'Le 150', 'Live', null),
+                          _buildMineralCard('Silver', 'TCC150', 'Live', null),
                           SizedBox(width: 12),
-                          _buildMineralCard('Platinum', 'Le 350', 'Live', null),
+                          _buildMineralCard('Platinum', 'TCC350', 'Live', null),
                         ]
                       : _metalPrices
                           .map((metal) => Padding(
                                 padding: EdgeInsets.only(right: 12),
                                 child: _buildMineralCard(
                                   metal['name'],
-                                  'Le ${NumberFormat('#,##0.00').format(metal['price'])}',
+                                  'TCC${NumberFormat('#,##0.00').format(metal['price'])}',
                                   'Live',
                                   metal,
                                 ),
@@ -802,11 +803,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: _buildAgroCard('Land Lease', 'Le 2,217', '+5% +5.6'),
+                  child: _buildAgroCard('Land Lease', 'TCC2,217', '+5% +5.6'),
                 ),
                 SizedBox(width: 12),
                 Expanded(
-                  child: _buildAgroCard('Processing', 'Le 2,217', '+5% +6.1'),
+                  child: _buildAgroCard('Processing', 'TCC2,217', '+5% +6.1'),
                 ),
               ],
             ),
@@ -918,11 +919,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: _buildEducationCard('Institutions', 'Le 2,217', '+5% +5.6'),
+                  child: _buildEducationCard('Institutions', 'TCC2,217', '+5% +5.6'),
                 ),
                 SizedBox(width: 12),
                 Expanded(
-                  child: _buildEducationCard('Dormitory', 'Le 2,217', '+5% +6.1'),
+                  child: _buildEducationCard('Dormitory', 'TCC2,217', '+5% +6.1'),
                 ),
               ],
             ),
@@ -1229,7 +1230,7 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
             decoration: InputDecoration(
               labelText: 'Amount (Le)',
               hintText: 'Enter amount',
-              prefixText: 'Le ',
+              prefixText: 'TCC',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1263,7 +1264,7 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
                     ),
                   ),
                   child: Text(
-                    'Le ${amount.toStringAsFixed(0)}',
+                    'TCC${amount.toStringAsFixed(0)}',
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black87,
                       fontWeight: FontWeight.w600,

@@ -280,7 +280,7 @@ class _ElectionsScreenState extends State<ElectionsScreen>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'SLL ${election.votingCharge.toStringAsFixed(0)}',
+                      'TCC${election.votingCharge.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

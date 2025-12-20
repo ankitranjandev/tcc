@@ -3,11 +3,12 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/poll_model.dart';
 import '../../services/poll_service.dart';
-import '../../utils/csv_export.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
 import '../../widgets/dialogs/create_poll_dialog.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 
 /// E-Voting Screen
 class VotingScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class VotingScreen extends StatefulWidget {
 
 class _VotingScreenState extends State<VotingScreen> {
   final PollService _pollService = PollService();
+  final ExportService _exportService = ExportService();
   String _searchQuery = '';
   String _filterStatus = 'All';
   bool _isLoading = true;
@@ -72,6 +74,30 @@ class _VotingScreenState extends State<VotingScreen> {
         );
       }
     }
+  }
+
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export E-Voting Data',
+        subtitle: 'Export poll and voting data in your preferred format',
+        filters: {
+          if (_searchQuery.isNotEmpty) 'Search': _searchQuery,
+          if (_filterStatus != 'All') 'Status': _filterStatus,
+        },
+        onExport: (format) async {
+          final response = await _exportService.exportEVoting(
+            format: format,
+            status: _filterStatus == 'All' ? null : _filterStatus,
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
+      ),
+    );
   }
 
   void _showCreatePollDialog() {
@@ -333,16 +359,7 @@ class _VotingScreenState extends State<VotingScreen> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            // Export functionality - convert poll models to map format
-                            final pollsData = _polls.map((p) => {
-                              'title': p.title,
-                              'status': p.status,
-                              'totalVotes': p.totalVotes,
-                              'totalRevenue': p.totalRevenue,
-                              'startDate': p.startDate,
-                              'endDate': p.endDate,
-                            }).toList();
-                            CsvExport.exportPolls(pollsData);
+                            _showExportDialog();
                           },
                           icon: const Icon(Icons.download),
                           label: const Text('Export'),
@@ -422,16 +439,7 @@ class _VotingScreenState extends State<VotingScreen> {
                       // Export Button
                       OutlinedButton.icon(
                         onPressed: () {
-                          // Export functionality - convert poll models to map format
-                          final pollsData = _polls.map((p) => {
-                            'title': p.title,
-                            'status': p.status,
-                            'totalVotes': p.totalVotes,
-                            'totalRevenue': p.totalRevenue,
-                            'startDate': p.startDate,
-                            'endDate': p.endDate,
-                          }).toList();
-                          CsvExport.exportPolls(pollsData);
+                          _showExportDialog();
                         },
                         icon: const Icon(Icons.download),
                         label: const Text('Export'),

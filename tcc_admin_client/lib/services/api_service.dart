@@ -69,10 +69,22 @@ class ApiService {
         onError: (error, handler) async {
           // Log error in debug mode
           debugPrint('ERROR[${error.response?.statusCode}] => ${error.requestOptions.uri}');
+          debugPrint('ERROR TYPE: ${error.type}');
+
+          // Check if this is a network error (no internet connection)
+          if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.sendTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.unknown) {
+            // This is likely a network connectivity issue, not an auth issue
+            // Don't show session expired dialog for network errors
+            debugPrint('Network error detected, not showing session expired dialog');
+            return handler.next(error);
+          }
 
           final statusCode = error.response?.statusCode;
 
-          // Handle 401 Unauthorized or 403 Forbidden
+          // Handle 401 Unauthorized or 403 Forbidden only if we have a response
           if (statusCode == 401 || statusCode == 403) {
             // Try to refresh token for 401 only
             if (statusCode == 401) {
@@ -124,7 +136,7 @@ class ApiService {
       final response = await refreshDio.post(
         '/auth/refresh',
         data: {'refresh_token': refreshToken},
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -157,6 +169,24 @@ class ApiService {
       }
 
       debugPrint('Token refresh failed: Invalid response format');
+      _isRefreshing = false;
+      _notifyRefreshCallbacks(false);
+      return false;
+    } on DioException catch (e) {
+      // Handle Dio-specific errors
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.unknown) {
+        debugPrint('Token refresh failed due to network error: ${e.type}');
+      } else {
+        debugPrint('Token refresh failed with Dio error: ${e.type}');
+      }
+      _isRefreshing = false;
+      _notifyRefreshCallbacks(false);
+      return false;
+    } on TimeoutException catch (_) {
+      debugPrint('Token refresh timed out');
       _isRefreshing = false;
       _notifyRefreshCallbacks(false);
       return false;

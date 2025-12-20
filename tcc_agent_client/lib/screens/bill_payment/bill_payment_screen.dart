@@ -258,7 +258,7 @@ class BillPaymentScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'SLL ${amount.toStringAsFixed(0)}',
+                  'TCC${amount.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,

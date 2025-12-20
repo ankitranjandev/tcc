@@ -3,8 +3,10 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../services/mock_data_service.dart';
 import '../../services/reports_service.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 
 /// Reports and Analytics Screen
 class ReportsScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   final mockData = MockDataService();
   final _reportsService = ReportsService();
+  final _exportService = ExportService();
   String _selectedPeriod = 'This Month';
   String _selectedReportType = 'Overview';
   bool _isLoading = false;
@@ -185,15 +188,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ),
                 const SizedBox(height: AppTheme.space12),
                 OutlinedButton.icon(
-                  onPressed: _isLoading ? null : _exportReport,
-                  icon: _isLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.download),
-                  label: Text(_isLoading ? 'Generating...' : 'Export Report'),
+                  onPressed: _showExportDialog,
+                  icon: const Icon(Icons.download),
+                  label: const Text('Export Report'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppTheme.space24,
@@ -255,15 +252,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
                     const SizedBox(width: AppTheme.space16),
                     OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _exportReport,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.download),
-                      label: Text(_isLoading ? 'Generating...' : 'Export Report'),
+                      onPressed: _showExportDialog,
+                      icon: const Icon(Icons.download),
+                      label: const Text('Export Report'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppTheme.space24,
@@ -1203,6 +1194,33 @@ class _ReportsScreenState extends State<ReportsScreen> {
   double _calculateGrowth(int newCount, int totalCount) {
     if (totalCount == 0) return 0.0;
     return ((newCount / totalCount) * 100).toDouble();
+  }
+
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export Report',
+        subtitle: 'Export $_selectedReportType report for $_selectedPeriod',
+        filters: {
+          'Report Type': _selectedReportType,
+          'Period': _selectedPeriod,
+        },
+        onExport: (format) async {
+          final dateRange = _getDateRange();
+          final response = await _exportService.exportReports(
+            format: format,
+            reportType: _selectedReportType.toLowerCase(),
+            startDate: dateRange['from'],
+            endDate: dateRange['to'],
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
+      ),
+    );
   }
 
   /// Export report based on selected type and period

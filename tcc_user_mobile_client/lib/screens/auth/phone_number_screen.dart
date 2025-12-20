@@ -35,28 +35,62 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       // Clean phone number - remove any spaces or special characters
       final cleanedPhone = _phoneController.text.replaceAll(RegExp(r'[^\d]'), '');
 
-      debugPrint('📱 PhoneNumberScreen: Preparing to send OTP');
-      debugPrint('📱 PhoneNumberScreen: firstName: ${widget.registrationData?['firstName']}');
-      debugPrint('📱 PhoneNumberScreen: lastName: ${widget.registrationData?['lastName']}');
-      debugPrint('📱 PhoneNumberScreen: phone: $cleanedPhone');
+      debugPrint('📱 PhoneNumberScreen: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('📱 PhoneNumberScreen: Starting registration process');
+      debugPrint('📱 PhoneNumberScreen: User Data:');
+      debugPrint('📱 PhoneNumberScreen:   First Name: ${widget.registrationData?['firstName']}');
+      debugPrint('📱 PhoneNumberScreen:   Last Name: ${widget.registrationData?['lastName']}');
+      debugPrint('📱 PhoneNumberScreen:   Email: ${widget.registrationData?['email']}');
+      debugPrint('📱 PhoneNumberScreen:   Phone: $cleanedPhone');
+      debugPrint('📱 PhoneNumberScreen:   Country Code: $_countryCode');
+      debugPrint('📱 PhoneNumberScreen:   Has Password: ${widget.registrationData?['password'] != null}');
+      debugPrint('📱 PhoneNumberScreen:   Referral Code: ${widget.registrationData?['referralCode'] ?? 'None'}');
+      debugPrint('📱 PhoneNumberScreen: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      // Navigate directly to OTP verification screen
-      // Registration will be completed after OTP verification
-      debugPrint('📱 PhoneNumberScreen: Navigating to OTP screen');
-      if (mounted) {
-        context.go('/otp-verification', extra: {
-          'phone': '$_countryCode $cleanedPhone',
-          'countryCode': _countryCode,
-          'registrationData': {
-            'firstName': widget.registrationData?['firstName']?.toString() ?? '',
-            'lastName': widget.registrationData?['lastName']?.toString() ?? '',
-            'email': widget.registrationData?['email']?.toString() ?? '',
-            'password': widget.registrationData?['password']?.toString() ?? '',
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
+      debugPrint('📱 PhoneNumberScreen: Calling authProvider.register()');
+      // First register the user to create the account and send OTP
+      final success = await authProvider.register(
+        firstName: widget.registrationData?['firstName']?.toString() ?? '',
+        lastName: widget.registrationData?['lastName']?.toString() ?? '',
+        email: widget.registrationData?['email']?.toString() ?? '',
+        password: widget.registrationData?['password']?.toString() ?? '',
+        phone: cleanedPhone,
+        countryCode: _countryCode,
+        referralCode: widget.registrationData?['referralCode']?.toString(),
+      );
+
+      debugPrint('📱 PhoneNumberScreen: Registration result: $success');
+      
+      if (success) {
+        debugPrint('📱 PhoneNumberScreen: ✅ Registration successful, navigating to OTP screen');
+        if (mounted) {
+          context.go('/otp-verification', extra: {
             'phone': cleanedPhone,
             'countryCode': _countryCode,
-          },
-        });
-        debugPrint('📱 PhoneNumberScreen: Navigation to OTP screen complete');
+            'displayPhone': '$_countryCode $cleanedPhone',
+            'registrationData': {
+              'firstName': widget.registrationData?['firstName']?.toString() ?? '',
+              'lastName': widget.registrationData?['lastName']?.toString() ?? '',
+              'email': widget.registrationData?['email']?.toString() ?? '',
+              'password': widget.registrationData?['password']?.toString() ?? '',
+              'phone': cleanedPhone,
+              'countryCode': _countryCode,
+            },
+          });
+        }
+      } else {
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.errorMessage ?? 'Registration failed. Please try again.'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }

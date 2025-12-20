@@ -35,9 +35,9 @@ class AppConstants {
   static const String apiDateFormat = 'yyyy-MM-dd';
 
   // ==================== Currency ====================
-  static const String currency = 'Le'; // Sierra Leonean Leone
-  static const String currencyCode = 'SLL';
-  static const String currencySymbol = 'Le';
+  static const String currency = 'TCC'; // TCC Coin
+  static const String currencyCode = 'TCC';
+  static const String currencySymbol = 'TCC';
 
   // ==================== Validation ====================
   static const int minPasswordLength = 8;

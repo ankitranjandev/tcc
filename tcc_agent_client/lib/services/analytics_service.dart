@@ -181,7 +181,7 @@ class AnalyticsService {
         'transaction_id': transactionId,
         'type': type,
         'value': amount,
-        'currency': currency ?? 'SLL' as Object,
+        'currency': currency ?? 'TCC' as Object,
         'timestamp': DateTime.now().toIso8601String(),
       },
     );
@@ -197,7 +197,7 @@ class AnalyticsService {
       parameters: {
         'transaction_id': transactionId,
         'value': amount,
-        'currency': 'SLL',
+        'currency': 'TCC',
         if (paymentMethod != null) 'payment_method': paymentMethod,
         'timestamp': DateTime.now().toIso8601String(),
       },
@@ -214,7 +214,7 @@ class AnalyticsService {
       parameters: {
         'transaction_id': transactionId,
         'value': amount,
-        'currency': 'SLL',
+        'currency': 'TCC',
         if (paymentMethod != null) 'payment_method': paymentMethod,
         'timestamp': DateTime.now().toIso8601String(),
       },
@@ -234,7 +234,7 @@ class AnalyticsService {
         'order_id': orderId,
         'order_type': orderType,
         'value': amount,
-        'currency': 'SLL',
+        'currency': 'TCC',
         'timestamp': DateTime.now().toIso8601String(),
       },
     );
@@ -253,7 +253,7 @@ class AnalyticsService {
         'order_type': orderType,
         'value': amount,
         'commission': commission,
-        'currency': 'SLL',
+        'currency': 'TCC',
         'timestamp': DateTime.now().toIso8601String(),
       },
     );
@@ -289,7 +289,7 @@ class AnalyticsService {
       parameters: {
         'bill_type': billType,
         'value': amount,
-        'currency': 'SLL',
+        'currency': 'TCC',
         if (paymentMethod != null) 'payment_method': paymentMethod,
         'timestamp': DateTime.now().toIso8601String(),
       },
@@ -308,7 +308,7 @@ class AnalyticsService {
       parameters: {
         'transaction_id': transactionId,
         'value': commission,
-        'currency': 'SLL',
+        'currency': 'TCC',
         'commission_type': commissionType,
         'timestamp': DateTime.now().toIso8601String(),
       },

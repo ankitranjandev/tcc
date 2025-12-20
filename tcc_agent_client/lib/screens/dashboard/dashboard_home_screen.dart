@@ -99,7 +99,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'SLL ${(agent?.walletBalance ?? 0).toStringAsFixed(0)}',
+                                    'TCC${(agent?.walletBalance ?? 0).toStringAsFixed(0)}',
                                     style: TextStyle(
                                       color: AppColors.white.withValues(alpha: 0.95),
                                       fontSize: 14,
@@ -222,7 +222,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'SLL ${(agent?.walletBalance ?? 0).toStringAsFixed(2)}',
+                          'TCC${(agent?.walletBalance ?? 0).toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: AppColors.white,
                             fontSize: 32,
@@ -270,7 +270,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                       child: _buildStatCard(
                         icon: Icons.trending_up,
                         title: 'Earnings',
-                        value: 'SLL $_todayEarnings',
+                        value: 'TCC$_todayEarnings',
                         color: AppColors.commissionGreen,
                       ),
                     ),

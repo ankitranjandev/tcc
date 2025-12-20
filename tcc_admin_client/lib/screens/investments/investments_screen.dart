@@ -3,10 +3,11 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/investment_model.dart';
 import '../../services/investment_service.dart';
-import '../../utils/csv_export.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 
 /// Investments Screen
 class InvestmentsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class InvestmentsScreen extends StatefulWidget {
 
 class _InvestmentsScreenState extends State<InvestmentsScreen> {
   final InvestmentService _investmentService = InvestmentService();
+  final ExportService _exportService = ExportService();
   bool _isLoading = true;
   List<InvestmentModel> _investments = [];
   String? _errorMessage;
@@ -314,7 +316,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            CsvExport.exportInvestments(_investments.map((e) => e.toJson()).toList());
+                            _showExportDialog();
                           },
                           icon: const Icon(Icons.download),
                           label: const Text('Export'),
@@ -419,7 +421,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                       // Export Button
                       OutlinedButton.icon(
                         onPressed: () {
-                          CsvExport.exportInvestments(_investments.map((e) => e.toJson()).toList());
+                          _showExportDialog();
                         },
                         icon: const Icon(Icons.download),
                         label: const Text('Export'),
@@ -803,6 +805,32 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export Investments',
+        subtitle: 'Export investment data in your preferred format',
+        filters: {
+          if (_searchQuery.isNotEmpty) 'Search': _searchQuery,
+          if (_filterCategory != 'All') 'Category': _filterCategory,
+          if (_filterStatus != 'All') 'Status': _filterStatus,
+        },
+        onExport: (format) async {
+          final response = await _exportService.exportInvestments(
+            format: format,
+            search: _searchQuery.isNotEmpty ? _searchQuery : null,
+            status: _filterStatus == 'All' ? null : _filterStatus,
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
       ),
     );
   }

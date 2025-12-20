@@ -14,6 +14,17 @@ export class AuthController {
       const { first_name, last_name, email, phone, country_code, password, role, referral_code } =
         req.body;
 
+      logger.info('📥 Registration endpoint called', {
+        email,
+        phone,
+        country_code,
+        first_name,
+        last_name,
+        hasReferralCode: !!referral_code,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
       const result = await AuthService.register({
         first_name,
         last_name,
@@ -25,13 +36,25 @@ export class AuthController {
         referral_code,
       });
 
+      logger.info('📤 Registration endpoint response', {
+        success: true,
+        userId: result.user.id,
+        email: result.user.email,
+        otpExpiresIn: result.otpExpiresIn,
+      });
+
       return ApiResponseUtil.created(res, {
         user: result.user,
         otp_sent: true,
         otp_expires_in: result.otpExpiresIn,
       }, 'Registration successful. Please verify your phone number.');
     } catch (error: any) {
-      logger.error('Register error', error);
+      logger.error('❌ Register endpoint error', { 
+        error: error.message,
+        stack: error.stack,
+        email: req.body.email,
+        phone: req.body.phone 
+      });
 
       if (error.message === 'EMAIL_ALREADY_EXISTS') {
         return ApiResponseUtil.conflict(res, 'Email already registered');
@@ -56,7 +79,24 @@ export class AuthController {
     try {
       const { phone, country_code, otp, purpose } = req.body;
 
+      logger.info('📥 OTP verification endpoint called', {
+        phone,
+        country_code,
+        otp,
+        purpose,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        timestamp: new Date().toISOString(),
+      });
+
       const result = await AuthService.verifyOTPAndLogin(phone, country_code, otp, purpose);
+
+      logger.info('📤 OTP verification endpoint response', {
+        success: true,
+        userId: result.user.id,
+        email: result.user.email,
+        purpose,
+      });
 
       return ApiResponseUtil.success(res, {
         access_token: result.accessToken,
@@ -66,7 +106,13 @@ export class AuthController {
         user: result.user,
       }, 'OTP verified successfully');
     } catch (error: any) {
-      logger.error('Verify OTP error', error);
+      logger.error('❌ Verify OTP endpoint error', {
+        error: error.message,
+        stack: error.stack,
+        phone: req.body.phone,
+        country_code: req.body.country_code,
+        purpose: req.body.purpose,
+      });
 
       if (error.message === 'INVALID_OTP' || error.message.includes('OTP')) {
         return ApiResponseUtil.badRequest(res, error.message);
@@ -91,11 +137,12 @@ export class AuthController {
       const result = await AuthService.login(loginIdentifier, password);
 
       return ApiResponseUtil.success(res, {
-        otp_sent: result.requiresOTP,
-        otp_expires_in: result.otpExpiresIn,
-        phone: result.phone,
-        message: 'OTP sent to your registered phone number',
-      });
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+        token_type: 'Bearer',
+        expires_in: result.expiresIn,
+        user: result.user,
+      }, 'Login successful');
     } catch (error: any) {
       logger.error('Login error', error);
 

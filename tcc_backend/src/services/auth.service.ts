@@ -43,41 +43,63 @@ export class AuthService {
     referral_code?: string;
   }): Promise<{ user: Partial<User>; otpExpiresIn: number }> {
     try {
+      logger.info('🚀 Registration started', {
+        email: data.email,
+        phone: data.phone,
+        country_code: data.country_code,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        hasReferralCode: !!data.referral_code,
+      });
+
       // Check if email already exists
+      logger.info('📧 Checking if email exists', { email: data.email });
       const emailExists = await db.query('SELECT id FROM users WHERE email = $1', [data.email]);
       if (emailExists.length > 0) {
+        logger.warn('❌ Email already exists', { email: data.email });
         throw new Error('EMAIL_ALREADY_EXISTS');
       }
+      logger.info('✅ Email is available', { email: data.email });
 
       // Check if phone already exists
+      logger.info('📱 Checking if phone exists', { phone: data.phone, country_code: data.country_code });
       const phoneExists = await db.query(
         'SELECT id FROM users WHERE phone = $1 AND country_code = $2',
         [data.phone, data.country_code]
       );
       if (phoneExists.length > 0) {
+        logger.warn('❌ Phone already exists', { phone: data.phone, country_code: data.country_code });
         throw new Error('PHONE_ALREADY_EXISTS');
       }
+      logger.info('✅ Phone is available', { phone: data.phone });
 
       // Verify referral code if provided
       let referredBy = null;
       if (data.referral_code) {
+        logger.info('🎟️ Verifying referral code', { referral_code: data.referral_code });
         const referrer = await db.query<User>(
           'SELECT id FROM users WHERE referral_code = $1',
           [data.referral_code]
         );
         if (referrer.length === 0) {
+          logger.warn('❌ Invalid referral code', { referral_code: data.referral_code });
           throw new Error('INVALID_REFERRAL_CODE');
         }
         referredBy = referrer[0].id;
+        logger.info('✅ Valid referral code', { referrer_id: referredBy });
       }
 
       // Hash password
+      logger.info('🔐 Hashing password');
       const passwordHash = await PasswordUtils.hash(data.password);
 
       // Generate referral code for new user
+      logger.info('🎟️ Generating referral code for new user');
       const referralCode = await this.generateReferralCode();
+      logger.info('✅ Generated referral code', { referralCode });
 
       // Create user
+      logger.info('👤 Creating user in database');
       const users = await db.query<User>(
         `INSERT INTO users (
           first_name, last_name, email, phone, country_code,
@@ -99,12 +121,20 @@ export class AuthService {
       );
 
       const user = users[0];
+      logger.info('✅ User created successfully', { 
+        userId: user.id, 
+        email: user.email,
+        phone: user.phone,
+        country_code: user.country_code 
+      });
 
       // Create wallet for user
+      logger.info('💰 Creating wallet for user', { userId: user.id });
       await db.query(
         'INSERT INTO wallets (user_id, balance, currency) VALUES ($1, 0, $2)',
         [user.id, 'SLL']
       );
+      logger.info('✅ Wallet created successfully', { userId: user.id });
 
       // Generate and send OTP
       logger.info('📤 Creating OTP for registration', {
@@ -113,12 +143,12 @@ export class AuthService {
         purpose: 'REGISTRATION'
       });
 
-      const { expiresIn } = await OTPService.createOTP(
+      const { otp, expiresIn } = await OTPService.createOTP(
         data.phone,
         data.country_code,
         'REGISTRATION'
       );
-      await OTPService.sendOTP(data.phone, data.country_code, data.phone);
+      await OTPService.sendOTP(data.phone, data.country_code, otp);
 
       logger.info('User registered', { userId: user.id, email: data.email });
 
@@ -130,13 +160,13 @@ export class AuthService {
   }
 
   /**
-   * Login user - returns OTP requirement
+   * Login user - returns tokens directly
    */
   static async login(emailOrPhone: string, password: string): Promise<{
-    requiresOTP: boolean;
-    phone?: string;
-    userId?: string;
-    otpExpiresIn?: number;
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    user: Partial<User>;
   }> {
     try {
       logger.info('Login attempt', { emailOrPhone, passwordLength: password?.length });
@@ -148,8 +178,9 @@ export class AuthService {
       let users: User[];
       if (isEmail) {
         users = await db.query<User>(
-          `SELECT id, email, phone, country_code, password_hash, is_active,
-                  locked_until, failed_login_attempts
+          `SELECT id, first_name, last_name, email, phone, country_code, password_hash,
+                  is_active, locked_until, failed_login_attempts, role, kyc_status,
+                  profile_picture_url
            FROM users WHERE email = $1`,
           [emailOrPhone]
         );
@@ -157,8 +188,9 @@ export class AuthService {
         // Assume it's a phone number - try with common country codes or require full format
         // For now, we'll try to match just the phone number without country code
         users = await db.query<User>(
-          `SELECT id, email, phone, country_code, password_hash, is_active,
-                  locked_until, failed_login_attempts
+          `SELECT id, first_name, last_name, email, phone, country_code, password_hash,
+                  is_active, locked_until, failed_login_attempts, role, kyc_status,
+                  profile_picture_url
            FROM users WHERE phone = $1`,
           [emailOrPhone]
         );
@@ -213,26 +245,37 @@ export class AuthService {
         throw new Error('INVALID_CREDENTIALS');
       }
 
-      // Reset failed attempts
+      // Reset failed attempts and update last login
       await db.query(
-        'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1',
+        'UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = $1',
         [user.id]
       );
 
-      // Generate and send OTP
-      const { expiresIn } = await OTPService.createOTP(user.phone, user.country_code, 'LOGIN');
-      await OTPService.sendOTP(user.phone, user.country_code, user.phone);
+      // Generate tokens
+      logger.info('Generating tokens', { userId: user.id });
+      const accessToken = JWTUtils.generateAccessToken(user.id, user.role, user.email);
+      const refreshTokenValue = JWTUtils.generateRefreshToken(user.id, user.role, user.email);
 
-      // Mask phone number
-      const maskedPhone = `****${user.phone.slice(-4)}`;
+      // Store refresh token
+      await this.storeRefreshToken(user.id, refreshTokenValue);
 
-      logger.info('Login OTP sent', { userId: user.id, emailOrPhone });
+      logger.info('Login successful', { userId: user.id, emailOrPhone });
 
       return {
-        requiresOTP: true,
-        phone: maskedPhone,
-        userId: user.id,
-        otpExpiresIn: expiresIn,
+        accessToken,
+        refreshToken: refreshTokenValue,
+        expiresIn: 3600, // 1 hour
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: user.phone,
+          country_code: user.country_code,
+          role: user.role,
+          kyc_status: user.kyc_status,
+          profile_picture_url: user.profile_picture_url,
+        },
       };
     } catch (error) {
       logger.error('Error in login', error);
@@ -255,14 +298,27 @@ export class AuthService {
     user: Partial<User>;
   }> {
     try {
+      logger.info('🔍 OTP Verification Started', {
+        phone,
+        countryCode,
+        otp,
+        purpose,
+        timestamp: new Date().toISOString()
+      });
+
       // Verify OTP
+      logger.info('📱 Calling OTPService.verifyOTP');
       const otpResult = await OTPService.verifyOTP(phone, countryCode, otp, purpose);
+      logger.info('📱 OTP verification result', { valid: otpResult.valid, error: otpResult.error });
 
       if (!otpResult.valid) {
+        logger.warn('❌ Invalid OTP', { phone, countryCode, purpose, error: otpResult.error });
         throw new Error(otpResult.error || 'INVALID_OTP');
       }
+      logger.info('✅ OTP verified successfully');
 
       // Get user
+      logger.info('👤 Looking up user', { phone, countryCode });
       const users = await db.query<User>(
         `SELECT id, first_name, last_name, email, phone, country_code, role,
                 kyc_status, is_active, profile_picture_url
@@ -270,19 +326,31 @@ export class AuthService {
         [phone, countryCode]
       );
 
+      logger.info('👤 User lookup result', { 
+        found: users.length > 0,
+        phone,
+        countryCode,
+        userCount: users.length 
+      });
+
       if (users.length === 0) {
+        logger.error('❌ User not found after OTP verification', { phone, countryCode, purpose });
         throw new Error('USER_NOT_FOUND');
       }
 
       const user = users[0];
+      logger.info('✅ User found', { userId: user.id, email: user.email });
 
       // Mark user as verified and active
+      logger.info('📝 Updating user verification status', { userId: user.id });
       await db.query(
         'UPDATE users SET phone_verified = true, is_verified = true, is_active = true, last_login_at = NOW() WHERE id = $1',
         [user.id]
       );
+      logger.info('✅ User marked as verified and active');
 
       // Generate tokens
+      logger.info('🔐 Generating tokens', { userId: user.id });
       const accessToken = JWTUtils.generateAccessToken(user.id, user.role, user.email);
 
       const refreshToken = JWTUtils.generateRefreshToken(user.id, user.role, user.email);
@@ -290,7 +358,13 @@ export class AuthService {
       // Store refresh token
       await this.storeRefreshToken(user.id, refreshToken);
 
-      logger.info('User logged in', { userId: user.id, email: user.email });
+      logger.info('✅ Login successful', { 
+        userId: user.id, 
+        email: user.email,
+        purpose,
+        phone: user.phone,
+        countryCode: user.country_code
+      });
 
       return {
         accessToken,

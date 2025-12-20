@@ -273,7 +273,7 @@ class _PaymentOrdersScreenState extends State<PaymentOrdersScreen> with SingleTi
 
               // Amount
               Text(
-                'SLL ${amount.toStringAsFixed(2)}',
+                'TCC${amount.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -377,7 +377,7 @@ class _PaymentOrdersScreenState extends State<PaymentOrdersScreen> with SingleTi
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'SLL ${order['commission'].toStringAsFixed(2)}',
+                          'TCC${order['commission'].toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

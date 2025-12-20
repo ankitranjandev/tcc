@@ -3,13 +3,14 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../services/user_management_service.dart';
-import '../../utils/csv_export.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
 import '../../widgets/dialogs/add_user_dialog.dart';
 import '../../widgets/dialogs/edit_user_dialog.dart';
 import '../../widgets/dialogs/view_user_dialog.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 
 /// Users List Screen
 class UsersScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class UsersScreen extends StatefulWidget {
 
 class _UsersScreenState extends State<UsersScreen> {
   final _userService = UserManagementService();
+  final _exportService = ExportService();
   List<UserModel> _users = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -93,7 +95,7 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Future<void> _toggleUserStatus(UserModel user) async {
-    final newStatus = user.status.name == 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    final newStatus = user.status.name == 'active' ? 'INACTIVE' : 'ACTIVE';
     final action = newStatus == 'ACTIVE' ? 'activate' : 'suspend';
 
     // Show confirmation dialog
@@ -181,6 +183,31 @@ class _UsersScreenState extends State<UsersScreen> {
       });
       _loadUsers();
     }
+  }
+
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export Users',
+        subtitle: 'Export user data in your preferred format',
+        filters: {
+          if (_searchQuery.isNotEmpty) 'Search': _searchQuery,
+          if (_filterStatus != 'All') 'Status': _filterStatus,
+        },
+        onExport: (format) async {
+          final response = await _exportService.exportUsers(
+            format: format,
+            search: _searchQuery.isNotEmpty ? _searchQuery : null,
+            status: _filterStatus == 'All' ? null : _filterStatus,
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -443,7 +470,7 @@ class _UsersScreenState extends State<UsersScreen> {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                CsvExport.exportUsers(users);
+                                _showExportDialog();
                               },
                               icon: const Icon(Icons.download),
                               label: const Text('Export'),
@@ -512,7 +539,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           // Export Button
                           OutlinedButton.icon(
                             onPressed: () {
-                              CsvExport.exportUsers(users);
+                              _showExportDialog();
                             },
                             icon: const Icon(Icons.download),
                             label: const Text('Export'),

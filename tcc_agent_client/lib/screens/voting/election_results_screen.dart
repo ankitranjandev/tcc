@@ -101,7 +101,7 @@ class ElectionResultsScreen extends StatelessWidget {
                       Expanded(
                         child: _buildStatCard(
                           'Revenue',
-                          'SLL ${(election.totalRevenue ?? 0).toStringAsFixed(0)}',
+                          'TCC${(election.totalRevenue ?? 0).toStringAsFixed(0)}',
                           Icons.monetization_on,
                         ),
                       ),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../services/dashboard_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/cards/stat_card.dart';
-import '../kyc/kyc_submissions_screen.dart';
 
 /// Dashboard Screen
 class DashboardScreen extends StatefulWidget {
@@ -218,12 +218,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       iconColor: AppColors.warning,
                       change: null,
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const KYCSubmissionsScreen(),
-                          ),
-                        );
+                        context.go('/kyc-submissions');
                       },
                     ),
                   ],
@@ -411,7 +406,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             count: stats['pendingKYC'] ?? 0,
             color: AppColors.warning,
             onTap: () {
-              // TODO: Navigate to KYC approvals
+              context.go('/kyc-submissions');
             },
           ),
           const Divider(),

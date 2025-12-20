@@ -268,7 +268,7 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                           _buildDetailRow(
                             icon: Icons.account_balance_wallet,
                             label: 'Current Wallet Balance',
-                            value: 'SLL ${_mockUser['wallet_balance'].toStringAsFixed(2)}',
+                            value: 'TCC${_mockUser['wallet_balance'].toStringAsFixed(2)}',
                             valueColor: AppColors.primaryOrange,
                           ),
                         ],

@@ -18,6 +18,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   final _otpController = TextEditingController();
   String _currentOTP = '';
   int _resendTimer = 22;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -27,7 +28,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
   void _startResendTimer() {
     Future.delayed(Duration(seconds: 1), () {
-      if (mounted && _resendTimer > 0) {
+      if (!_isDisposed && mounted && _resendTimer > 0) {
         setState(() {
           _resendTimer--;
         });
@@ -38,7 +39,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
   @override
   void dispose() {
-    _otpController.dispose();
+    _isDisposed = true;
     super.dispose();
   }
 
@@ -50,25 +51,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       // Extract registration data
-      final registrationData = widget.extraData?['registrationData'] as Map<String, dynamic>?;
       final phone = widget.extraData?['phone']?.toString() ?? '';
       final countryCode = widget.extraData?['countryCode']?.toString() ?? '+232';
 
-      // Parse phone number if it's in format "+232 1234567"
-      String phoneNumber = phone;
-      String dialCode = countryCode;
-      if (phone.contains(' ')) {
-        final parts = phone.split(' ');
-        if (parts.length > 1) {
-          dialCode = parts[0];
-          phoneNumber = parts.sublist(1).join(' ');
-        }
-      }
-
       // Verify OTP to complete registration and get authentication tokens
       final success = await authProvider.verifyOTP(
-        phone: phoneNumber,
-        countryCode: dialCode,
+        phone: phone,
+        countryCode: countryCode,
         otp: _currentOTP,
         purpose: 'REGISTRATION',
       );
@@ -105,21 +94,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       final phone = widget.extraData?['phone']?.toString() ?? '';
       final countryCode = widget.extraData?['countryCode']?.toString() ?? '+232';
 
-      // Parse phone number if it's in format "+232 1234567"
-      String phoneNumber = phone;
-      String dialCode = countryCode;
-      if (phone.contains(' ')) {
-        final parts = phone.split(' ');
-        if (parts.length > 1) {
-          dialCode = parts[0];
-          phoneNumber = parts.sublist(1).join(' ');
-        }
-      }
-
       // Call resend OTP API
       final success = await authProvider.resendOTP(
-        phone: phoneNumber,
-        countryCode: dialCode,
+        phone: phone,
+        countryCode: countryCode,
       );
 
       if (success) {
@@ -152,7 +130,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final phoneNumber = widget.extraData?['phone'] ?? '+232 88769 783';
+    final phoneNumber = widget.extraData?['displayPhone'] ?? widget.extraData?['phone'] ?? '+232 88769 783';
 
     return Scaffold(
       appBar: AppBar(

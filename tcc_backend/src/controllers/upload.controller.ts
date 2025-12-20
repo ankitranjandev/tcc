@@ -22,7 +22,17 @@ export class UploadController {
       }
 
       const { file_type } = req.body;
+      logger.info('Upload request received', { 
+        userId, 
+        file_type, 
+        mimetype: file.mimetype,
+        filename: file.originalname,
+        size: file.size,
+        validFileTypes: Object.values(FileType)
+      });
+      
       if (!file_type || !Object.values(FileType).includes(file_type)) {
+        logger.error('Invalid file_type', { file_type, validTypes: Object.values(FileType) });
         return ApiResponseUtil.badRequest(res, 'Invalid file_type provided');
       }
 

@@ -25,6 +25,17 @@ export class CurrencyService {
   private static readonly CACHE_TTL = parseInt(process.env.CURRENCY_RATE_CACHE_TTL || '300') * 1000; // Convert to ms
 
   /**
+   * Map TCC currency to SLL for external API compatibility
+   * External currency APIs don't recognize 'TCC' as a valid currency code
+   * @param currency - The currency code to map
+   * @returns The mapped currency code for external API calls
+   */
+  private static mapCurrencyForAPI(currency: string): string {
+    // Map TCC to SLL for external API compatibility
+    return currency === 'TCC' ? 'SLL' : currency;
+  }
+
+  /**
    * Check if cache is still valid
    */
   private static isCacheValid(): boolean {
@@ -35,11 +46,11 @@ export class CurrencyService {
 
   /**
    * Get live currency rates from API
-   * @param baseCurrency - Base currency (default: 'SLL' for Sierra Leone Leone)
+   * @param baseCurrency - Base currency (default: 'TCC' for TCC Coin)
    * @param currencies - Array of currency codes (e.g., ['USD', 'EUR', 'GBP'])
    */
   static async getLiveCurrencyRates(
-    baseCurrency: string = 'SLL',
+    baseCurrency: string = 'TCC',
     currencies: string[] = ['USD', 'EUR', 'GBP', 'NGN', 'GHS']
   ): Promise<CurrencyRateResponse> {
     try {
@@ -54,10 +65,13 @@ export class CurrencyService {
 
       logger.info(`Fetching currency rates from API: ${url}`);
 
+      // Map TCC to SLL for external API compatibility
+      const apiBaseCurrency = this.mapCurrencyForAPI(baseCurrency);
+
       const response = await axios.get<CurrencyRateResponse>(url, {
         params: {
           apikey: this.API_KEY,
-          base_currency: baseCurrency,
+          base_currency: apiBaseCurrency,
           currencies: currencies.join(','),
         },
         timeout: 10000, // 10 second timeout
@@ -158,9 +172,9 @@ export class CurrencyService {
 
   /**
    * Get formatted currency rates for mobile app display
-   * Returns rates for common currency pairs with SLL
+   * Returns rates for common currency pairs with TCC
    */
-  static async getFormattedCurrencyRates(baseCurrency: string = 'SLL'): Promise<{
+  static async getFormattedCurrencyRates(baseCurrency: string = 'TCC'): Promise<{
     base: string;
     rates: {
       [key: string]: {

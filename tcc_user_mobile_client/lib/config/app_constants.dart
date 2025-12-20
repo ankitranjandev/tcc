@@ -126,6 +126,6 @@ class AppConstants {
   static const String apiDateTimeFormat = 'yyyy-MM-ddTHH:mm:ss.SSSZ';
 
   // Currency
-  static const String currencySymbol = 'Le';
-  static const String currencyCode = 'SLL';
+  static const String currencySymbol = 'TCC';
+  static const String currencyCode = 'TCC';
 }

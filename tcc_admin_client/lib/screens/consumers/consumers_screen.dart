@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/consumer_model.dart';
 import '../../services/consumer_service.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 
 /// Consumers List Screen
 /// Displays all consumers from TCC user mobile app
@@ -18,6 +22,9 @@ class ConsumersScreen extends StatefulWidget {
 
 class _ConsumersScreenState extends State<ConsumersScreen> {
   final _consumerService = ConsumerService();
+  final _exportService = ExportService();
+  final _searchController = TextEditingController();
+  Timer? _searchDebounceTimer;
   List<ConsumerModel> _consumers = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -35,6 +42,13 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
     _loadConsumers();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchDebounceTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadConsumers() async {
     setState(() {
       _isLoading = true;
@@ -46,7 +60,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
       limit: _pageSize,
       search: _searchQuery.isNotEmpty ? _searchQuery : null,
       isActive: _filterStatus == 'All' ? null : _filterStatus == 'active',
-      kycStatus: _filterKycStatus == 'All' ? null : _filterKycStatus,
+      kycStatus: _filterKycStatus == 'All' ? null : _filterKycStatus.toUpperCase(),
     );
 
     if (response.success && response.data != null) {
@@ -132,11 +146,14 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
   }
 
   void _onSearchChanged(String value) {
-    setState(() {
-      _searchQuery = value;
-      _currentPage = 1;
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = value;
+        _currentPage = 1;
+      });
+      _loadConsumers();
     });
-    _loadConsumers();
   }
 
   void _onStatusFilterChanged(String? value) {
@@ -175,6 +192,34 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
       });
       _loadConsumers();
     }
+  }
+
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export Consumers',
+        subtitle: 'Export consumer data in your preferred format',
+        filters: {
+          if (_searchQuery.isNotEmpty) 'Search': _searchQuery,
+          if (_filterStatus != 'All') 'Status': _filterStatus,
+          if (_filterKycStatus != 'All') 'KYC Status': _filterKycStatus,
+        },
+        onExport: (format) async {
+          final response = await _exportService.exportUsers(
+            format: format,
+            search: _searchQuery.isNotEmpty ? _searchQuery : null,
+            role: 'USER',
+            status: _filterStatus == 'All' ? null : _filterStatus.toUpperCase(),
+            kycStatus: _filterKycStatus == 'All' ? null : _filterKycStatus.toUpperCase(),
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -351,6 +396,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                         children: [
                           // Search Bar
                           TextField(
+                            controller: _searchController,
                             onChanged: _onSearchChanged,
                             decoration: InputDecoration(
                               hintText: 'Search by name, email, or phone...',
@@ -421,7 +467,11 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                                 .map(
                                   (status) => DropdownMenuItem(
                                     value: status,
-                                    child: Text(status),
+                                    child: Text(
+                                      status == 'All' 
+                                        ? 'All' 
+                                        : status[0].toUpperCase() + status.substring(1),
+                                    ),
                                   ),
                                 )
                                 .toList(),
@@ -460,7 +510,11 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                                       (status) => DropdownMenuItem(
                                         value: status,
                                         child: Text(
-                                          status == 'All' ? 'All' : status,
+                                          status == 'All' 
+                                            ? 'All' 
+                                            : status == 'underReview' 
+                                              ? 'Under Review' 
+                                              : status[0].toUpperCase() + status.substring(1),
                                         ),
                                       ),
                                     )
@@ -474,12 +528,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                // Export functionality would go here
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Export feature coming soon'),
-                                  ),
-                                );
+                                _showExportDialog();
                               },
                               icon: const Icon(Icons.download),
                               label: const Text('Export'),
@@ -501,6 +550,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                           Expanded(
                             flex: 2,
                             child: TextField(
+                              controller: _searchController,
                               onChanged: _onSearchChanged,
                               decoration: InputDecoration(
                                 hintText: 'Search by name, email, or phone...',
@@ -558,7 +608,11 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                                   .map(
                                     (status) => DropdownMenuItem(
                                       value: status,
-                                      child: Text(status),
+                                      child: Text(
+                                        status == 'All' 
+                                          ? 'All' 
+                                          : status[0].toUpperCase() + status.substring(1),
+                                      ),
                                     ),
                                   )
                                   .toList(),
@@ -593,7 +647,11 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                                         (status) => DropdownMenuItem(
                                           value: status,
                                           child: Text(
-                                            status == 'All' ? 'All' : status,
+                                            status == 'All' 
+                                              ? 'All' 
+                                              : status == 'underReview' 
+                                                ? 'Under Review' 
+                                                : status[0].toUpperCase() + status.substring(1),
                                           ),
                                         ),
                                       )
@@ -606,11 +664,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                           // Export Button
                           OutlinedButton.icon(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Export feature coming soon'),
-                                ),
-                              );
+                              _showExportDialog();
                             },
                             icon: const Icon(Icons.download),
                             label: const Text('Export'),
@@ -847,10 +901,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                                           ),
                                           onPressed: () {
                                             // Navigate to KYC review for this specific consumer
-                                            Navigator.pushNamed(
-                                              context,
-                                              '/kyc-submissions',
-                                            );
+                                            context.go('/kyc-submissions');
                                           },
                                           tooltip: 'Review KYC',
                                         ),

@@ -145,20 +145,20 @@ class _TransactionConfirmationScreenState extends State<TransactionConfirmationS
                           const SizedBox(height: 16),
                           _buildDetailRow(
                             'Cash Received',
-                            'SLL ${_amount.toStringAsFixed(2)}',
+                            'TCC${_amount.toStringAsFixed(2)}',
                             isHighlighted: true,
                           ),
                           const SizedBox(height: 12),
                           _buildDetailRow(
                             'User Receives',
-                            'SLL ${_userReceives.toStringAsFixed(2)}',
+                            'TCC${_userReceives.toStringAsFixed(2)}',
                           ),
                           const SizedBox(height: 12),
                           Divider(color: AppColors.borderLight),
                           const SizedBox(height: 12),
                           _buildDetailRow(
                             'Your Commission ($_commissionRate%)',
-                            'SLL ${_commission.toStringAsFixed(2)}',
+                            'TCC${_commission.toStringAsFixed(2)}',
                             valueColor: AppColors.commissionGreen,
                           ),
                         ],

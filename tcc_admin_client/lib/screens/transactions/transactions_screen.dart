@@ -3,10 +3,11 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/transaction_model.dart';
 import '../../services/transaction_service.dart';
-import '../../utils/csv_export.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 
 /// Transactions List Screen
 class TransactionsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   final _transactionService = TransactionService();
+  final _exportService = ExportService();
   List<TransactionModel> _transactions = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -108,6 +110,33 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       });
       _loadTransactions();
     }
+  }
+
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export Transactions',
+        subtitle: 'Export transaction data in your preferred format',
+        filters: {
+          if (_searchQuery.isNotEmpty) 'Search': _searchQuery,
+          if (_filterType != 'All') 'Type': _filterType,
+          if (_filterStatus != 'All') 'Status': _filterStatus,
+        },
+        onExport: (format) async {
+          final response = await _exportService.exportTransactions(
+            format: format,
+            search: _searchQuery.isNotEmpty ? _searchQuery : null,
+            type: _filterType == 'All' ? null : _filterType,
+            status: _filterStatus == 'All' ? null : _filterStatus,
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
+      ),
+    );
   }
 
   String _convertEnumToUpperSnakeCase(String enumName) {
@@ -215,7 +244,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 const SizedBox(height: AppTheme.space8),
                 ElevatedButton.icon(
                   onPressed: () {
-                    CsvExport.exportTransactions(transactions);
+                    _showExportDialog();
                   },
                   icon: const Icon(Icons.download),
                   label: const Text('Export Report'),
@@ -266,7 +295,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     const SizedBox(width: AppTheme.space12),
                     ElevatedButton.icon(
                       onPressed: () {
-                        CsvExport.exportTransactions(transactions);
+                        _showExportDialog();
                       },
                       icon: const Icon(Icons.download),
                       label: const Text('Export Report'),

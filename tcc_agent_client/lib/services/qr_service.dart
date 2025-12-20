@@ -185,7 +185,7 @@ class QRService {
       data: orderId,
       metadata: {
         'amount': amount,
-        'currency': 'SLL',
+        'currency': 'TCC',
         'description': description,
         'timestamp': DateTime.now().toIso8601String(),
       },

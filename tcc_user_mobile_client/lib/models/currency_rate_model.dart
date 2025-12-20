@@ -37,8 +37,8 @@ class CurrencyRate {
         return 'Nigerian Naira';
       case 'GHS':
         return 'Ghanaian Cedi';
-      case 'SLL':
-        return 'Sierra Leonean Leone';
+      case 'TCC':
+        return 'TCC Coin';
       default:
         return code;
     }
@@ -56,8 +56,8 @@ class CurrencyRate {
         return '₦';
       case 'GHS':
         return '₵';
-      case 'SLL':
-        return 'Le';
+      case 'TCC':
+        return 'TCC';
       default:
         return code;
     }
@@ -86,7 +86,7 @@ class CurrencyRatesResponse {
     });
 
     return CurrencyRatesResponse(
-      base: json['base'] ?? 'SLL',
+      base: json['base'] ?? 'TCC',
       rates: ratesMap,
       timestamp: json['timestamp'] ?? 0,
     );

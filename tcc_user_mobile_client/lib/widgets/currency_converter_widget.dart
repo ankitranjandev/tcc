@@ -15,7 +15,7 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
   final CurrencyService _currencyService = CurrencyService();
   final TextEditingController _amountController = TextEditingController(text: '1000');
 
-  String _fromCurrency = 'SLL';
+  String _fromCurrency = 'TCC';
   String _toCurrency = 'USD';
   double? _convertedAmount;
   double? _exchangeRate;
@@ -23,7 +23,7 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
   String? _errorMessage;
 
   final List<Map<String, String>> _currencies = [
-    {'code': 'SLL', 'name': 'Leone', 'symbol': 'Le'},
+    {'code': 'TCC', 'name': 'TCC Coin', 'symbol': 'TCC'},
     {'code': 'USD', 'name': 'US Dollar', 'symbol': '\$'},
     {'code': 'EUR', 'name': 'Euro', 'symbol': '€'},
     {'code': 'GBP', 'name': 'British Pound', 'symbol': '£'},

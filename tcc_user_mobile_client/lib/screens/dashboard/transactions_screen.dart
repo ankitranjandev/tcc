@@ -203,7 +203,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
   Widget _buildTransactionCard(TransactionModel transaction) {
     final isCredit = transaction.isCredit;
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
 
     return Card(
       child: InkWell(
@@ -475,7 +475,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                               child: TextField(
                                 decoration: InputDecoration(
                                   labelText: 'Min Amount',
-                                  prefixText: 'Le ',
+                                  prefixText: 'TCC',
                                   border: OutlineInputBorder(),
                                 ),
                                 keyboardType: TextInputType.number,
@@ -491,7 +491,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                               child: TextField(
                                 decoration: InputDecoration(
                                   labelText: 'Max Amount',
-                                  prefixText: 'Le ',
+                                  prefixText: 'TCC',
                                   border: OutlineInputBorder(),
                                 ),
                                 keyboardType: TextInputType.number,

@@ -265,7 +265,7 @@ class DatabaseService {
       'id': transaction['id'],
       'type': transaction['type'],
       'amount': transaction['amount'],
-      'currency': transaction['currency'] ?? 'SLL',
+      'currency': transaction['currency'] ?? 'TCC',
       'status': transaction['status'],
       'customer_name': transaction['customer_name'],
       'customer_phone': transaction['customer_phone'],

@@ -122,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
                   Expanded(
                     child: _buildStatCard(
                       'Wallet',
-                      'SLL 2,500,000',
+                      'TCC2,500,000',
                       Icons.account_balance_wallet,
                       AppColors.primaryOrange,
                     ),
@@ -131,7 +131,7 @@ class ProfileScreen extends StatelessWidget {
                   Expanded(
                     child: _buildStatCard(
                       'Commission',
-                      'SLL 125,000',
+                      'TCC125,000',
                       Icons.trending_up,
                       AppColors.commissionGreen,
                     ),

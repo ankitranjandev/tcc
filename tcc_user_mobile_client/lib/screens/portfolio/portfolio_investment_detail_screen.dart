@@ -29,7 +29,7 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
     final dateFormat = DateFormat('MMM dd, yyyy');
     final profit = investment.expectedReturn - investment.amount;
     final profitPercentage = (profit / investment.amount) * 100;

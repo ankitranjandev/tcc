@@ -103,6 +103,74 @@ class MoreScreen extends StatelessWidget {
                 ),
               ),
 
+              // KYC Status Banner
+              if (user != null && !user.isKycApproved) ...[
+                SizedBox(height: 24),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: InkWell(
+                    onTap: () => context.go('/kyc-verification'),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _getKycBannerColor(user.kycStatus).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _getKycBannerColor(user.kycStatus).withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: _getKycBannerColor(user.kycStatus).withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getKycIcon(user.kycStatus),
+                              color: _getKycBannerColor(user.kycStatus),
+                              size: 24,
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getKycTitle(user.kycStatus),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getKycBannerColor(user.kycStatus),
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  _getKycMessage(user.kycStatus),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context).textTheme.bodySmall?.color,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
               SizedBox(height: 32),
               Divider(),
               SizedBox(height: 16),
@@ -392,5 +460,49 @@ class MoreScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static Color _getKycBannerColor(String kycStatus) {
+    switch (kycStatus.toUpperCase()) {
+      case 'PENDING':
+        return AppColors.warning;
+      case 'REJECTED':
+        return AppColors.error;
+      default:
+        return AppColors.primaryBlue;
+    }
+  }
+
+  static IconData _getKycIcon(String kycStatus) {
+    switch (kycStatus.toUpperCase()) {
+      case 'PENDING':
+        return Icons.access_time;
+      case 'REJECTED':
+        return Icons.error_outline;
+      default:
+        return Icons.verified_user_outlined;
+    }
+  }
+
+  static String _getKycTitle(String kycStatus) {
+    switch (kycStatus.toUpperCase()) {
+      case 'PENDING':
+        return 'KYC Verification Pending';
+      case 'REJECTED':
+        return 'KYC Verification Failed';
+      default:
+        return 'Complete KYC Verification';
+    }
+  }
+
+  static String _getKycMessage(String kycStatus) {
+    switch (kycStatus.toUpperCase()) {
+      case 'PENDING':
+        return 'Your documents are being reviewed';
+      case 'REJECTED':
+        return 'Please resubmit your documents';
+      default:
+        return 'Verify your identity to access all features';
+    }
   }
 }

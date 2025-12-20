@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/app_constants.dart';
 
@@ -277,8 +278,26 @@ class ApiService {
         developer.log('📤 ApiService: Added Authorization header', name: 'ApiService');
       }
 
-      // Add file
-      final file = await http.MultipartFile.fromPath(fieldName, filePath);
+      // Add file with proper MIME type
+      // Determine MIME type based on file extension
+      String mimeType = 'application/octet-stream';
+      final extension = filePath.split('.').last.toLowerCase();
+      
+      if (extension == 'jpg' || extension == 'jpeg') {
+        mimeType = 'image/jpeg';
+      } else if (extension == 'png') {
+        mimeType = 'image/png';
+      } else if (extension == 'pdf') {
+        mimeType = 'application/pdf';
+      }
+      
+      developer.log('📤 ApiService: File extension: $extension, MIME type: $mimeType', name: 'ApiService');
+      
+      final file = await http.MultipartFile.fromPath(
+        fieldName, 
+        filePath,
+        contentType: http_parser.MediaType.parse(mimeType),
+      );
       request.files.add(file);
       developer.log('📤 ApiService: Added file: ${file.filename} (${file.length} bytes)', name: 'ApiService');
 
@@ -362,12 +381,10 @@ class ApiService {
         developer.log('⚠️ ApiService: Could not parse 401 error body: $e', name: 'ApiService');
       }
 
-      // Only clear tokens if this is for an authenticated request
-      // Don't clear tokens on login failure
-      if (_token != null) {
-        developer.log('⚠️ ApiService: Clearing tokens due to 401', name: 'ApiService');
-        clearTokens();
-      }
+      // Note: We no longer clear tokens here automatically.
+      // The calling code (AuthProvider) should handle logout/token clearing
+      // This prevents cascading auth failures from a single 401.
+      developer.log('⚠️ ApiService: 401 received, token status: ${_token != null ? "present" : "absent"}', name: 'ApiService');
 
       throw UnauthorizedException(errorMessage);
     } else if (response.statusCode == 403) {

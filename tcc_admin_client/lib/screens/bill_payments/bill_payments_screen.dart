@@ -3,10 +3,11 @@ import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/bill_payment_model.dart';
 import '../../services/bill_payment_service.dart';
-import '../../utils/csv_export.dart';
+import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
+import '../../widgets/dialogs/export_dialog.dart';
 
 /// Bill Payments Screen
 class BillPaymentsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class BillPaymentsScreen extends StatefulWidget {
 
 class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
   final BillPaymentService _billPaymentService = BillPaymentService();
+  final ExportService _exportService = ExportService();
   String _searchQuery = '';
   String _filterService = 'All';
   String _filterStatus = 'All';
@@ -84,6 +86,33 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
   }
 
   // Calculate service statistics from bill payments
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        title: 'Export Bill Payments',
+        subtitle: 'Export bill payment data in your preferred format',
+        filters: {
+          if (_searchQuery.isNotEmpty) 'Search': _searchQuery,
+          if (_filterService != 'All') 'Service': _filterService,
+          if (_filterStatus != 'All') 'Status': _filterStatus,
+        },
+        onExport: (format) async {
+          final response = await _exportService.exportBillPayments(
+            format: format,
+            search: _searchQuery.isNotEmpty ? _searchQuery : null,
+            status: _filterStatus == 'All' ? null : _filterStatus,
+            billerId: _filterService == 'All' ? null : _filterService,
+          );
+          
+          if (!response.success) {
+            throw Exception(response.message ?? 'Export failed');
+          }
+        },
+      ),
+    );
+  }
+
   Map<String, int> _getServiceStats() {
     final stats = <String, int>{
       'Electricity': 0,
@@ -182,7 +211,7 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
                 const SizedBox(height: AppTheme.space8),
                 ElevatedButton.icon(
                   onPressed: () {
-                    CsvExport.exportTransactions(billPayments);
+                    _showExportDialog();
                   },
                   icon: const Icon(Icons.download),
                   label: const Text('Export Report'),
@@ -233,7 +262,7 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
                     const SizedBox(width: AppTheme.space12),
                     ElevatedButton.icon(
                       onPressed: () {
-                        CsvExport.exportTransactions(billPayments);
+                        _showExportDialog();
                       },
                       icon: const Icon(Icons.download),
                       label: const Text('Export Report'),
@@ -458,7 +487,7 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            CsvExport.exportTransactions(billPayments);
+                            _showExportDialog();
                           },
                           icon: const Icon(Icons.download),
                           label: const Text('Export'),
@@ -570,7 +599,7 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
                       // Export Button
                       OutlinedButton.icon(
                         onPressed: () {
-                          CsvExport.exportTransactions(billPayments);
+                          _showExportDialog();
                         },
                         icon: const Icon(Icons.download),
                         label: const Text('Export'),

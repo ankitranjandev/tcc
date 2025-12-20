@@ -68,6 +68,22 @@ class App {
     // Request logging middleware
     this.app.use((req, res, next) => {
       const start = Date.now();
+      
+      // Log request details for debugging uploads
+      if (req.path.includes('upload') || (req.method === 'POST' && req.path === '/')) {
+        logger.info('Incoming request details', {
+          method: req.method,
+          originalUrl: req.originalUrl,
+          path: req.path,
+          baseUrl: req.baseUrl,
+          url: req.url,
+          headers: {
+            'content-type': req.headers['content-type'],
+            'authorization': req.headers['authorization'] ? 'Bearer ***' : 'None'
+          }
+        });
+      }
+      
       res.on('finish', () => {
         const duration = Date.now() - start;
         logger.info('HTTP Request', {
@@ -178,7 +194,7 @@ class App {
     // Upload routes
     const uploadRoutes = await import('./routes/upload.routes');
     this.app.use(`${apiPrefix}/uploads`, uploadRoutes.default);
-    logger.info('Upload routes registered');
+    logger.info('Upload routes registered at', { path: `${apiPrefix}/uploads` });
 
     // Bank account routes
     const bankAccountRoutes = await import('./routes/bank-account.routes');

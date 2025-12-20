@@ -147,7 +147,7 @@ class _CommissionDashboardScreenState extends State<CommissionDashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'SLL ${currentStats['earnings'].toStringAsFixed(2)}',
+                    'TCC${currentStats['earnings'].toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 36,
@@ -184,7 +184,7 @@ class _CommissionDashboardScreenState extends State<CommissionDashboardScreen> {
                   Expanded(
                     child: _buildStatCard(
                       'Avg/Transaction',
-                      'SLL ${(currentStats['earnings'] / currentStats['transactions']).toStringAsFixed(0)}',
+                      'TCC${(currentStats['earnings'] / currentStats['transactions']).toStringAsFixed(0)}',
                       Icons.calculate,
                       AppColors.infoBlue,
                     ),
@@ -429,7 +429,7 @@ class _CommissionDashboardScreenState extends State<CommissionDashboardScreen> {
                         ),
                       ),
                       Text(
-                        'SLL ${commission['amount'].toStringAsFixed(2)}',
+                        'TCC${commission['amount'].toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

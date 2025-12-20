@@ -396,7 +396,7 @@ class _BillPaymentFormScreenState extends State<BillPaymentFormScreen> {
             _buildConfirmRow('Name:', _billNameController.text),
             _buildConfirmRow(
               'Amount:',
-              'SLL ${_amountController.text}',
+              'TCC${_amountController.text}',
               isAmount: true,
             ),
             _buildConfirmRow('Payment Method:', _getPaymentMethodLabel()),

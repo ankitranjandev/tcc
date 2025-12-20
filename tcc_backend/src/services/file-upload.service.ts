@@ -108,9 +108,9 @@ class FileUploadService {
   }
 
   /**
-   * Validate file type
+   * Get allowed MIME types for a file type
    */
-  public validateFileType(mimeType: string, fileType: FileType): boolean {
+  private getAllowedTypes(fileType: FileType): string[] {
     const allowedTypes: Record<FileType, string[]> = {
       [FileType.KYC_DOCUMENT]: [
         'image/jpeg',
@@ -135,8 +135,44 @@ class FileUploadService {
         'image/png',
       ],
     };
+    
+    return allowedTypes[fileType] || [];
+  }
 
-    return allowedTypes[fileType]?.includes(mimeType) || false;
+  /**
+   * Get MIME type from file extension as fallback
+   */
+  private getMimeTypeFromExtension(filename: string): string | null {
+    const ext = path.extname(filename).toLowerCase();
+    const mimeMap: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.pdf': 'application/pdf',
+    };
+    return mimeMap[ext] || null;
+  }
+
+  /**
+   * Validate file type
+   */
+  public validateFileType(mimeType: string, fileType: FileType, filename?: string): boolean {
+    const allowedTypes = this.getAllowedTypes(fileType);
+    
+    // Direct match
+    if (allowedTypes.includes(mimeType)) {
+      return true;
+    }
+    
+    // If MIME type is application/octet-stream, try to determine from file extension
+    if (mimeType === 'application/octet-stream' && filename) {
+      const detectedMimeType = this.getMimeTypeFromExtension(filename);
+      if (detectedMimeType && allowedTypes.includes(detectedMimeType)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -163,7 +199,16 @@ class FileUploadService {
   ): Promise<UploadedFile> {
     try {
       // Validate file
-      if (!this.validateFileType(file.mimetype, fileType)) {
+      console.log('File save validation:', {
+        mimetype: file.mimetype,
+        filename: file.originalname,
+        fileType,
+        allowedTypes: this.getAllowedTypes(fileType),
+        isValid: this.validateFileType(file.mimetype, fileType, file.originalname)
+      });
+      
+      if (!this.validateFileType(file.mimetype, fileType, file.originalname)) {
+        console.error('File save error:', new Error('Invalid file type'));
         throw new Error('Invalid file type');
       }
 

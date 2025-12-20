@@ -14,7 +14,7 @@ class SendGiftScreen extends StatefulWidget {
 }
 
 class _SendGiftScreenState extends State<SendGiftScreen> {
-  final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+  final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
 
   String _sendVia = 'TCC ID';
   final _amountController = TextEditingController();
@@ -142,7 +142,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                     hintText: 'Enter amount',
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    prefixText: 'Le ',
+                    prefixText: 'TCC',
                     prefixStyle: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -233,7 +233,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                       SizedBox(height: 8),
                       _buildSummaryRow(
                         'Amount',
-                        'Le ${_amountController.text}',
+                        'TCC${_amountController.text}',
                         highlight: true,
                       ),
                     ],
@@ -330,7 +330,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
       },
       child: Chip(
         label: Text(
-          'Le $amount',
+          'TCC$amount',
           style: TextStyle(
             color: isSelected ? AppColors.white : AppColors.primaryBlue,
             fontSize: 13,
@@ -466,7 +466,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             SizedBox(height: 16),
             _buildSummaryRow('Recipient', _recipientController.text),
             SizedBox(height: 8),
-            _buildSummaryRow('Amount', 'Le ${amount.toStringAsFixed(2)}', highlight: true),
+            _buildSummaryRow('Amount', 'TCC${amount.toStringAsFixed(2)}', highlight: true),
             if (_messageController.text.isNotEmpty) ...[
               SizedBox(height: 8),
               _buildSummaryRow('Message', _messageController.text),
@@ -646,8 +646,10 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
 
       if (result['success'] == true) {
         // Reload user profile to update wallet balance
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        await authProvider.loadUserProfile();
+        if (mounted) {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          await authProvider.loadUserProfile();
+        }
 
         if (mounted) {
           _showSuccessDialog(amount);

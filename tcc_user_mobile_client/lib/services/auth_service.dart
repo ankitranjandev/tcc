@@ -28,7 +28,10 @@ class AuthService {
     String? otp,
   }) async {
     try {
-      developer.log('📤 AuthService: Registration request for email: $email, with OTP: ${otp != null}', name: 'AuthService');
+      developer.log('📤 AuthService: Registration request started', name: 'AuthService');
+      developer.log('📤 AuthService: User details - Email: $email, Phone: $phone, CountryCode: $countryCode', name: 'AuthService');
+      developer.log('📤 AuthService: Name: $firstName $lastName', name: 'AuthService');
+      developer.log('📤 AuthService: Has referral code: ${referralCode != null}, Has OTP: ${otp != null}', name: 'AuthService');
 
       final body = {
         'first_name': firstName,
@@ -41,13 +44,15 @@ class AuthService {
 
       if (referralCode != null && referralCode.isNotEmpty) {
         body['referral_code'] = referralCode;
+        developer.log('📤 AuthService: Added referral code to request', name: 'AuthService');
       }
 
       if (otp != null && otp.isNotEmpty) {
         body['otp'] = otp;
+        developer.log('📤 AuthService: Added OTP to request', name: 'AuthService');
       }
 
-      developer.log('📤 AuthService: Sending registration data', name: 'AuthService');
+      developer.log('📤 AuthService: Sending POST request to /auth/register', name: 'AuthService');
 
       final response = await _apiService.post(
         '/auth/register',
@@ -84,7 +89,9 @@ class AuthService {
     required String purpose, // REGISTRATION, LOGIN, PHONE_CHANGE, PASSWORD_RESET
   }) async {
     try {
-      developer.log('📤 AuthService: OTP verification request for phone: $phone', name: 'AuthService');
+      developer.log('📤 AuthService: OTP verification started', name: 'AuthService');
+      developer.log('📤 AuthService: Phone: $phone, CountryCode: $countryCode', name: 'AuthService');
+      developer.log('📤 AuthService: Purpose: $purpose, OTP: $otp', name: 'AuthService');
       final response = await _apiService.post(
         '/auth/verify-otp',
         body: {

@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../notifications/notification_screen.dart';
 import '../bill_payment/bill_provider_screen.dart';
+import '../../widgets/kyc_guard.dart';
 
 class PayScreen extends StatelessWidget {
   const PayScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Padding(
+    return KycGuard(
+      customMessage: 'Complete your KYC verification to pay bills and make transactions.',
+      child: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Padding(
                 padding: EdgeInsets.all(24),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -157,6 +160,7 @@ class PayScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

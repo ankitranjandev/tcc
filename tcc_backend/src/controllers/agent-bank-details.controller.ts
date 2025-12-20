@@ -1,12 +1,13 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AgentBankDetailsService, BankDetailsSubmission } from '../services/agent-bank-details.service';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
+import { AuthRequest } from '../types';
 
 export class AgentBankDetailsController {
   /**
    * Submit or update bank details for an agent
    */
-  static async submitBankDetails(req: Request, res: Response) {
+  static async submitBankDetails(req: AuthRequest, res: Response) {
     try {
       const agentId = req.params.agentId || req.user?.agentId;
 
@@ -69,7 +70,7 @@ export class AgentBankDetailsController {
   /**
    * Get bank details for an agent
    */
-  static async getBankDetails(req: Request, res: Response) {
+  static async getBankDetails(req: AuthRequest, res: Response) {
     try {
       const agentId = req.params.agentId || req.user?.agentId;
 
@@ -105,7 +106,7 @@ export class AgentBankDetailsController {
   /**
    * Admin: Get all bank details for review
    */
-  static async getAllBankDetailsForAdmin(req: Request, res: Response) {
+  static async getAllBankDetailsForAdmin(req: AuthRequest, res: Response) {
     try {
       // Check if user is admin
       if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
@@ -142,7 +143,7 @@ export class AgentBankDetailsController {
   /**
    * Admin: Verify bank details
    */
-  static async verifyBankDetails(req: Request, res: Response) {
+  static async verifyBankDetails(req: AuthRequest, res: Response) {
     try {
       // Check if user is admin
       if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
@@ -195,7 +196,7 @@ export class AgentBankDetailsController {
   /**
    * Delete bank details
    */
-  static async deleteBankDetails(req: Request, res: Response) {
+  static async deleteBankDetails(req: AuthRequest, res: Response) {
     try {
       const { bankDetailsId } = req.params;
       const agentId = req.user?.agentId;

@@ -165,7 +165,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'SLL ${_calculateTotalCommission().toStringAsFixed(0)}',
+                        'TCC${_calculateTotalCommission().toStringAsFixed(0)}',
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 20,
@@ -312,7 +312,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         ),
                       ),
                       Text(
-                        'SLL ${amount.toStringAsFixed(0)}',
+                        'TCC${amount.toStringAsFixed(0)}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

@@ -12,6 +12,7 @@ import '../screens/bill_payments/bill_payments_screen.dart';
 import '../screens/voting/voting_screen.dart';
 import '../screens/reports/reports_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/kyc/kyc_submissions_screen.dart';
 import '../screens/layout/main_layout.dart';
 import '../services/navigation_service.dart';
 
@@ -148,6 +149,16 @@ class AppRouter {
         builder: (context, state) => MainLayout(
           currentRoute: state.matchedLocation,
           child: const SettingsScreen(),
+        ),
+      ),
+
+      // KYC Submissions Route
+      GoRoute(
+        path: '/kyc-submissions',
+        name: 'kyc-submissions',
+        builder: (context, state) => MainLayout(
+          currentRoute: state.matchedLocation,
+          child: const KYCSubmissionsScreen(),
         ),
       ),
     ],

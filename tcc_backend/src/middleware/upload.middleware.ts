@@ -52,7 +52,7 @@ export const validateUpload = (allowedFileType: FileType) => {
       }
 
       // Validate file type
-      if (!fileUploadService.validateFileType(file.mimetype, allowedFileType)) {
+      if (!fileUploadService.validateFileType(file.mimetype, allowedFileType, file.originalname)) {
         return res.status(400).json({
           success: false,
           error: {
@@ -107,7 +107,7 @@ export const validateMultipleUploads = (allowedFileType: FileType) => {
 
       // Validate each file
       for (const file of files) {
-        if (!fileUploadService.validateFileType(file.mimetype, allowedFileType)) {
+        if (!fileUploadService.validateFileType(file.mimetype, allowedFileType, file.originalname)) {
           return res.status(400).json({
             success: false,
             error: {

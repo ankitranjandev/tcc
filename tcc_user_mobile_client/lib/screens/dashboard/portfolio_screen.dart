@@ -11,7 +11,8 @@ class PortfolioScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final mockService = MockDataService();
     final investments = mockService.userInvestments;
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
+    final tccFormat = NumberFormat.currency(symbol: 'TCC ', decimalDigits: 2);
 
     final totalInvested = investments.fold<double>(
       0,
@@ -53,7 +54,7 @@ class PortfolioScreen extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              currencyFormat.format(totalInvested),
+                              tccFormat.format(totalInvested),
                               style: TextStyle(
                                 color: AppColors.white,
                                 fontSize: 24,
@@ -81,7 +82,7 @@ class PortfolioScreen extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerRight,
                             child: Text(
-                              currencyFormat.format(totalExpectedReturn),
+                              tccFormat.format(totalExpectedReturn),
                               style: TextStyle(
                                 color: AppColors.white,
                                 fontSize: 24,

@@ -37,7 +37,7 @@ class TransactionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
     final dateFormat = DateFormat('MMMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
@@ -458,7 +458,7 @@ class TransactionDetailScreen extends StatelessWidget {
   }
 
   Future<void> _shareTransactionReceipt(BuildContext context) async {
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
     final dateFormat = DateFormat('MMMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 

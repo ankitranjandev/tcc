@@ -20,17 +20,23 @@ class UserModel {
   });
 
   String get fullName => '$firstName $lastName';
+  
+  // KYC Status helpers
+  bool get isKycApproved => kycStatus.toUpperCase() == 'APPROVED';
+  bool get isKycPending => kycStatus.toUpperCase() == 'PENDING';
+  bool get isKycRejected => kycStatus.toUpperCase() == 'REJECTED';
+  bool get canMakeTransactions => isKycApproved;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
+      firstName: json['first_name'] ?? json['firstName'] ?? '',
+      lastName: json['last_name'] ?? json['lastName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
-      profilePicture: json['profilePicture'],
+      profilePicture: json['profile_picture_url'] ?? json['profilePicture'],
       walletBalance: (json['walletBalance'] ?? 0).toDouble(),
-      kycStatus: json['kycStatus'] ?? 'PENDING',
+      kycStatus: json['kyc_status'] ?? json['kycStatus'] ?? 'PENDING',
     );
   }
 

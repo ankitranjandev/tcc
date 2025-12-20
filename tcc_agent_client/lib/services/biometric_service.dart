@@ -125,7 +125,7 @@ class BiometricService {
   }) async {
     final type = transactionType ?? 'transaction';
     return await authenticate(
-      localizedReason: 'Authenticate to confirm $type of SLL ${amount.toStringAsFixed(2)}',
+      localizedReason: 'Authenticate to confirm $type of TCC${amount.toStringAsFixed(2)}',
       biometricOnly: false,
     );
   }

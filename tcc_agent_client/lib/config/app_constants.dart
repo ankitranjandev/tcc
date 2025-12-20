@@ -72,7 +72,7 @@ class AppConstants {
   static const int minCommissionRate = 0;
   static const int maxCommissionRate = 10; // percentage
 
-  // Currency Denominations (Sierra Leone Leone)
+  // Currency Denominations (TCC Coin)
   static const List<int> currencyDenominations = [
     10000,
     5000,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../bill_payment/payment_method_screen.dart';
 import '../../widgets/currency_converter_widget.dart';
+import '../../widgets/kyc_guard.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -10,7 +11,7 @@ class WalletScreen extends StatefulWidget {
   State<WalletScreen> createState() => _WalletScreenState();
 }
 
-class _WalletScreenState extends State<WalletScreen> {
+class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,7 +88,7 @@ class _WalletScreenState extends State<WalletScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Le 1,25,450.00',
+                'TCC1,25,450.00',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -117,7 +118,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Le 5,00,000',
+                      'TCC5,00,000',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -184,21 +185,21 @@ class _WalletScreenState extends State<WalletScreen> {
                 icon: Icons.add,
                 label: 'Add Money',
                 color: AppColors.success,
-                onTap: () => _showAddMoneyDialog(),
+                onTap: () => checkKycAndProceed(() => _showAddMoneyDialog()),
               ),
               _buildActionButton(
                 icon: Icons.send,
                 label: 'Send',
                 color: AppColors.primaryBlue,
-                onTap: () {
+                onTap: () => checkKycAndProceed(() {
                   // Navigate to send money screen
-                },
+                }),
               ),
               _buildActionButton(
                 icon: Icons.account_balance,
                 label: 'Withdraw',
                 color: AppColors.secondaryYellow,
-                onTap: () => _showWithdrawDialog(),
+                onTap: () => checkKycAndProceed(() => _showWithdrawDialog()),
               ),
             ],
           ),
@@ -530,7 +531,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 autofocus: true,
                 decoration: InputDecoration(
                   labelText: 'Amount',
-                  prefixText: 'Le ',
+                  prefixText: 'TCC',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -551,7 +552,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 children: [
                   '1000', '5000', '10000', '25000'
                 ].map((amount) => ActionChip(
-                  label: Text('Le $amount'),
+                  label: Text('TCC$amount'),
                   onPressed: () {
                     amountController.text = amount;
                   },
@@ -644,7 +645,7 @@ class _WalletScreenState extends State<WalletScreen> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Amount',
-                prefixText: 'Le ',
+                prefixText: 'TCC',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

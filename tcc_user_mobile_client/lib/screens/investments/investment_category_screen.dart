@@ -237,7 +237,7 @@ class InvestmentCategoryScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Le ${product.price.toStringAsFixed(0)}',
+                    'TCC${product.price.toStringAsFixed(0)}',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

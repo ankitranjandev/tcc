@@ -7,7 +7,7 @@ class CurrencyService {
   /// Get live currency exchange rates
   /// Returns rates for common currencies relative to the base currency
   Future<Map<String, dynamic>> getCurrencyRates({
-    String baseCurrency = 'SLL',
+    String baseCurrency = 'TCC',
     List<String>? currencies,
   }) async {
     try {
@@ -143,7 +143,7 @@ class CurrencyService {
   /// Get formatted currency rates for display
   /// Returns a map of currency codes to rates
   Future<Map<String, double>> getFormattedRates({
-    String baseCurrency = 'SLL',
+    String baseCurrency = 'TCC',
     List<String>? currencies,
   }) async {
     try {
@@ -170,7 +170,7 @@ class CurrencyService {
   }
 
   /// Get the inverse rate (how much base currency for 1 unit of target currency)
-  /// Useful for displaying "1 USD = X SLL" format
+  /// Useful for displaying "1 USD = X TCC" format
   Future<double?> getInverseRate({
     required String baseCurrency,
     required String targetCurrency,

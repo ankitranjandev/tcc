@@ -132,7 +132,7 @@ class _CurrencyCounterScreenState extends State<CurrencyCounterScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'SLL ${_totalAmount.toStringAsFixed(2)}',
+                  'TCC${_totalAmount.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 40,

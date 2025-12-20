@@ -178,7 +178,7 @@ class UserGuideScreen extends StatelessWidget {
         GuideStep(
           title: 'Request Withdrawal',
           description: 'When ready to withdraw, go to Wallet and select "Withdraw". Enter amount and confirm.',
-          tip: 'Minimum withdrawal is SLL 50,000.',
+          tip: 'Minimum withdrawal is TCC50,000.',
         ),
       ],
     ),

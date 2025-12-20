@@ -21,8 +21,8 @@ class ConsumerService {
       'limit': limit.toString(),
       'role': 'USER', // Filter to get only consumers (not agents or admins)
       if (search != null && search.isNotEmpty) 'search': search,
-      if (kycStatus != null && kycStatus.isNotEmpty) 'kyc_status': kycStatus,
-      if (isActive != null) 'is_active': isActive.toString(),
+      if (kycStatus != null && kycStatus.isNotEmpty && kycStatus != 'All') 'kycStatus': kycStatus,
+      if (isActive != null) 'isActive': isActive.toString(),
     };
 
     final response = await _apiService.get<Map<String, dynamic>>(

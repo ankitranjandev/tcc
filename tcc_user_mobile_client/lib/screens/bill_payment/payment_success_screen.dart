@@ -44,7 +44,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
       // Create PDF document
       final pdf = pw.Document();
-      final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+      final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
 
       // Add page to PDF
       pdf.addPage(
@@ -250,7 +250,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: 'Le ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
 
     return PopScope(
       canPop: false,

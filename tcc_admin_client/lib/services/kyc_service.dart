@@ -31,10 +31,19 @@ class KycService {
     final response = await _apiService.get(
       '/kyc/admin/submissions',
       queryParameters: queryParameters,
-      fromJson: (data) => PaginatedResponse.fromJson(
-        data as Map<String, dynamic>,
-        (json) => json,
-      ),
+      fromJson: (data) {
+        final responseData = data as Map<String, dynamic>;
+        final submissions = responseData['submissions'] as List<dynamic>;
+        final pagination = responseData['meta']?['pagination'] as Map<String, dynamic>?;
+        
+        return PaginatedResponse<Map<String, dynamic>>(
+          data: submissions.map((e) => e as Map<String, dynamic>).toList(),
+          total: pagination?['total'] ?? 0,
+          page: pagination?['page'] ?? 1,
+          perPage: pagination?['limit'] ?? perPage,
+          totalPages: pagination?['totalPages'] ?? 1,
+        );
+      },
     );
 
     return response;

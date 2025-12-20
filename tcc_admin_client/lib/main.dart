@@ -17,8 +17,8 @@ void main() async {
     // Initialize Notification Service
     await NotificationService().initialize();
     debugPrint('Notification service initialized successfully');
-  } catch (e) {
-    debugPrint('Failed to initialize Firebase/Notifications: $e');
+    } catch (e) {
+      debugPrint('Failed to initialize Firebase/Notifications: $e');
     // Continue running the app even if Firebase fails to initialize
     // This allows the app to work in development mode without Firebase
   }
