@@ -20,13 +20,15 @@ interface KYCDocument {
 interface KYCSubmission {
   id: string;
   user_id: string;
-  user_name: string;
-  user_email: string;
-  user_phone: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  kyc_status: KYCStatus;
   document_type: DocumentType;
   document_url: string;
   document_number?: string;
-  status: KYCStatus;
+  document_count: number;
   rejection_reason?: string;
   verified_by?: string;
   verified_by_name?: string;
@@ -238,6 +240,7 @@ export class KYCService {
     filters: {
       status?: KYCStatus;
       search?: string;
+      user_type?: string;
       document_type?: DocumentType;
     },
     pagination: PaginationParams
@@ -261,6 +264,17 @@ export class KYCService {
         // Default to show only submitted and pending
         conditions.push(`u.kyc_status IN ($${paramCount++}, $${paramCount++})`);
         params.push(KYCStatus.SUBMITTED, KYCStatus.PENDING);
+      }
+
+      // Filter by user type
+      if (filters.user_type) {
+        if (filters.user_type === 'consumer') {
+          conditions.push(`u.role = $${paramCount++}`);
+          params.push(UserRole.USER);
+        } else if (filters.user_type === 'agent') {
+          conditions.push(`u.role = $${paramCount++}`);
+          params.push(UserRole.AGENT);
+        }
       }
 
       // Search by user name, email, or phone
@@ -297,10 +311,11 @@ export class KYCService {
         SELECT DISTINCT ON (u.id)
           kd.id,
           u.id as user_id,
-          u.first_name || ' ' || u.last_name as user_name,
-          u.email as user_email,
-          u.phone as user_phone,
-          u.kyc_status as status,
+          u.first_name,
+          u.last_name,
+          u.email,
+          u.phone,
+          u.kyc_status,
           kd.document_type,
           kd.document_url,
           kd.document_number,
@@ -309,7 +324,8 @@ export class KYCService {
           kd.verified_at,
           kd.created_at as submitted_at,
           kd.updated_at,
-          admin.first_name || ' ' || admin.last_name as verified_by_name
+          admin.first_name || ' ' || admin.last_name as verified_by_name,
+          (SELECT COUNT(*) FROM kyc_documents WHERE user_id = u.id) as document_count
         FROM users u
         INNER JOIN kyc_documents kd ON u.id = kd.user_id
         LEFT JOIN users admin ON kd.verified_by = admin.id

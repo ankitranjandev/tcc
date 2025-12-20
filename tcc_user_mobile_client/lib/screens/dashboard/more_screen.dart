@@ -109,7 +109,14 @@ class MoreScreen extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24),
                   child: InkWell(
-                    onTap: () => context.go('/kyc-verification'),
+                    onTap: () {
+                      // Navigate to status screen if KYC is pending, otherwise to verification
+                      if (user.isKycPending) {
+                        context.push('/kyc-status');
+                      } else {
+                        context.push('/kyc-verification');
+                      }
+                    },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: EdgeInsets.all(16),

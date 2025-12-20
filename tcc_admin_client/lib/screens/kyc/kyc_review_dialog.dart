@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 import '../../models/agent_model.dart';
 import '../../services/kyc_service.dart' as service;
+import '../../services/storage_service.dart';
+import '../../services/api_service.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_text_styles.dart';
 
@@ -20,7 +24,11 @@ class KYCReviewDialog extends StatefulWidget {
 
 class _KYCReviewDialogState extends State<KYCReviewDialog> {
   final service.KycService _kycService = service.KycService();
+  final StorageService _storage = StorageService();
   bool _isLoading = false;
+  bool _isLoadingImage = true;
+  bool _hasImageError = false;
+  Uint8List? _imageBytes;
   String? _selectedRejectionReason;
   final TextEditingController _customReasonController = TextEditingController();
 
@@ -37,9 +45,67 @@ class _KYCReviewDialogState extends State<KYCReviewDialog> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadDocumentImage();
+  }
+
+  @override
   void dispose() {
     _customReasonController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDocumentImage() async {
+    final nationalIdUrl = widget.agent.nationalIdUrl;
+    if (nationalIdUrl == null || nationalIdUrl.isEmpty) {
+      setState(() {
+        _isLoadingImage = false;
+        _hasImageError = true;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingImage = true;
+      _hasImageError = false;
+    });
+
+    try {
+      final token = await _storage.getAccessToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      // Build full URL
+      String fullUrl = nationalIdUrl;
+      if (!nationalIdUrl.startsWith('http://') && !nationalIdUrl.startsWith('https://')) {
+        final baseUrl = ApiService.baseUrl.replaceAll('/v1', '');
+        fullUrl = '$baseUrl$nationalIdUrl';
+      }
+
+      final response = await http.get(
+        Uri.parse(fullUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'image/*',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _imageBytes = response.bodyBytes;
+          _isLoadingImage = false;
+        });
+      } else {
+        throw Exception('Failed to load image: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        _hasImageError = true;
+        _isLoadingImage = false;
+      });
+    }
   }
 
   Future<void> _handleApprove() async {
@@ -431,40 +497,39 @@ class _KYCReviewDialogState extends State<KYCReviewDialog> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    nationalIdUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: AppColors.background,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error, color: AppColors.errorRed, size: 40),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Failed to load image',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
+                  child: _isLoadingImage
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : _hasImageError || _imageBytes == null
+                          ? Container(
+                              color: AppColors.background,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error, color: AppColors.errorRed, size: 40),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Failed to load image',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextButton.icon(
+                                    onPressed: _loadDocumentImage,
+                                    icon: const Icon(Icons.refresh, size: 16),
+                                    label: const Text('Retry'),
+                                  ),
+                                ],
                               ),
+                            )
+                          : Image.memory(
+                              _imageBytes!,
+                              fit: BoxFit.cover,
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                          color: AppColors.primary,
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ),
             )

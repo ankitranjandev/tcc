@@ -96,6 +96,16 @@ const getAnalyticsSchema = z.object({
   }),
 });
 
+const exportUsersSchema = z.object({
+  query: z.object({
+    format: z.enum(['csv', 'xlsx', 'pdf']).optional(),
+    search: z.string().optional(),
+    role: z.enum(['USER', 'AGENT', 'ADMIN', 'SUPER_ADMIN']).optional(),
+    status: z.string().optional(),
+    kycStatus: z.enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED']).optional(),
+  }),
+});
+
 // Public routes (no authentication required)
 router.post('/login', validate(loginSchema), AdminController.login);
 
@@ -109,6 +119,7 @@ router.get('/analytics', validate(getAnalyticsSchema), AdminController.getAnalyt
 
 // User management
 router.get('/users', validate(getUsersSchema), AdminController.getUsers);
+router.get('/users/export', validate(exportUsersSchema), AdminController.exportUsers);
 router.post('/users', validate(createUserSchema), AdminController.createUser);
 router.put('/users/:userId/status', validate(updateUserStatusSchema), AdminController.updateUserStatus);
 

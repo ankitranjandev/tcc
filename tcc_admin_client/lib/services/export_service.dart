@@ -138,43 +138,83 @@ class ExportService {
     Map<String, dynamic>? filters,
   }) async {
     try {
+      debugPrint('=== EXPORT DEBUG START ===');
+      debugPrint('Export endpoint: $endpoint');
+      debugPrint('Export format: $format');
+
       final formatString = _getFormatString(format);
+      debugPrint('Format string: $formatString');
+
       final queryParameters = {
         'format': formatString,
         ...?filters,
       };
+      debugPrint('Query parameters: $queryParameters');
 
+      debugPrint('Making API request...');
       final response = await _apiService.get<Map<String, dynamic>>(
         endpoint,
         queryParameters: queryParameters,
       );
 
+      debugPrint('API Response received');
+      debugPrint('Response success: ${response.success}');
+      debugPrint('Response data: ${response.data}');
+      debugPrint('Response message: ${response.message}');
+      debugPrint('Response error: ${response.error}');
+
       if (response.success && response.data != null) {
+        debugPrint('Response data type: ${response.data.runtimeType}');
+        debugPrint('Response data keys: ${response.data!.keys}');
+
         final downloadUrl = response.data!['url'] as String?;
-        final fileName = response.data!['filename'] as String? ?? 
+        debugPrint('Download URL: $downloadUrl');
+
+        final fileName = response.data!['filename'] as String? ??
             'export_${DateTime.now().millisecondsSinceEpoch}.$formatString';
+        debugPrint('File name: $fileName');
 
         if (downloadUrl != null) {
+          debugPrint('Starting file download from URL...');
           _downloadFile(downloadUrl, fileName);
+          debugPrint('=== EXPORT DEBUG END (SUCCESS) ===');
           return ApiResponse.success(
             message: 'Export started successfully',
           );
         } else {
+          debugPrint('No download URL, checking for direct data...');
           // Handle direct file download response
           final fileData = response.data!['data'];
+          debugPrint('File data: ${fileData != null ? "present" : "null"}');
+
           if (fileData != null) {
+            debugPrint('Starting file download from data...');
             _downloadFileFromData(fileData as String, fileName, format);
+            debugPrint('=== EXPORT DEBUG END (SUCCESS) ===');
             return ApiResponse.success(
               message: 'Export completed successfully',
             );
+          } else {
+            debugPrint('ERROR: No download URL or data in response');
           }
         }
+      } else {
+        debugPrint('ERROR: Response not successful or data is null');
+        debugPrint('Response success: ${response.success}');
+        debugPrint('Response data is null: ${response.data == null}');
       }
 
+      debugPrint('=== EXPORT DEBUG END (FAILED) ===');
       return ApiResponse.error(
         message: response.message ?? 'Export failed',
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('=== EXPORT DEBUG EXCEPTION ===');
+      debugPrint('Exception type: ${e.runtimeType}');
+      debugPrint('Exception message: ${e.toString()}');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('=== EXPORT DEBUG END (EXCEPTION) ===');
+
       return ApiResponse.error(
         message: 'Export failed: ${e.toString()}',
       );

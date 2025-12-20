@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
@@ -259,12 +260,19 @@ class _ExportDialogState extends State<ExportDialog> {
   }
 
   Future<void> _handleExport() async {
+    debugPrint('=== EXPORT DIALOG: Starting export ===');
+    debugPrint('Selected format: $_selectedFormat');
+    debugPrint('Active filters: ${widget.filters}');
+
     setState(() {
       _isExporting = true;
     });
 
     try {
+      debugPrint('Calling onExport callback...');
       await widget.onExport(_selectedFormat);
+      debugPrint('onExport callback completed successfully');
+
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -276,7 +284,13 @@ class _ExportDialogState extends State<ExportDialog> {
           ),
         );
       }
-    } catch (e) {
+      debugPrint('=== EXPORT DIALOG: Success ===');
+    } catch (e, stackTrace) {
+      debugPrint('=== EXPORT DIALOG: Exception caught ===');
+      debugPrint('Exception type: ${e.runtimeType}');
+      debugPrint('Exception message: ${e.toString()}');
+      debugPrint('Stack trace: $stackTrace');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -285,12 +299,14 @@ class _ExportDialogState extends State<ExportDialog> {
           ),
         );
       }
+      debugPrint('=== EXPORT DIALOG: Error shown to user ===');
     } finally {
       if (mounted) {
         setState(() {
           _isExporting = false;
         });
       }
+      debugPrint('=== EXPORT DIALOG: Completed ===');
     }
   }
 }

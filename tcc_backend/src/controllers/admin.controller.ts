@@ -901,4 +901,48 @@ export class AdminController {
       return ApiResponseUtil.internalError(res);
     }
   }
+
+  /**
+   * Export users data
+   */
+  static async exportUsers(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { format = 'csv', search, role, status, kycStatus } = req.query;
+
+      // Validate format
+      const validFormats = ['csv', 'xlsx', 'pdf'];
+      if (!validFormats.includes(format as string)) {
+        return ApiResponseUtil.badRequest(res, 'Invalid export format. Supported formats: csv, xlsx, pdf');
+      }
+
+      // Import ExportService dynamically to avoid circular dependencies
+      const { ExportService } = await import('../services/export.service');
+
+      // Export users
+      const result = await ExportService.exportUsers(format as 'csv' | 'xlsx' | 'pdf', {
+        search: search as string,
+        role: role as UserRole,
+        status: status as string,
+        kycStatus: kycStatus as KYCStatus,
+      });
+
+      // For web browsers, we'll return the file path as a downloadable URL
+      // In production, you should serve this through a CDN or static file server
+      const downloadUrl = `/uploads/exports/${result.filename}`;
+
+      logger.info('Users export completed', {
+        format,
+        filename: result.filename,
+        adminId: req.user?.id,
+      });
+
+      return ApiResponseUtil.success(res, {
+        url: downloadUrl,
+        filename: result.filename,
+      });
+    } catch (error: any) {
+      logger.error('Export users error', error);
+      return ApiResponseUtil.internalError(res, error.message);
+    }
+  }
 }

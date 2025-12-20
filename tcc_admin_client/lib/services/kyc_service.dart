@@ -76,11 +76,14 @@ class KycService {
     required String action, // 'approve' or 'reject'
     String? remarks,
   }) async {
+    // Convert action to uppercase status expected by backend
+    final status = action.toUpperCase() == 'APPROVE' ? 'APPROVED' : 'REJECTED';
+
     return await _apiService.post(
       '/kyc/admin/review/$submissionId',
       data: {
-        'action': action,
-        if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
+        'status': status,
+        if (remarks != null && remarks.isNotEmpty) 'rejection_reason': remarks,
       },
       fromJson: (data) => data as Map<String, dynamic>,
     );

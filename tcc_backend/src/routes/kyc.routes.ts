@@ -47,6 +47,7 @@ const adminGetSubmissionsSchema = z.object({
       KYCStatus.REJECTED,
     ]).optional(),
     search: z.string().optional(),
+    user_type: z.enum(['consumer', 'agent']).optional(),
     document_type: z.enum([
       DocumentType.NATIONAL_ID,
       DocumentType.PASSPORT,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
@@ -206,6 +207,12 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
           if (_filterKycStatus != 'All') 'KYC Status': _filterKycStatus,
         },
         onExport: (format) async {
+          debugPrint('=== CONSUMERS SCREEN: Export triggered ===');
+          debugPrint('Format: $format');
+          debugPrint('Search query: $_searchQuery');
+          debugPrint('Filter status: $_filterStatus');
+          debugPrint('Filter KYC status: $_filterKycStatus');
+
           final response = await _exportService.exportUsers(
             format: format,
             search: _searchQuery.isNotEmpty ? _searchQuery : null,
@@ -213,10 +220,17 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
             status: _filterStatus == 'All' ? null : _filterStatus.toUpperCase(),
             kycStatus: _filterKycStatus == 'All' ? null : _filterKycStatus.toUpperCase(),
           );
-          
+
+          debugPrint('Export service response received');
+          debugPrint('Response success: ${response.success}');
+          debugPrint('Response message: ${response.message}');
+
           if (!response.success) {
+            debugPrint('Export failed - throwing exception');
             throw Exception(response.message ?? 'Export failed');
           }
+
+          debugPrint('=== CONSUMERS SCREEN: Export completed successfully ===');
         },
       ),
     );

@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 import config from './config';
 import logger from './utils/logger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -64,6 +65,10 @@ class App {
 
     // Rate limiting
     this.app.use(generalRateLimiter);
+
+    // Serve static files for exports
+    this.app.use('/uploads/exports', express.static(path.join(__dirname, '../uploads/exports')));
+    logger.info('Static file serving enabled for exports');
 
     // Request logging middleware
     this.app.use((req, res, next) => {

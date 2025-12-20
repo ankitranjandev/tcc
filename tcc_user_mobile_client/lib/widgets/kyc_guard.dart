@@ -27,10 +27,22 @@ class KycGuard extends StatelessWidget {
     // Otherwise show KYC required screen
     return Scaffold(
       appBar: AppBar(
-        title: Text('KYC Verification Required'),
+        title: Text(
+          user.isKycRejected
+              ? 'KYC Verification Failed'
+              : user.isKycPending
+                  ? 'KYC Verification Pending'
+                  : 'KYC Verification Required',
+        ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
         ),
       ),
       body: Center(
@@ -44,22 +56,37 @@ class KycGuard extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.1),
+                  color: (user.isKycRejected
+                          ? AppColors.error
+                          : user.isKycPending
+                              ? AppColors.primaryBlue
+                              : AppColors.warning)
+                      .withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.verified_user_outlined,
+                  user.isKycRejected
+                      ? Icons.cancel_outlined
+                      : user.isKycPending
+                          ? Icons.pending_outlined
+                          : Icons.verified_user_outlined,
                   size: 60,
-                  color: AppColors.warning,
+                  color: user.isKycRejected
+                      ? AppColors.error
+                      : user.isKycPending
+                          ? AppColors.primaryBlue
+                          : AppColors.warning,
                 ),
               ),
               SizedBox(height: 32),
               
               // Title
               Text(
-                user.isKycRejected 
-                  ? 'KYC Verification Failed' 
-                  : 'KYC Verification Required',
+                user.isKycRejected
+                  ? 'KYC Verification Failed'
+                  : user.isKycPending
+                    ? 'KYC Verification Pending'
+                    : 'KYC Verification Required',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -84,19 +111,24 @@ class KycGuard extends StatelessWidget {
                 onPressed: () {
                   if (user.isKycRejected) {
                     // Navigate to KYC resubmission
-                    context.go('/kyc-verification');
+                    context.push('/kyc-verification');
+                  } else if (user.isKycPending) {
+                    // Navigate to KYC status screen
+                    context.push('/kyc-status');
                   } else {
                     // Navigate to KYC verification
-                    context.go('/kyc-verification');
+                    context.push('/kyc-verification');
                   }
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
                 child: Text(
-                  user.isKycRejected 
-                    ? 'Resubmit Documents' 
-                    : 'Complete KYC',
+                  user.isKycRejected
+                    ? 'Resubmit Documents'
+                    : user.isKycPending
+                      ? 'View Status'
+                      : 'Complete KYC',
                   style: TextStyle(fontSize: 16),
                 ),
               ),

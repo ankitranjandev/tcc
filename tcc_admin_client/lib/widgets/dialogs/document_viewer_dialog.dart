@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../services/storage_service.dart';
 
 /// Dialog for viewing KYC documents (images)
 class DocumentViewerDialog extends StatefulWidget {
@@ -40,9 +43,11 @@ class DocumentViewerDialog extends StatefulWidget {
 class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
   final TransformationController _transformationController =
       TransformationController();
+  final StorageService _storage = StorageService();
   bool _isLoading = true;
   bool _hasError = false;
   double _rotation = 0;
+  Uint8List? _imageBytes;
 
   String get _fullUrl {
     // If the URL is already absolute, use it as-is
@@ -76,6 +81,48 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
         _rotation = 0;
       }
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImage();
+  }
+
+  Future<void> _loadImage() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    try {
+      final token = await _storage.getAccessToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await http.get(
+        Uri.parse(_fullUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'image/*',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _imageBytes = response.bodyBytes;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load image: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        _hasError = true;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -178,65 +225,25 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
                   children: [
                     // Image with zoom and pan
                     Center(
-                      child: InteractiveViewer(
-                        transformationController: _transformationController,
-                        minScale: 0.5,
-                        maxScale: 4.0,
-                        child: Transform.rotate(
-                          angle: _rotation * 3.14159 / 180,
-                          child: Image.network(
-                            _fullUrl,
-                            fit: BoxFit.contain,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  if (mounted && _isLoading) {
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
-                                  }
-                                });
-                                return child;
-                              }
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                      color: AppColors.accentBlue,
-                                    ),
-                                    const SizedBox(height: AppTheme.space16),
-                                    Text(
-                                      'Loading document...',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
+                      child: _isLoading
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: AppColors.accentBlue,
                                 ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (mounted && !_hasError) {
-                                  setState(() {
-                                    _hasError = true;
-                                    _isLoading = false;
-                                  });
-                                }
-                              });
-                              return Center(
-                                child: Column(
+                                const SizedBox(height: AppTheme.space16),
+                                Text(
+                                  'Loading document...',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : _hasError
+                              ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
@@ -264,12 +271,7 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
                                     ),
                                     const SizedBox(height: AppTheme.space16),
                                     TextButton.icon(
-                                      onPressed: () {
-                                        setState(() {
-                                          _hasError = false;
-                                          _isLoading = true;
-                                        });
-                                      },
+                                      onPressed: _loadImage,
                                       icon: const Icon(Icons.refresh),
                                       label: const Text('Retry'),
                                       style: TextButton.styleFrom(
@@ -277,12 +279,20 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
                                       ),
                                     ),
                                   ],
+                                )
+                              : InteractiveViewer(
+                                  transformationController:
+                                      _transformationController,
+                                  minScale: 0.5,
+                                  maxScale: 4.0,
+                                  child: Transform.rotate(
+                                    angle: _rotation * 3.14159 / 180,
+                                    child: Image.memory(
+                                      _imageBytes!,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
                     ),
                     // Zoom hint
                     if (!_isLoading && !_hasError)

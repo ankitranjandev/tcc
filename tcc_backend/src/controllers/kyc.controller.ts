@@ -174,6 +174,7 @@ export class KYCController {
       const {
         status,
         search,
+        user_type,
         document_type,
         page = '1',
         limit = '20',
@@ -186,6 +187,7 @@ export class KYCController {
       const filters: any = {};
       if (status) filters.status = status as KYCStatus;
       if (search) filters.search = search as string;
+      if (user_type) filters.user_type = user_type as string;
       if (document_type) filters.document_type = document_type as DocumentType;
 
       const result = await KYCService.adminGetKYCSubmissions(

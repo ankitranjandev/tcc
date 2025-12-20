@@ -174,13 +174,33 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
         // Navigate to bank details screen
         context.go('/bank-details', extra: widget.extraData);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['error'] ?? 'Failed to submit KYC'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        final errorMessage = result['error'] ?? 'Failed to submit KYC';
+
+        // Check if the error is because KYC is already submitted
+        if (errorMessage.contains('already submitted') ||
+            errorMessage.contains('pending review')) {
+          developer.log('⚠️ KYC Screen: KYC already submitted, redirecting to status screen', name: 'KYCScreen');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Your KYC is already being reviewed'),
+              backgroundColor: AppColors.warning,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          // Reload user profile to get updated KYC status
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          await authProvider.loadUserProfile();
+          // Navigate to status screen
+          context.go('/kyc-status', extra: widget.extraData);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -232,6 +252,12 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
       });
     } else {
       developer.log('✅ KYC Screen: User authenticated: ${authProvider.user?.email}', name: 'KYCScreen');
+
+      // Check if KYC is already submitted (pending)
+      if (mounted && authProvider.user?.isKycPending == true) {
+        developer.log('⚠️ KYC Screen: KYC already submitted and pending, redirecting to status screen', name: 'KYCScreen');
+        context.go('/kyc-status', extra: widget.extraData);
+      }
     }
   }
 
@@ -253,7 +279,13 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
         ),
         title: Text('KYC Verification'),
       ),
