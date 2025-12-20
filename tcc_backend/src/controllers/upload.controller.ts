@@ -146,7 +146,7 @@ export class UploadController {
 
       // Construct file URL
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      const fileUrl = `${baseUrl}/api/uploads/${subDir}/${userId}/${filename}`;
+      const fileUrl = `${baseUrl}/v1/uploads/${subDir}/${userId}/${filename}`;
 
       // Check if file exists
       const exists = await fileUploadService.fileExists(fileUrl);

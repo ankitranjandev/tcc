@@ -45,6 +45,28 @@ interface PaginationParams {
 
 export class KYCService {
   /**
+   * Fix document URL to use correct API prefix
+   * Handles legacy URLs that use /api/uploads/ instead of /v1/uploads/
+   */
+  private static fixDocumentUrl(url: string): string {
+    if (!url) return url;
+    return url.replace('/api/uploads/', '/v1/uploads/');
+  }
+
+  /**
+   * Fix URLs in document objects
+   */
+  private static fixDocumentUrls<T extends { document_url?: string }>(doc: T): T {
+    if (doc.document_url) {
+      return {
+        ...doc,
+        document_url: this.fixDocumentUrl(doc.document_url),
+      };
+    }
+    return doc;
+  }
+
+  /**
    * Submit KYC documents for verification
    */
   static async submitKYC(
@@ -66,18 +88,28 @@ export class KYCService {
         throw new Error('USER_NOT_FOUND');
       }
 
-      if (users[0].kyc_status === KYCStatus.APPROVED) {
+      const userKycStatus = users[0].kyc_status;
+
+      if (userKycStatus === KYCStatus.APPROVED) {
         throw new Error('KYC_ALREADY_APPROVED');
       }
 
-      // Check if there's a pending submission
-      const existingSubmissions = await db.query<KYCDocument>(
-        'SELECT id, status FROM kyc_documents WHERE user_id = $1 AND status IN ($2, $3)',
-        [userId, KYCStatus.PENDING, KYCStatus.SUBMITTED]
-      );
+      // If user's KYC was rejected, delete all old documents (handles legacy data)
+      if (userKycStatus === KYCStatus.REJECTED) {
+        await db.query(
+          'DELETE FROM kyc_documents WHERE user_id = $1 AND status IN ($2, $3, $4)',
+          [userId, KYCStatus.REJECTED, KYCStatus.SUBMITTED, KYCStatus.PENDING]
+        );
+      } else {
+        // For non-rejected statuses, check if there's a pending submission
+        const existingSubmissions = await db.query<KYCDocument>(
+          'SELECT id, status FROM kyc_documents WHERE user_id = $1 AND status IN ($2, $3)',
+          [userId, KYCStatus.PENDING, KYCStatus.SUBMITTED]
+        );
 
-      if (existingSubmissions.length > 0) {
-        throw new Error('KYC_ALREADY_SUBMITTED');
+        if (existingSubmissions.length > 0) {
+          throw new Error('KYC_ALREADY_SUBMITTED');
+        }
       }
 
       const documents: KYCDocument[] = [];
@@ -175,9 +207,12 @@ export class KYCService {
       // User can resubmit if status is REJECTED or PENDING
       const canResubmit = kycStatus === KYCStatus.REJECTED || kycStatus === KYCStatus.PENDING;
 
+      // Fix document URLs
+      const fixedDocuments = documents.map(doc => this.fixDocumentUrls(doc));
+
       return {
         kyc_status: kycStatus,
-        documents,
+        documents: fixedDocuments,
         can_resubmit: canResubmit,
       };
     } catch (error) {
@@ -212,10 +247,10 @@ export class KYCService {
         throw new Error('KYC_RESUBMIT_NOT_ALLOWED');
       }
 
-      // Archive old documents by updating their status
+      // Delete old documents before resubmission
       await db.query(
-        'UPDATE kyc_documents SET status = $1 WHERE user_id = $2 AND status IN ($3, $4)',
-        ['ARCHIVED', userId, KYCStatus.REJECTED, KYCStatus.PENDING]
+        'DELETE FROM kyc_documents WHERE user_id = $1 AND status IN ($2, $3)',
+        [userId, KYCStatus.REJECTED, KYCStatus.PENDING]
       );
 
       // Submit new documents
@@ -338,10 +373,13 @@ export class KYCService {
 
       const submissions = await db.query<KYCSubmission>(query, params);
 
+      // Fix document URLs in submissions
+      const fixedSubmissions = submissions.map(sub => this.fixDocumentUrls(sub));
+
       const totalPages = Math.ceil(total / pagination.limit);
 
       return {
-        submissions,
+        submissions: fixedSubmissions,
         total,
         page: pagination.page,
         limit: pagination.limit,
@@ -415,12 +453,12 @@ export class KYCService {
             [newStatus, userId]
           );
         } else {
-          // For rejection, update the specific document
+          // For rejection, update all documents for this user
           await client.query(
             `UPDATE kyc_documents
             SET status = $1, rejection_reason = $2, verified_by = $3, verified_at = NOW(), updated_at = NOW()
-            WHERE id = $4`,
-            [newStatus, rejectionReason, adminId, submissionId]
+            WHERE user_id = $4 AND status = $5`,
+            [newStatus, rejectionReason, adminId, userId, KYCStatus.SUBMITTED]
           );
 
           // Update user's KYC status
@@ -532,9 +570,12 @@ export class KYCService {
         [userId]
       );
 
+      // Fix document URLs
+      const fixedDocuments = allDocuments.map(doc => this.fixDocumentUrls(doc));
+
       return {
         user: users[0],
-        documents: allDocuments,
+        documents: fixedDocuments,
       };
     } catch (error) {
       logger.error('Error getting KYC details', error);

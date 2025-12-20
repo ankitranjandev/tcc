@@ -351,7 +351,7 @@ class ApiService {
         final statusCode = error.response?.statusCode;
         final message = error.response?.data?['error']?['message'] ??
             error.response?.data?['message'] ??
-            'An error occurred';
+            _getDefaultErrorMessage(statusCode);
 
         return ApiResponse.error(
           message: message,
@@ -370,6 +370,28 @@ class ApiService {
           message: 'Network error. Please check your connection.',
           code: 'NETWORK_ERROR',
         );
+    }
+  }
+
+  /// Get default error message based on status code
+  String _getDefaultErrorMessage(int? statusCode) {
+    switch (statusCode) {
+      case 400:
+        return 'Invalid request. Please check your input.';
+      case 401:
+        return 'Unauthorized. Please login again.';
+      case 403:
+        return 'Access denied. You do not have permission to perform this action.';
+      case 404:
+        return 'Resource not found.';
+      case 500:
+        return 'Server error. Please try again later or contact support if the issue persists.';
+      case 502:
+        return 'Bad gateway. The server is temporarily unavailable.';
+      case 503:
+        return 'Service unavailable. Please try again later.';
+      default:
+        return 'An error occurred. Please try again.';
     }
   }
 

@@ -171,8 +171,16 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
           ),
         );
 
-        // Navigate to bank details screen
-        context.go('/bank-details', extra: widget.extraData);
+        // Check if this is a resubmission
+        final isResubmission = widget.extraData?['isResubmission'] == true;
+
+        if (isResubmission) {
+          // For resubmission, navigate to KYC status screen
+          context.go('/kyc-status', extra: widget.extraData);
+        } else {
+          // For first-time submission, navigate to bank details screen
+          context.go('/bank-details', extra: widget.extraData);
+        }
       } else {
         final errorMessage = result['error'] ?? 'Failed to submit KYC';
 

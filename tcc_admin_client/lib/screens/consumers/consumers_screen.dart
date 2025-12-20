@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
@@ -1205,7 +1204,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                   ),
                   onPressed: () {
                     // Navigate to KYC review for this specific consumer
-                    Navigator.pushNamed(context, '/kyc-submissions');
+                    context.push('/kyc-submissions');
                   },
                   tooltip: 'Review KYC',
                 ),

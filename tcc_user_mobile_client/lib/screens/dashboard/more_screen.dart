@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../wallet/wallet_screen.dart';
+import '../profile/profile_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -52,10 +53,10 @@ class MoreScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 24),
                 child: InkWell(
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Profile view coming soon!'),
-                        behavior: SnackBarBehavior.floating,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(),
                       ),
                     );
                   },
@@ -110,9 +111,11 @@ class MoreScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 24),
                   child: InkWell(
                     onTap: () {
-                      // Navigate to status screen if KYC is pending, otherwise to verification
-                      if (user.isKycPending) {
+                      // Navigate to status screen if KYC is in progress, otherwise to verification
+                      if (_isKycInProgress(user.kycStatus)) {
                         context.push('/kyc-status');
+                      } else if (user.isKycRejected) {
+                        context.push('/kyc-verification');
                       } else {
                         context.push('/kyc-verification');
                       }
@@ -469,11 +472,23 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
+  static bool _isKycInProgress(String kycStatus) {
+    final status = kycStatus.toUpperCase();
+    return status == 'PENDING' ||
+           status == 'PROCESSING' ||
+           status == 'IN_PROGRESS' ||
+           status == 'SUBMITTED';
+  }
+
   static Color _getKycBannerColor(String kycStatus) {
     switch (kycStatus.toUpperCase()) {
       case 'PENDING':
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
         return AppColors.warning;
       case 'REJECTED':
+      case 'FAILED':
         return AppColors.error;
       default:
         return AppColors.primaryBlue;
@@ -483,8 +498,12 @@ class MoreScreen extends StatelessWidget {
   static IconData _getKycIcon(String kycStatus) {
     switch (kycStatus.toUpperCase()) {
       case 'PENDING':
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
         return Icons.access_time;
       case 'REJECTED':
+      case 'FAILED':
         return Icons.error_outline;
       default:
         return Icons.verified_user_outlined;
@@ -494,8 +513,12 @@ class MoreScreen extends StatelessWidget {
   static String _getKycTitle(String kycStatus) {
     switch (kycStatus.toUpperCase()) {
       case 'PENDING':
-        return 'KYC Verification Pending';
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
+        return 'KYC Verification in Progress';
       case 'REJECTED':
+      case 'FAILED':
         return 'KYC Verification Failed';
       default:
         return 'Complete KYC Verification';
@@ -505,8 +528,12 @@ class MoreScreen extends StatelessWidget {
   static String _getKycMessage(String kycStatus) {
     switch (kycStatus.toUpperCase()) {
       case 'PENDING':
-        return 'Your documents are being reviewed';
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
+        return 'Your documents are being reviewed. This usually takes 1-2 business days';
       case 'REJECTED':
+      case 'FAILED':
         return 'Please resubmit your documents';
       default:
         return 'Verify your identity to access all features';

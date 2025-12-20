@@ -206,7 +206,7 @@ class ExportService {
 
       debugPrint('=== EXPORT DEBUG END (FAILED) ===');
       return ApiResponse.error(
-        message: response.message ?? 'Export failed',
+        message: response.message ?? 'Export failed. The server encountered an error while processing your request.',
       );
     } catch (e, stackTrace) {
       debugPrint('=== EXPORT DEBUG EXCEPTION ===');

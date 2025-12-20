@@ -6,24 +6,19 @@
   <component name="ChangeListManager">
     <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="updates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/android/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/android/build.gradle.kts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/kyc/kyc_review_dialog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/kyc/kyc_review_dialog.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/reports/reports_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/reports/reports_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/services/api_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/services/api_service.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/services/export_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/services/export_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/services/kyc_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/services/kyc_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/document_viewer_dialog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/document_viewer_dialog.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/export_dialog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/export_dialog.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/view_user_dialog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/view_user_dialog.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/kyc.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/kyc.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/routes/kyc.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/routes/kyc.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/upload.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/upload.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/export.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/export.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/file-upload.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/file-upload.service.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/kyc.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/kyc.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_status_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_status_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_verification_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_verification_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/more_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/more_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/widgets/kyc_guard.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/widgets/kyc_guard.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,23 +51,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "com.google.services.firebase.aqiPopupShown": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Volumes/Extreme SSD/projects/tcc",
-    "settings.editor.selected.configurable": "preferences.language.Kotlin",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Volumes/Extreme SSD/projects/tcc&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.language.Kotlin&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/tcc_user_mobile_client" />

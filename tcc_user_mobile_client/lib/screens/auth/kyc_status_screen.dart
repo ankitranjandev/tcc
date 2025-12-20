@@ -68,7 +68,12 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
   }
 
   void _handleResubmit() {
-    context.go('/kyc-verification', extra: widget.extraData);
+    // Pass flag to indicate this is a resubmission
+    final resubmitData = {
+      ...?widget.extraData,
+      'isResubmission': true,
+    };
+    context.go('/kyc-verification', extra: resubmitData);
   }
 
   Widget _buildPendingStatus() {

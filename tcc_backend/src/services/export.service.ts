@@ -154,7 +154,7 @@ export class ExportService {
       users.map((user) => ({
         ...user,
         is_active: user.is_active ? 'Yes' : 'No',
-        wallet_balance: user.wallet_balance?.toFixed(2) || '0.00',
+        wallet_balance: user.wallet_balance ? Number(user.wallet_balance).toFixed(2) : '0.00',
         created_at: new Date(user.created_at).toISOString(),
         last_login_at: user.last_login_at ? new Date(user.last_login_at).toISOString() : '',
       }))
@@ -211,7 +211,7 @@ export class ExportService {
         role: user.role,
         kyc_status: user.kyc_status,
         is_active: user.is_active ? 'Yes' : 'No',
-        wallet_balance: user.wallet_balance?.toFixed(2) || '0.00',
+        wallet_balance: user.wallet_balance ? Number(user.wallet_balance).toFixed(2) : '0.00',
         created_at: new Date(user.created_at).toISOString(),
         last_login_at: user.last_login_at ? new Date(user.last_login_at).toISOString() : '',
       });
@@ -291,7 +291,7 @@ export class ExportService {
         doc.text(user.phone || '', 270, yPosition, { width: columnWidths.phone, height: itemHeight });
         doc.text(user.role || '', 350, yPosition, { width: columnWidths.role, height: itemHeight });
         doc.text(user.kyc_status || '', 410, yPosition, { width: columnWidths.kyc, height: itemHeight });
-        doc.text(user.wallet_balance?.toFixed(2) || '0.00', 490, yPosition, {
+        doc.text(user.wallet_balance ? Number(user.wallet_balance).toFixed(2) : '0.00', 490, yPosition, {
           width: columnWidths.balance,
           height: itemHeight,
         });

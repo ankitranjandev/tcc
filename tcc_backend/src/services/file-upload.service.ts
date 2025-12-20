@@ -239,7 +239,7 @@ class FileUploadService {
         : fileType === FileType.BANK_RECEIPT
         ? 'bank'
         : 'profiles';
-      const url = `${this.baseUrl}/api/uploads/${relativeDir}/${userId}/${filename}`;
+      const url = `${this.baseUrl}/v1/uploads/${relativeDir}/${userId}/${filename}`;
 
       return {
         id: fileId,

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
@@ -241,17 +240,24 @@ class _ExportDialogState extends State<ExportDialog> {
                 ],
               ),
             ),
-            Radio<ExportFormat>(
-              value: format,
-              groupValue: _selectedFormat,
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedFormat = value;
-                  });
-                }
-              },
-              activeColor: AppColors.accentBlue,
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? AppColors.accentBlue : AppColors.gray400,
+                  width: 2,
+                ),
+                color: isSelected ? AppColors.accentBlue : Colors.transparent,
+              ),
+              child: isSelected
+                  ? Icon(
+                      Icons.check,
+                      size: 16,
+                      color: AppColors.white,
+                    )
+                  : null,
             ),
           ],
         ),
