@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
+import '../../providers/auth_provider.dart';
 import 'vault_screen.dart';
 import 'pay_screen.dart';
 import 'gift_screen.dart';
@@ -13,7 +15,7 @@ class MainNavigation extends StatefulWidget {
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
@@ -23,6 +25,38 @@ class _MainNavigationState extends State<MainNavigation> {
     HistoryScreen(),
     MoreScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Refresh user profile when dashboard loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshUserProfile();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh user profile when app resumes
+    if (state == AppLifecycleState.resumed) {
+      _refreshUserProfile();
+    }
+  }
+
+  Future<void> _refreshUserProfile() async {
+    if (mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.loadUserProfile();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

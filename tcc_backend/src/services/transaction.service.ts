@@ -302,6 +302,14 @@ export class TransactionService {
         // No fee for investments
         return 0;
 
+      case TransactionType.INVESTMENT_RETURN:
+        // No fee for investment returns (system credits)
+        return 0;
+
+      case TransactionType.REFUND:
+        // No fee for refunds
+        return 0;
+
       default:
         return 0;
     }
@@ -476,6 +484,10 @@ export class TransactionService {
         return 'Commission earned';
       case TransactionType.AGENT_CREDIT:
         return 'Agent credit';
+      case TransactionType.INVESTMENT_RETURN:
+        return 'Investment return credited';
+      case TransactionType.REFUND:
+        return 'Transaction refund';
       default:
         return 'Transaction';
     }

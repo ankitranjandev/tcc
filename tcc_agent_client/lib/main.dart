@@ -12,6 +12,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/otp_verification_screen.dart';
 import 'screens/auth/kyc_verification_screen.dart';
+import 'screens/auth/kyc_status_screen.dart';
 import 'screens/auth/bank_details_screen.dart';
 import 'screens/auth/verification_waiting_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
@@ -102,6 +103,7 @@ class TCCAgentApp extends StatelessWidget {
       redirect: (context, state) {
         final isAuthenticated = authProvider.isAuthenticated;
         final isPendingVerification = authProvider.isPendingVerification;
+        final isKycApproved = authProvider.isKycApproved;
         final currentLocation = state.matchedLocation;
         final isOnAuthRoute = currentLocation.startsWith('/login') ||
             currentLocation.startsWith('/register') ||
@@ -112,12 +114,45 @@ class TCCAgentApp extends StatelessWidget {
             currentLocation.startsWith('/forgot-password') ||
             currentLocation.startsWith('/splash');
 
+        // Protected routes that require KYC approval
+        final kycProtectedRoutes = [
+          '/add-money',
+          '/transaction-history',
+          '/payment-orders',
+          '/commission-dashboard',
+          '/credit-request',
+          '/user-verification',
+          '/currency-counter',
+          '/transaction-confirmation',
+          '/transaction-success',
+        ];
+
+        final isOnKycProtectedRoute = kycProtectedRoutes.any(
+          (route) => currentLocation.startsWith(route),
+        );
+
+        // Routes that are always accessible (even without KYC)
+        final alwaysAccessibleRoutes = [
+          '/dashboard',
+          '/profile',
+          '/settings',
+          '/support',
+          '/notifications',
+          '/kyc-status',
+        ];
+
+        final isOnAlwaysAccessibleRoute = alwaysAccessibleRoutes.any(
+          (route) => currentLocation.startsWith(route),
+        );
+
         developer.log(
           '🔀 [ROUTER] Redirect check:\n'
           '  Current: $currentLocation\n'
           '  isAuthenticated: $isAuthenticated\n'
           '  isPendingVerification: $isPendingVerification\n'
+          '  isKycApproved: $isKycApproved\n'
           '  isOnAuthRoute: $isOnAuthRoute\n'
+          '  isOnKycProtectedRoute: $isOnKycProtectedRoute\n'
           '  Agent: ${authProvider.agent?.firstName ?? 'null'}',
           name: 'TCC.Router',
         );
@@ -132,6 +167,12 @@ class TCCAgentApp extends StatelessWidget {
         if (isAuthenticated && isPendingVerification && !currentLocation.startsWith('/verification-waiting')) {
           developer.log('➡️ [ROUTER] Redirecting to /verification-waiting (pending verification)', name: 'TCC.Router');
           return '/verification-waiting';
+        }
+
+        // If authenticated, not pending, but KYC not approved and trying to access protected route
+        if (isAuthenticated && !isPendingVerification && !isKycApproved && isOnKycProtectedRoute) {
+          developer.log('➡️ [ROUTER] Redirecting to /kyc-status (KYC not approved)', name: 'TCC.Router');
+          return '/kyc-status';
         }
 
         // If authenticated, verified, and on auth route, redirect to dashboard
@@ -169,6 +210,10 @@ class TCCAgentApp extends StatelessWidget {
         GoRoute(
           path: '/kyc-verification',
           builder: (context, state) => const KYCVerificationScreen(),
+        ),
+        GoRoute(
+          path: '/kyc-status',
+          builder: (context, state) => const KYCStatusScreen(),
         ),
         GoRoute(
           path: '/bank-details',

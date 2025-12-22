@@ -8,6 +8,7 @@ import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
 import '../../widgets/dialogs/export_dialog.dart';
+import '../../widgets/dialogs/transaction_details_dialog.dart';
 
 /// Transactions List Screen
 class TransactionsScreen extends StatefulWidget {
@@ -409,7 +410,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           filled: true,
                           fillColor: AppColors.gray50,
                         ),
-                        items: ['All', 'DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'BILL_PAYMENT', 'INVESTMENT', 'VOTING']
+                        items: ['All', 'DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'BILL_PAYMENT', 'INVESTMENT', 'INVESTMENT_RETURN', 'VOTING', 'REFUND', 'COMMISSION', 'AGENT_CREDIT']
                             .map((type) => DropdownMenuItem(
                                   value: type,
                                   child: Text(type.replaceAll('_', ' ')),
@@ -727,26 +728,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 IconButton(
                                   icon: Icon(Icons.visibility, color: AppColors.info, size: 20),
                                   onPressed: () {
-                                    // TODO: View transaction details
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => TransactionDetailsDialog(
+                                        transaction: txn,
+                                      ),
+                                    );
                                   },
                                   tooltip: 'View Details',
                                 ),
-                                if (_convertEnumToUpperSnakeCase(txn.status.name) == 'PENDING')
-                                  IconButton(
-                                    icon: Icon(Icons.check, color: AppColors.success, size: 20),
-                                    onPressed: () {
-                                      // TODO: Approve transaction
-                                    },
-                                    tooltip: 'Approve',
-                                  ),
-                                if (_convertEnumToUpperSnakeCase(txn.status.name) == 'PENDING')
-                                  IconButton(
-                                    icon: Icon(Icons.close, color: AppColors.error, size: 20),
-                                    onPressed: () {
-                                      // TODO: Reject transaction
-                                    },
-                                    tooltip: 'Reject',
-                                  ),
                                 IconButton(
                                   icon: Icon(Icons.download, color: AppColors.gray600, size: 20),
                                   onPressed: () {
@@ -884,8 +874,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         return Colors.orange;
       case 'INVESTMENT':
         return Colors.purple;
+      case 'INVESTMENT_RETURN':
+        return Colors.green;
       case 'VOTING':
         return Colors.pink;
+      case 'REFUND':
+        return Colors.amber;
+      case 'COMMISSION':
+        return Colors.teal;
+      case 'AGENT_CREDIT':
+        return Colors.indigo;
       default:
         return AppColors.gray500;
     }
@@ -904,8 +902,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         return Icons.receipt;
       case 'INVESTMENT':
         return Icons.trending_up;
+      case 'INVESTMENT_RETURN':
+        return Icons.trending_up;
       case 'VOTING':
         return Icons.how_to_vote;
+      case 'REFUND':
+        return Icons.keyboard_return;
+      case 'COMMISSION':
+        return Icons.monetization_on;
+      case 'AGENT_CREDIT':
+        return Icons.account_balance;
       default:
         return Icons.account_balance_wallet;
     }
@@ -1100,7 +1106,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // TODO: View transaction details
+                    showDialog(
+                      context: context,
+                      builder: (context) => TransactionDetailsDialog(
+                        transaction: txn,
+                      ),
+                    );
                   },
                   icon: Icon(Icons.visibility, size: 18, color: AppColors.info),
                   label: Text(
@@ -1113,42 +1124,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   ),
                 ),
               ),
-              if (_convertEnumToUpperSnakeCase(txn.status.name) == 'PENDING') ...[
-                const SizedBox(width: AppTheme.space8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Approve transaction
-                    },
-                    icon: Icon(Icons.check, size: 18, color: AppColors.white),
-                    label: Text(
-                      'Approve',
-                      style: TextStyle(color: AppColors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      padding: const EdgeInsets.symmetric(vertical: AppTheme.space12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppTheme.space8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Reject transaction
-                    },
-                    icon: Icon(Icons.close, size: 18, color: AppColors.white),
-                    label: Text(
-                      'Reject',
-                      style: TextStyle(color: AppColors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      padding: const EdgeInsets.symmetric(vertical: AppTheme.space12),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ],

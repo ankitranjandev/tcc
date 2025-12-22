@@ -20,6 +20,7 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   bool get isVerified => _agent?.isVerified ?? false;
   bool get isPendingVerification => _agent?.isPendingVerification ?? false;
+  bool get isKycApproved => _agent?.kycStatus == 'APPROVED';
   AuthService get authService => _authService;
 
   // Initialize - check if user is already logged in

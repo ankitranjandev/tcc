@@ -55,9 +55,9 @@ class TransactionModel {
       userId: (json['user_id'] ?? json['from_user_id'] ?? '') as String,
       userName: userName,
       type: _parseTransactionType(json['type'] as String),
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      fee: (json['fee'] as num?)?.toDouble() ?? 0.0,
-      total: (json['total'] ?? json['net_amount'] as num?)?.toDouble() ?? 0.0,
+      amount: _parseAmount(json['amount']),
+      fee: _parseAmount(json['fee']),
+      total: _parseAmount(json['total'] ?? json['net_amount']),
       status: _parseTransactionStatus(json['status'] as String),
       paymentMethod: json['payment_method'] as String?,
       agentId: (json['agent_id'] ?? json['to_user_id']) as String?,
@@ -68,6 +68,14 @@ class TransactionModel {
           ? DateTime.parse((json['completed_at'] ?? json['processed_at']) as String)
           : null,
     );
+  }
+
+  /// Parse amount from dynamic value (handles both string and numeric values)
+  static double _parseAmount(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
   }
 
   /// Parse transaction type from string (supports both camelCase and UPPER_SNAKE_CASE)
@@ -85,8 +93,19 @@ class TransactionModel {
         return TransactionType.billPayment;
       case 'investment':
         return TransactionType.investment;
+      case 'investment_return':
+      case 'investmentreturn':
+        return TransactionType.investmentReturn;
       case 'voting':
+      case 'vote':
         return TransactionType.voting;
+      case 'refund':
+        return TransactionType.refund;
+      case 'commission':
+        return TransactionType.commission;
+      case 'agent_credit':
+      case 'agentcredit':
+        return TransactionType.agentCredit;
       default:
         throw ArgumentError('Unknown transaction type: $type');
     }
@@ -176,7 +195,11 @@ enum TransactionType {
   transfer,
   billPayment,
   investment,
-  voting;
+  investmentReturn,
+  voting,
+  refund,
+  commission,
+  agentCredit;
 
   String get displayName {
     switch (this) {
@@ -190,8 +213,16 @@ enum TransactionType {
         return 'Bill Payment';
       case TransactionType.investment:
         return 'Investment';
+      case TransactionType.investmentReturn:
+        return 'Investment Return';
       case TransactionType.voting:
         return 'E-Voting';
+      case TransactionType.refund:
+        return 'Refund';
+      case TransactionType.commission:
+        return 'Commission';
+      case TransactionType.agentCredit:
+        return 'Agent Credit';
     }
   }
 }

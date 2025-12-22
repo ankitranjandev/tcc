@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
+import '../../models/bank_account_model.dart';
 import '../../models/consumer_model.dart';
+import '../../services/bank_account_service.dart';
 import '../../services/consumer_service.dart';
 import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
@@ -1232,10 +1234,46 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
 }
 
 /// Consumer Details Dialog
-class _ConsumerDetailsDialog extends StatelessWidget {
+class _ConsumerDetailsDialog extends StatefulWidget {
   final ConsumerModel consumer;
 
   const _ConsumerDetailsDialog({required this.consumer});
+
+  @override
+  State<_ConsumerDetailsDialog> createState() => _ConsumerDetailsDialogState();
+}
+
+class _ConsumerDetailsDialogState extends State<_ConsumerDetailsDialog> {
+  final BankAccountService _bankAccountService = BankAccountService();
+  List<BankAccountModel>? _bankAccounts;
+  bool _isLoadingBankAccounts = true;
+  String? _bankAccountsError;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBankAccounts();
+  }
+
+  Future<void> _fetchBankAccounts() async {
+    setState(() {
+      _isLoadingBankAccounts = true;
+      _bankAccountsError = null;
+    });
+
+    final response = await _bankAccountService.getUserBankAccounts(widget.consumer.id);
+
+    if (mounted) {
+      setState(() {
+        _isLoadingBankAccounts = false;
+        if (response.success && response.data != null) {
+          _bankAccounts = response.data;
+        } else {
+          _bankAccountsError = response.error?.message ?? 'Failed to load bank accounts';
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1272,7 +1310,7 @@ class _ConsumerDetailsDialog extends StatelessWidget {
                   radius: 40,
                   backgroundColor: AppColors.accentBlue.withValues(alpha: 0.1),
                   child: Text(
-                    consumer.firstName.substring(0, 1).toUpperCase(),
+                    widget.consumer.firstName.substring(0, 1).toUpperCase(),
                     style: TextStyle(
                       color: AppColors.accentBlue,
                       fontWeight: FontWeight.w600,
@@ -1284,7 +1322,7 @@ class _ConsumerDetailsDialog extends StatelessWidget {
               const SizedBox(height: AppTheme.space16),
               Center(
                 child: Text(
-                  consumer.fullName,
+                  widget.consumer.fullName,
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -1296,54 +1334,58 @@ class _ConsumerDetailsDialog extends StatelessWidget {
                   spacing: AppTheme.space8,
                   alignment: WrapAlignment.center,
                   children: [
-                    StatusBadge(status: consumer.status.name),
-                    StatusBadge(status: consumer.kycStatus.name),
+                    StatusBadge(status: widget.consumer.status.name),
+                    StatusBadge(status: widget.consumer.kycStatus.name),
                   ],
                 ),
               ),
               const SizedBox(height: AppTheme.space24),
               const Divider(),
               const SizedBox(height: AppTheme.space24),
-              _buildDetailRow('Email', consumer.email),
-              _buildDetailRow('Phone', consumer.phone ?? 'N/A'),
-              _buildDetailRow('Country Code', consumer.countryCode ?? 'N/A'),
-              _buildDetailRow('Address', consumer.address ?? 'N/A'),
+              _buildDetailRow('Email', widget.consumer.email),
+              _buildDetailRow('Phone', widget.consumer.phone ?? 'N/A'),
+              _buildDetailRow('Country Code', widget.consumer.countryCode ?? 'N/A'),
+              _buildDetailRow('Address', widget.consumer.address ?? 'N/A'),
               _buildDetailRow(
                 'Date of Birth',
-                consumer.dateOfBirth != null
-                    ? Formatters.formatDate(consumer.dateOfBirth!)
+                widget.consumer.dateOfBirth != null
+                    ? Formatters.formatDate(widget.consumer.dateOfBirth!)
                     : 'N/A',
               ),
               _buildDetailRow(
                 'Wallet Balance',
-                Formatters.formatCurrency(consumer.walletBalance),
+                Formatters.formatCurrency(widget.consumer.walletBalance),
               ),
               _buildDetailRow(
                 'Total Transactions',
-                consumer.totalTransactions.toString(),
+                widget.consumer.totalTransactions.toString(),
               ),
               _buildDetailRow(
                 'Total Invested',
-                Formatters.formatCurrency(consumer.totalInvested),
+                Formatters.formatCurrency(widget.consumer.totalInvested),
               ),
               _buildDetailRow(
                 'Has Bank Details',
-                consumer.hasBankDetails ? 'Yes' : 'No',
+                widget.consumer.hasBankDetails ? 'Yes' : 'No',
               ),
               _buildDetailRow(
                 'Has Investments',
-                consumer.hasInvestments ? 'Yes' : 'No',
+                widget.consumer.hasInvestments ? 'Yes' : 'No',
               ),
               _buildDetailRow(
                 'Registered',
-                Formatters.formatDate(consumer.createdAt),
+                Formatters.formatDate(widget.consumer.createdAt),
               ),
               _buildDetailRow(
                 'Last Active',
-                consumer.lastActive != null
-                    ? Formatters.formatDate(consumer.lastActive!)
+                widget.consumer.lastActive != null
+                    ? Formatters.formatDate(widget.consumer.lastActive!)
                     : 'N/A',
               ),
+              const SizedBox(height: AppTheme.space16),
+              const Divider(),
+              const SizedBox(height: AppTheme.space16),
+              _buildBankAccountsSection(),
               const SizedBox(height: AppTheme.space24),
               SizedBox(
                 width: double.infinity,
@@ -1384,6 +1426,165 @@ class _ConsumerDetailsDialog extends StatelessWidget {
           ),
           Expanded(
             child: Text(value, style: TextStyle(color: AppColors.textPrimary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBankAccountsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bank Accounts',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppTheme.space12),
+        _buildBankAccountsContent(),
+      ],
+    );
+  }
+
+  Widget _buildBankAccountsContent() {
+    if (_isLoadingBankAccounts) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.space16),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.accentBlue),
+          ),
+        ),
+      );
+    }
+
+    if (_bankAccountsError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.space16),
+          child: Text(
+            _bankAccountsError!,
+            style: TextStyle(
+              color: AppColors.error,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_bankAccounts == null || _bankAccounts!.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.space16),
+          child: Text(
+            'No bank accounts found',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _bankAccounts!.asMap().entries.map((entry) {
+        final index = entry.key;
+        final account = entry.value;
+        return Column(
+          children: [
+            if (index > 0) const SizedBox(height: AppTheme.space12),
+            if (index > 0) const Divider(color: AppColors.gray300),
+            if (index > 0) const SizedBox(height: AppTheme.space12),
+            _buildBankAccountCard(account),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildBankAccountCard(BankAccountModel account) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.space12),
+      decoration: BoxDecoration(
+        color: AppColors.bgTertiary,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: AppColors.gray300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  account.bankName,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  if (account.isPrimary)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.space8,
+                        vertical: AppTheme.space4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                        border: Border.all(color: AppColors.accentBlue),
+                      ),
+                      child: Text(
+                        'PRIMARY',
+                        style: TextStyle(
+                          color: AppColors.accentBlue,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: AppTheme.space8),
+                  if (account.isVerified)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.space8,
+                        vertical: AppTheme.space4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                        border: Border.all(color: AppColors.success),
+                      ),
+                      child: Text(
+                        'VERIFIED',
+                        style: TextStyle(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.space8),
+          _buildDetailRow('Account Holder', account.accountHolderName),
+          _buildDetailRow('Account Number', account.accountNumberMasked),
+          _buildDetailRow(
+            'Added On',
+            Formatters.formatDate(account.createdAt),
           ),
         ],
       ),

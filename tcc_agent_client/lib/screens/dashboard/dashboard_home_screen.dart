@@ -41,10 +41,46 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 
+  void _showKycRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.verified_user, color: AppColors.warningOrange),
+            const SizedBox(width: 12),
+            const Text('KYC Required'),
+          ],
+        ),
+        content: const Text(
+          'You need to complete your KYC verification to use this feature. Please complete your KYC submission and wait for admin approval.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/kyc-status');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryOrange,
+              foregroundColor: AppColors.white,
+            ),
+            child: const Text('Check KYC Status'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final agent = authProvider.agent;
+    final isKycApproved = authProvider.isKycApproved;
     final isMobile = ResponsiveHelper.isMobile(context);
 
     return Scaffold(
@@ -181,6 +217,12 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             padding: const EdgeInsets.all(16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // KYC Status Banner
+                if (!isKycApproved) ...[
+                  _buildKycStatusBanner(agent),
+                  const SizedBox(height: 16),
+                ],
+
                 // Wallet Balance Card
                 Card(
                   elevation: 2,
@@ -231,14 +273,21 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
-                          onPressed: () {
-                            context.push('/credit-request');
-                          },
-                          icon: const Icon(Icons.add, size: 20),
-                          label: const Text('Request Credit'),
+                          onPressed: isKycApproved
+                            ? () {
+                                context.push('/credit-request');
+                              }
+                            : _showKycRequiredDialog,
+                          icon: Icon(
+                            isKycApproved ? Icons.add : Icons.lock_outline,
+                            size: 20,
+                          ),
+                          label: Text(isKycApproved ? 'Request Credit' : 'KYC Required'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.white,
-                            foregroundColor: AppColors.primaryOrange,
+                            foregroundColor: isKycApproved
+                              ? AppColors.primaryOrange
+                              : AppColors.textSecondary,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -311,37 +360,57 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     _buildActionCard(
                       icon: Icons.add_circle_outline,
                       title: 'Add Money',
-                      subtitle: 'To User Account',
+                      subtitle: isKycApproved ? 'To User Account' : 'KYC Required',
                       color: AppColors.successGreen,
+                      isLocked: !isKycApproved,
                       onTap: () {
-                        context.push('/add-money');
+                        if (isKycApproved) {
+                          context.push('/add-money');
+                        } else {
+                          _showKycRequiredDialog();
+                        }
                       },
                     ),
                     _buildActionCard(
                       icon: Icons.assignment,
                       title: 'Payment Orders',
-                      subtitle: '$_pendingOrders Pending',
+                      subtitle: isKycApproved ? '$_pendingOrders Pending' : 'KYC Required',
                       color: AppColors.warningOrange,
+                      isLocked: !isKycApproved,
                       onTap: () {
-                        context.push('/payment-orders');
+                        if (isKycApproved) {
+                          context.push('/payment-orders');
+                        } else {
+                          _showKycRequiredDialog();
+                        }
                       },
                     ),
                     _buildActionCard(
                       icon: Icons.history,
                       title: 'History',
-                      subtitle: 'View Transactions',
+                      subtitle: isKycApproved ? 'View Transactions' : 'KYC Required',
                       color: AppColors.infoBlue,
+                      isLocked: !isKycApproved,
                       onTap: () {
-                        context.push('/transaction-history');
+                        if (isKycApproved) {
+                          context.push('/transaction-history');
+                        } else {
+                          _showKycRequiredDialog();
+                        }
                       },
                     ),
                     _buildActionCard(
                       icon: Icons.account_balance,
                       title: 'Commission',
-                      subtitle: 'View Earnings',
+                      subtitle: isKycApproved ? 'View Earnings' : 'KYC Required',
                       color: AppColors.secondaryTeal,
+                      isLocked: !isKycApproved,
                       onTap: () {
-                        context.push('/commission-dashboard');
+                        if (isKycApproved) {
+                          context.push('/commission-dashboard');
+                        } else {
+                          _showKycRequiredDialog();
+                        }
                       },
                     ),
                   ],
@@ -352,6 +421,103 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildKycStatusBanner(AgentModel? agent) {
+    final kycStatus = agent?.kycStatus ?? 'PENDING';
+
+    Color backgroundColor;
+    Color iconColor;
+    IconData icon;
+    String title;
+    String message;
+
+    switch (kycStatus) {
+      case 'PENDING':
+        backgroundColor = AppColors.warningOrange.withValues(alpha: 0.1);
+        iconColor = AppColors.warningOrange;
+        icon = Icons.pending_actions;
+        title = 'KYC Verification Pending';
+        message = 'Please complete your KYC verification to access all features.';
+        break;
+      case 'SUBMITTED':
+        backgroundColor = AppColors.infoBlue.withValues(alpha: 0.1);
+        iconColor = AppColors.infoBlue;
+        icon = Icons.hourglass_empty;
+        title = 'KYC Under Review';
+        message = 'Your KYC documents are being reviewed. You will be notified once approved.';
+        break;
+      case 'REJECTED':
+        backgroundColor = Colors.red.withValues(alpha: 0.1);
+        iconColor = Colors.red;
+        icon = Icons.cancel;
+        title = 'KYC Rejected';
+        message = 'Your KYC was rejected. Please resubmit with correct information.';
+        break;
+      default:
+        backgroundColor = AppColors.warningOrange.withValues(alpha: 0.1);
+        iconColor = AppColors.warningOrange;
+        icon = Icons.warning;
+        title = 'KYC Required';
+        message = 'Complete your KYC verification to access features.';
+    }
+
+    return Card(
+      elevation: 2,
+      color: backgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: iconColor.withValues(alpha: 0.3)),
+      ),
+      child: InkWell(
+        onTap: () => context.push('/kyc-status'),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: iconColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      message,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: iconColor,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -409,6 +575,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     required String subtitle,
     required Color color,
     required VoidCallback onTap,
+    bool isLocked = false,
   }) {
     return Card(
       elevation: 2,
@@ -418,40 +585,64 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+        child: Stack(
+          children: [
+            Opacity(
+              opacity: isLocked ? 0.5 : 1.0,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: color, size: 28),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: color, size: 28),
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+            ),
+            if (isLocked)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.warningOrange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock,
+                    color: AppColors.white,
+                    size: 16,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );

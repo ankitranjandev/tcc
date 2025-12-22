@@ -82,19 +82,19 @@ export class WebhookController {
       // Update transaction and wallet in a single transaction
       await db.transaction(async (client) => {
         // Get transaction details
-        const transactions = await client.query(
+        const result = await client.query(
           `SELECT id, to_user_id, amount, status
            FROM transactions
            WHERE stripe_payment_intent_id = $1`,
           [paymentIntentId]
         );
 
-        if (transactions.length === 0) {
+        if (result.rows.length === 0) {
           logger.error('Transaction not found for payment intent', { paymentIntentId });
           throw new Error('Transaction not found');
         }
 
-        const transaction = transactions[0];
+        const transaction = result.rows[0];
 
         // Only process if transaction is still pending
         if (transaction.status !== TransactionStatus.PENDING) {
@@ -221,19 +221,19 @@ export class WebhookController {
       logger.info('Processing charge.refunded', { paymentIntentId });
 
       // Get the transaction
-      const transactions = await db.query(
+      const result = await db.query(
         `SELECT id, to_user_id, amount, status
          FROM transactions
          WHERE stripe_payment_intent_id = $1`,
         [paymentIntentId]
       );
 
-      if (transactions.length === 0) {
+      if (result.length === 0) {
         logger.error('Transaction not found for refund', { paymentIntentId });
         return;
       }
 
-      const transaction = transactions[0];
+      const transaction: any = result[0];
 
       // Only process refund if transaction was completed
       if (transaction.status !== TransactionStatus.COMPLETED) {

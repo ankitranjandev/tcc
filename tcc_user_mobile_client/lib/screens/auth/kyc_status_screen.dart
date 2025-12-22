@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../services/kyc_service.dart';
+import '../../providers/auth_provider.dart';
 
 class KYCStatusScreen extends StatefulWidget {
   final Map<String, dynamic>? extraData;
@@ -37,11 +39,19 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
       if (mounted) {
         if (result['success'] == true) {
           final data = result['data']['data'];
+          final kycStatus = data['kyc_status'] ?? 'PENDING';
+
           setState(() {
-            _kycStatus = data['kyc_status'] ?? 'PENDING';
+            _kycStatus = kycStatus;
             _documents = data['documents'] ?? [];
             _isLoading = false;
           });
+
+          // If KYC is approved, refresh the user profile in AuthProvider
+          if (kycStatus.toUpperCase() == 'APPROVED') {
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            await authProvider.loadUserProfile();
+          }
         } else {
           setState(() {
             _errorMessage = result['error'] ?? 'Failed to load KYC status';
@@ -63,8 +73,15 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
     _loadKYCStatus();
   }
 
-  void _handleGoToDashboard() {
-    context.go('/dashboard');
+  Future<void> _handleGoToDashboard() async {
+    // Ensure user profile is refreshed before going to dashboard
+    if (_kycStatus.toUpperCase() == 'APPROVED') {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.loadUserProfile();
+    }
+    if (mounted) {
+      context.go('/dashboard');
+    }
   }
 
   void _handleResubmit() {
