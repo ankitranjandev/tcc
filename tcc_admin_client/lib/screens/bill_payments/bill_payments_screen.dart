@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
@@ -20,6 +21,8 @@ class BillPaymentsScreen extends StatefulWidget {
 class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
   final BillPaymentService _billPaymentService = BillPaymentService();
   final ExportService _exportService = ExportService();
+  final _searchController = TextEditingController();
+  Timer? _searchDebounceTimer;
   String _searchQuery = '';
   String _filterService = 'All';
   String _filterStatus = 'All';
@@ -56,6 +59,22 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
   void initState() {
     super.initState();
     _loadBillPayments();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchDebounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        _searchQuery = value;
+      });
+    });
   }
 
   Future<void> _loadBillPayments() async {
@@ -400,11 +419,8 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
                     children: [
                       // Search Bar
                       TextField(
-                        onChanged: (value) {
-                          setState(() {
-                            _searchQuery = value;
-                          });
-                        },
+                        controller: _searchController,
+                        onChanged: _onSearchChanged,
                         decoration: InputDecoration(
                           hintText: 'Search by user, description...',
                           prefixIcon: Icon(Icons.search, color: AppColors.gray500),
@@ -428,6 +444,7 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
 
                       // Service Filter
                       DropdownButtonFormField<String>(
+                        key: ValueKey('service_$_filterService'),
                         initialValue: _filterService,
                         decoration: InputDecoration(
                           labelText: 'Service Type',
@@ -459,6 +476,7 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
 
                       // Status Filter
                       DropdownButtonFormField<String>(
+                        key: ValueKey('status_$_filterStatus'),
                         initialValue: _filterStatus,
                         decoration: InputDecoration(
                           labelText: 'Status',
@@ -509,11 +527,8 @@ class _BillPaymentsScreenState extends State<BillPaymentsScreen> {
                       Expanded(
                         flex: 2,
                         child: TextField(
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                            });
-                          },
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
                           decoration: InputDecoration(
                             hintText: 'Search by user, description, or payment ID...',
                             prefixIcon: Icon(Icons.search, color: AppColors.gray500),

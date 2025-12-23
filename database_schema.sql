@@ -304,12 +304,45 @@ CREATE TABLE investment_units (
 CREATE INDEX idx_investment_units_category ON investment_units(category);
 CREATE INDEX idx_investment_units_active ON investment_units(is_active);
 
+-- Investment Opportunities Table (Admin-created investment products)
+CREATE TABLE investment_opportunities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    category_id UUID NOT NULL REFERENCES investment_categories(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    min_investment DECIMAL(15, 2) NOT NULL,
+    max_investment DECIMAL(15, 2) NOT NULL,
+    tenure_months INT NOT NULL,
+    return_rate DECIMAL(5, 2) NOT NULL, -- Annual percentage return
+    total_units INT NOT NULL DEFAULT 0,
+    available_units INT NOT NULL DEFAULT 0,
+    image_url TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    display_order INT DEFAULT 0,
+    metadata JSONB, -- Additional flexible data
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT positive_min_investment CHECK (min_investment > 0),
+    CONSTRAINT positive_max_investment CHECK (max_investment >= min_investment),
+    CONSTRAINT positive_tenure CHECK (tenure_months > 0),
+    CONSTRAINT positive_return_rate CHECK (return_rate >= 0),
+    CONSTRAINT positive_total_units CHECK (total_units >= 0),
+    CONSTRAINT positive_available_units CHECK (available_units >= 0 AND available_units <= total_units)
+);
+
+CREATE INDEX idx_inv_opp_category ON investment_opportunities(category_id);
+CREATE INDEX idx_inv_opp_active ON investment_opportunities(is_active);
+CREATE INDEX idx_inv_opp_display_order ON investment_opportunities(display_order);
+CREATE INDEX idx_inv_opp_category_active ON investment_opportunities(category_id, is_active);
+CREATE INDEX idx_inv_opp_metadata ON investment_opportunities USING GIN (metadata);
+
 -- Investments Table
 CREATE TABLE investments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     category investment_category NOT NULL,
     sub_category VARCHAR(100),
+    opportunity_id UUID REFERENCES investment_opportunities(id) ON DELETE SET NULL,
     tenure_id UUID NOT NULL REFERENCES investment_tenures(id),
     amount DECIMAL(15, 2) NOT NULL,
     tenure_months INT NOT NULL,
@@ -334,6 +367,7 @@ CREATE TABLE investments (
 CREATE INDEX idx_investments_user ON investments(user_id);
 CREATE INDEX idx_investments_status ON investments(status);
 CREATE INDEX idx_investments_category ON investments(category);
+CREATE INDEX idx_investments_opportunity ON investments(opportunity_id);
 CREATE INDEX idx_investments_end_date ON investments(end_date);
 
 -- Investment Tenure Change Requests Table
@@ -801,6 +835,7 @@ CREATE TRIGGER update_bank_accounts_updated_at BEFORE UPDATE ON bank_accounts FO
 CREATE TRIGGER update_investment_categories_updated_at BEFORE UPDATE ON investment_categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_investment_tenures_updated_at BEFORE UPDATE ON investment_tenures FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_investment_units_updated_at BEFORE UPDATE ON investment_units FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_investment_opportunities_updated_at BEFORE UPDATE ON investment_opportunities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_investments_updated_at BEFORE UPDATE ON investments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_investment_returns_updated_at BEFORE UPDATE ON investment_returns FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_investment_tenure_requests_updated_at BEFORE UPDATE ON investment_tenure_requests FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -818,6 +853,38 @@ CREATE TRIGGER update_notification_preferences_updated_at BEFORE UPDATE ON notif
 -- =====================================================
 -- FUNCTIONS FOR BUSINESS LOGIC
 -- =====================================================
+
+-- Function to enforce maximum 16 opportunities per category
+CREATE OR REPLACE FUNCTION check_category_opportunity_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+    opportunity_count INT;
+BEGIN
+    -- Count existing opportunities for this category
+    SELECT COUNT(*) INTO opportunity_count
+    FROM investment_opportunities
+    WHERE category_id = NEW.category_id;
+
+    -- Allow updates to existing records
+    IF TG_OP = 'UPDATE' THEN
+        RETURN NEW;
+    END IF;
+
+    -- Check limit for new records
+    IF opportunity_count >= 16 THEN
+        RAISE EXCEPTION 'Maximum 16 opportunities allowed per category. Category % already has % opportunities.',
+            NEW.category_id, opportunity_count;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply trigger to enforce opportunity limit
+CREATE TRIGGER enforce_opportunity_limit
+BEFORE INSERT ON investment_opportunities
+FOR EACH ROW
+EXECUTE FUNCTION check_category_opportunity_limit();
 
 -- Function to generate transaction ID
 CREATE OR REPLACE FUNCTION generate_transaction_id()
@@ -906,6 +973,69 @@ INSERT INTO investment_units (category, unit_name, unit_price, description, disp
 ('MINERALS', 'Platinum', 750.00, 'Platinum mining investment unit', 2, true),
 ('MINERALS', 'Silver', 400.00, 'Silver mining investment unit', 3, true),
 ('MINERALS', 'Diamond', 1000.00, 'Diamond mining investment unit', 4, true);
+
+-- =====================================================
+-- MIGRATE EXISTING SUB-CATEGORIES TO OPPORTUNITIES
+-- =====================================================
+
+-- Convert Agriculture and Education sub-categories to investment opportunities
+INSERT INTO investment_opportunities (
+    category_id,
+    title,
+    description,
+    min_investment,
+    max_investment,
+    tenure_months,
+    return_rate,
+    total_units,
+    available_units,
+    is_active,
+    display_order
+)
+SELECT
+    ic.id as category_id,
+    sub_cat::TEXT as title,
+    CASE
+        WHEN ic.name = 'AGRICULTURE' THEN
+            CASE sub_cat::TEXT
+                WHEN 'Land Lease' THEN 'Invest in agricultural land leasing projects with guaranteed returns'
+                WHEN 'Production' THEN 'Support crop and livestock production initiatives'
+                WHEN 'Processing' THEN 'Invest in agricultural processing facilities and equipment'
+                WHEN 'Marketing' THEN 'Fund agricultural marketing and distribution networks'
+                ELSE 'Agricultural investment opportunity'
+            END
+        WHEN ic.name = 'EDUCATION' THEN
+            CASE sub_cat::TEXT
+                WHEN 'Institution' THEN 'Invest in educational institutions and facilities'
+                WHEN 'Housing/Dormitory' THEN 'Support student housing and dormitory development'
+                ELSE 'Educational investment opportunity'
+            END
+        ELSE 'Investment opportunity'
+    END as description,
+    CASE ic.name
+        WHEN 'AGRICULTURE' THEN 1000.00
+        WHEN 'EDUCATION' THEN 5000.00
+        ELSE 1000.00
+    END as min_investment,
+    CASE ic.name
+        WHEN 'AGRICULTURE' THEN 100000.00
+        WHEN 'EDUCATION' THEN 500000.00
+        ELSE 100000.00
+    END as max_investment,
+    12 as tenure_months,
+    CASE ic.name
+        WHEN 'AGRICULTURE' THEN 15.0
+        WHEN 'EDUCATION' THEN 12.0
+        ELSE 10.0
+    END as return_rate,
+    100 as total_units,
+    100 as available_units,
+    true as is_active,
+    row_number() OVER (PARTITION BY ic.id ORDER BY sub_cat::TEXT) as display_order
+FROM investment_categories ic,
+LATERAL jsonb_array_elements_text(ic.sub_categories) sub_cat
+WHERE ic.name IN ('AGRICULTURE', 'EDUCATION')
+  AND ic.sub_categories IS NOT NULL;
 
 -- =====================================================
 -- CREATE DEFAULT SUPER ADMIN

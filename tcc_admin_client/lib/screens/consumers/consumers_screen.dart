@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/bank_account_model.dart';
 import '../../models/consumer_model.dart';
+import '../../models/user_model.dart';
 import '../../services/bank_account_service.dart';
 import '../../services/consumer_service.dart';
 import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
+import '../../widgets/dialogs/add_user_dialog.dart';
 import '../../widgets/dialogs/export_dialog.dart';
+import '../../services/kyc_service.dart';
+import '../kyc/kyc_review_detail_screen.dart';
 
 /// Consumers List Screen
 /// Displays all consumers from TCC user mobile app
@@ -25,6 +28,7 @@ class ConsumersScreen extends StatefulWidget {
 class _ConsumersScreenState extends State<ConsumersScreen> {
   final _consumerService = ConsumerService();
   final _exportService = ExportService();
+  final _kycService = KycService();
   final _searchController = TextEditingController();
   Timer? _searchDebounceTimer;
   List<ConsumerModel> _consumers = [];
@@ -78,6 +82,11 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _addConsumer(UserModel user) async {
+    // Refresh the list to include the newly added consumer
+    await _loadConsumers();
   }
 
   void _viewConsumerDetails(ConsumerModel consumer) {
@@ -144,6 +153,88 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
           );
         }
       }
+    }
+  }
+
+  Future<void> _reviewConsumerKyc(ConsumerModel consumer) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(AppTheme.space24),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppColors.accentBlue),
+              const SizedBox(height: AppTheme.space16),
+              Text(
+                'Loading KYC submission...',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // Fetch KYC submissions for this consumer
+      final response = await _kycService.getUserKycSubmissions(consumer.id);
+
+      if (!mounted) return;
+
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      if (response.success && response.data != null && response.data!.isNotEmpty) {
+        // Get the most recent submission
+        final submission = response.data!.first;
+        final submissionId = submission['id'] as String;
+
+        // Navigate to KYC review detail screen
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => KYCReviewDetailScreen(
+              submissionId: submissionId,
+              userId: consumer.id,
+            ),
+          ),
+        );
+
+        // Reload consumers after review
+        await _loadConsumers();
+      } else {
+        // No KYC submission found
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'No KYC submission found for ${consumer.fullName}',
+              ),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      // Close loading dialog if still showing
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading KYC submission: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -310,6 +401,30 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                         context,
                       ).textTheme.bodyMedium?.copyWith(fontSize: 14),
                     ),
+                    const SizedBox(height: AppTheme.space16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AddUserDialog(
+                              onUserAdded: _addConsumer,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Consumer'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentBlue,
+                          foregroundColor: AppColors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.space20,
+                            vertical: AppTheme.space12,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 )
               : Row(
@@ -328,6 +443,26 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AddUserDialog(
+                            onUserAdded: _addConsumer,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Consumer'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentBlue,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.space24,
+                          vertical: AppTheme.space16,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -914,10 +1049,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                                             color: AppColors.warning,
                                             size: 20,
                                           ),
-                                          onPressed: () {
-                                            // Navigate to KYC review for this specific consumer
-                                            context.go('/kyc-submissions');
-                                          },
+                                          onPressed: () => _reviewConsumerKyc(consumer),
                                           tooltip: 'Review KYC',
                                         ),
                                       IconButton(
@@ -1204,10 +1336,7 @@ class _ConsumersScreenState extends State<ConsumersScreen> {
                     color: AppColors.warning,
                     size: 20,
                   ),
-                  onPressed: () {
-                    // Navigate to KYC review for this specific consumer
-                    context.push('/kyc-submissions');
-                  },
+                  onPressed: () => _reviewConsumerKyc(consumer),
                   tooltip: 'Review KYC',
                 ),
               IconButton(

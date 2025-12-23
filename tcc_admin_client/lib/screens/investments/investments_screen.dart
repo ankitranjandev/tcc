@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/investment_model.dart';
+import '../../models/investment_opportunity_model.dart';
 import '../../services/investment_service.dart';
 import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
 import '../../widgets/dialogs/export_dialog.dart';
+import '../../widgets/dialogs/create_opportunity_dialog.dart';
+import '../../widgets/dialogs/edit_opportunity_dialog.dart';
 
 /// Investments Screen
 class InvestmentsScreen extends StatefulWidget {
@@ -17,7 +20,7 @@ class InvestmentsScreen extends StatefulWidget {
   State<InvestmentsScreen> createState() => _InvestmentsScreenState();
 }
 
-class _InvestmentsScreenState extends State<InvestmentsScreen> {
+class _InvestmentsScreenState extends State<InvestmentsScreen> with SingleTickerProviderStateMixin {
   final InvestmentService _investmentService = InvestmentService();
   final ExportService _exportService = ExportService();
   bool _isLoading = true;
@@ -29,10 +32,29 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
   String _filterCategory = 'All';
   String _filterStatus = 'All';
 
+  // Opportunities state
+  List<InvestmentOpportunityModel> _opportunities = [];
+  bool _isLoadingOpportunities = false;
+  Map<String, int> _opportunityCounts = {
+    'AGRICULTURE': 0,
+    'EDUCATION': 0,
+  };
+  String _opportunityFilterCategory = 'All';
+  String _opportunityFilterVisibility = 'All';
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadInvestments();
+    _loadOpportunities();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInvestments() async {
@@ -60,10 +82,96 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
     }
   }
 
+  Future<void> _loadOpportunities() async {
+    setState(() {
+      _isLoadingOpportunities = true;
+    });
+
+    final response = await _investmentService.getInvestmentOpportunities(
+      category: _opportunityFilterCategory != 'All' ? _opportunityFilterCategory : null,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isLoadingOpportunities = false;
+        if (response.success && response.data != null) {
+          _opportunities = response.data!.data
+              .map((json) => InvestmentOpportunityModel.fromJson(json))
+              .toList();
+          _calculateOpportunityCounts();
+        }
+      });
+    }
+  }
+
+  void _calculateOpportunityCounts() {
+    _opportunityCounts = {
+      'AGRICULTURE': _opportunities.where((o) => o.categoryName == 'AGRICULTURE').length,
+      'EDUCATION': _opportunities.where((o) => o.categoryName == 'EDUCATION').length,
+    };
+  }
+
+  bool _canCreateOpportunity() {
+    return _opportunityCounts.values.any((count) => count < 16);
+  }
+
+  void _showCreateOpportunityDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => CreateOpportunityDialog(
+        opportunityCounts: _opportunityCounts,
+        onOpportunityCreated: (opportunity) {
+          _loadOpportunities();
+        },
+      ),
+    );
+  }
+
+  void _showEditOpportunityDialog(InvestmentOpportunityModel opportunity) {
+    showDialog(
+      context: context,
+      builder: (context) => EditOpportunityDialog(
+        opportunity: opportunity,
+        onOpportunityUpdated: (updatedOpportunity) {
+          _loadOpportunities();
+        },
+      ),
+    );
+  }
+
+  Future<void> _toggleOpportunityStatus(InvestmentOpportunityModel opportunity) async {
+    final newStatus = !opportunity.isActive;
+
+    final response = await _investmentService.updateInvestmentOpportunity(
+      opportunityId: opportunity.id,
+      status: newStatus ? 'ACTIVE' : 'HIDDEN',
+    );
+
+    if (response.success) {
+      _loadOpportunities();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Opportunity ${newStatus ? 'shown' : 'hidden'} successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? 'Failed to toggle status'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
-    final isTablet = context.isTablet;
 
     // Show loading indicator
     if (_isLoading) {
@@ -94,8 +202,6 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
         ),
       );
     }
-
-    final filteredInvestments = _investments;
 
     // Calculate stats
     final totalInvested = _investments.fold<double>(
@@ -128,9 +234,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                 ),
                 const SizedBox(height: AppTheme.space16),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Create investment opportunity
-                  },
+                  onPressed: _canCreateOpportunity() ? _showCreateOpportunityDialog : null,
                   icon: const Icon(Icons.add),
                   label: const Text('Create Opportunity'),
                   style: ElevatedButton.styleFrom(
@@ -163,9 +267,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                   ],
                 ),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Create investment opportunity
-                  },
+                  onPressed: _canCreateOpportunity() ? _showCreateOpportunityDialog : null,
                   icon: const Icon(Icons.add),
                   label: const Text('Create Opportunity'),
                   style: ElevatedButton.styleFrom(
@@ -223,17 +325,67 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
           ),
           SizedBox(height: isMobile ? AppTheme.space24 : AppTheme.space32),
 
-          // Filters and Search
+          // Tab Bar
           Container(
-            padding: EdgeInsets.all(isMobile ? AppTheme.space16 : AppTheme.space24),
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
               boxShadow: [AppColors.shadowSmall],
             ),
-            child: Column(
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.account_balance_wallet),
+                  text: 'User Investments',
+                ),
+                Tab(
+                  icon: Icon(Icons.business_center),
+                  text: 'Opportunities',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.space24),
+
+          // Tab Content
+          SizedBox(
+            height: 600,
+            child: TabBarView(
+              controller: _tabController,
               children: [
-                if (isMobile)
+                _buildInvestmentsTab(),
+                _buildOpportunitiesTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInvestmentsTab() {
+    final isMobile = context.isMobile;
+    final isTablet = context.isTablet;
+    final filteredInvestments = _investments;
+
+    return Column(
+      children: [
+        // Filters and Search
+        Container(
+          padding: EdgeInsets.all(isMobile ? AppTheme.space16 : AppTheme.space24),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            boxShadow: [AppColors.shadowSmall],
+          ),
+          child: Column(
+            children: [
+              if (isMobile)
                   Column(
                     children: [
                       // Search Bar
@@ -443,10 +595,10 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                   )
                 else
                   SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    headingRowColor: WidgetStateProperty.all(AppColors.gray50),
-                    columns: [
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      headingRowColor: WidgetStateProperty.all(AppColors.gray50),
+                      columns: [
                       DataColumn(
                         label: Text(
                           'Investment ID',
@@ -537,8 +689,8 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                           ),
                         ),
                       ),
-                    ],
-                    rows: filteredInvestments.map((investment) {
+                      ],
+                      rows: filteredInvestments.map((investment) {
                       final id = investment.id;
                       final progress = investment.progressPercentage;
                       final status = investment.status;
@@ -696,9 +848,9 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                             ),
                           ),
                         ],
-                      );
-                    }).toList(),
-                  ),
+                        );
+                      }).toList(),
+                    ),
                 ),
 
                 const SizedBox(height: AppTheme.space24),
@@ -749,6 +901,557 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                 ),
               ],
             ),
+          ),
+        ],
+      );
+  }
+
+  Widget _buildOpportunitiesTab() {
+    final isMobile = context.isMobile;
+    final isTablet = context.isTablet;
+
+    // Apply filters
+    List<InvestmentOpportunityModel> filteredOpportunities = _opportunities;
+
+    if (_opportunityFilterCategory != 'All') {
+      filteredOpportunities = filteredOpportunities
+          .where((o) => o.categoryName == _opportunityFilterCategory)
+          .toList();
+    }
+
+    if (_opportunityFilterVisibility != 'All') {
+      final showActive = _opportunityFilterVisibility == 'Visible';
+      filteredOpportunities = filteredOpportunities
+          .where((o) => o.isActive == showActive)
+          .toList();
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Filters
+          Container(
+            padding: EdgeInsets.all(isMobile ? AppTheme.space16 : AppTheme.space24),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+              boxShadow: [AppColors.shadowSmall],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _opportunityFilterCategory,
+                        decoration: InputDecoration(
+                          labelText: 'Category',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.gray50,
+                        ),
+                        items: ['All', 'AGRICULTURE', 'EDUCATION']
+                            .map((category) => DropdownMenuItem(
+                                  value: category,
+                                  child: Text(category),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _opportunityFilterCategory = value!;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.space16),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _opportunityFilterVisibility,
+                        decoration: InputDecoration(
+                          labelText: 'Visibility',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.gray50,
+                        ),
+                        items: ['All', 'Visible', 'Hidden']
+                            .map((visibility) => DropdownMenuItem(
+                                  value: visibility,
+                                  child: Text(visibility),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _opportunityFilterVisibility = value!;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.space16),
+                // Stats
+                Row(
+                  children: [
+                    Text(
+                      'Agriculture: ${_opportunityCounts['AGRICULTURE'] ?? 0}/16',
+                      style: TextStyle(
+                        color: (_opportunityCounts['AGRICULTURE'] ?? 0) >= 16
+                            ? AppColors.error
+                            : AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.space24),
+                    Text(
+                      'Education: ${_opportunityCounts['EDUCATION'] ?? 0}/16',
+                      style: TextStyle(
+                        color: (_opportunityCounts['EDUCATION'] ?? 0) >= 16
+                            ? AppColors.error
+                            : AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Total: ${_opportunities.length} opportunities',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.space16),
+
+          // Opportunities List
+          if (_isLoadingOpportunities)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(AppTheme.space32),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (filteredOpportunities.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(AppTheme.space32),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                boxShadow: [AppColors.shadowSmall],
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.business_center, size: 48, color: AppColors.textSecondary),
+                    const SizedBox(height: AppTheme.space16),
+                    Text(
+                      'No opportunities found',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.space8),
+                    Text(
+                      'Create your first investment opportunity',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                boxShadow: [AppColors.shadowSmall],
+              ),
+              child: isMobile || isTablet
+                  ? Column(
+                      children: filteredOpportunities
+                          .map((opp) => _buildOpportunityCard(opp))
+                          .toList(),
+                    )
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        headingRowColor: WidgetStateProperty.all(AppColors.gray50),
+                        columns: const [
+                          DataColumn(
+                            label: Text(
+                              'Title',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Category',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Min-Max Investment',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Tenure',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Return Rate',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Units',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Status',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Actions',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                        rows: filteredOpportunities.map((opp) {
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Container(
+                                  constraints: const BoxConstraints(maxWidth: 200),
+                                  child: Text(
+                                    opp.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppTheme.space8,
+                                    vertical: AppTheme.space4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: opp.categoryName == 'AGRICULTURE'
+                                        ? AppColors.success.withValues(alpha: 0.1)
+                                        : AppColors.info.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                  ),
+                                  child: Text(
+                                    opp.categoryDisplayName,
+                                    style: TextStyle(
+                                      color: opp.categoryName == 'AGRICULTURE'
+                                          ? AppColors.success
+                                          : AppColors.info,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  'TCC ${Formatters.formatCurrencyCompact(opp.minInvestment)} - ${Formatters.formatCurrencyCompact(opp.maxInvestment)}',
+                                ),
+                              ),
+                              DataCell(
+                                Text('${opp.tenureMonths} months'),
+                              ),
+                              DataCell(
+                                Text(
+                                  '${opp.returnRate.toStringAsFixed(1)}%',
+                                  style: const TextStyle(
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${opp.availableUnits}/${opp.totalUnits}',
+                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                    ),
+                                    Text(
+                                      '${opp.soldPercentage.toStringAsFixed(0)}% sold',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      opp.isActive ? Icons.visibility : Icons.visibility_off,
+                                      size: 16,
+                                      color: opp.isActive ? AppColors.success : AppColors.textSecondary,
+                                    ),
+                                    const SizedBox(width: AppTheme.space4),
+                                    Text(
+                                      opp.statusText,
+                                      style: TextStyle(
+                                        color: opp.isActive ? AppColors.success : AppColors.textSecondary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 18),
+                                      onPressed: () => _showEditOpportunityDialog(opp),
+                                      tooltip: 'Edit',
+                                      color: AppColors.primary,
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        opp.isActive ? Icons.visibility_off : Icons.visibility,
+                                        size: 18,
+                                      ),
+                                      onPressed: () => _toggleOpportunityStatus(opp),
+                                      tooltip: opp.isActive ? 'Hide' : 'Show',
+                                      color: opp.isActive ? AppColors.warning : AppColors.success,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOpportunityCard(InvestmentOpportunityModel opportunity) {
+    return Container(
+      margin: const EdgeInsets.all(AppTheme.space12),
+      padding: const EdgeInsets.all(AppTheme.space16),
+      decoration: BoxDecoration(
+        color: opportunity.isActive ? AppColors.white : AppColors.gray50,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: opportunity.isActive ? AppColors.borderLight : AppColors.textSecondary.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  opportunity.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.space8,
+                  vertical: AppTheme.space4,
+                ),
+                decoration: BoxDecoration(
+                  color: opportunity.categoryName == 'AGRICULTURE'
+                      ? AppColors.success.withValues(alpha: 0.1)
+                      : AppColors.info.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                ),
+                child: Text(
+                  opportunity.categoryDisplayName,
+                  style: TextStyle(
+                    color: opportunity.categoryName == 'AGRICULTURE'
+                        ? AppColors.success
+                        : AppColors.info,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.space8),
+          Text(
+            opportunity.description,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppTheme.space12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Investment Range',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.space4),
+                    Text(
+                      'TCC ${Formatters.formatCurrencyCompact(opportunity.minInvestment)} - ${Formatters.formatCurrencyCompact(opportunity.maxInvestment)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Return Rate',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.space4),
+                    Text(
+                      '${opportunity.returnRate.toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.space12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tenure',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.space4),
+                    Text(
+                      '${opportunity.tenureMonths} months',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Units',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.space4),
+                    Text(
+                      '${opportunity.availableUnits}/${opportunity.totalUnits} (${opportunity.soldPercentage.toStringAsFixed(0)}% sold)',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.space12),
+          Row(
+            children: [
+              Icon(
+                opportunity.isActive ? Icons.visibility : Icons.visibility_off,
+                size: 16,
+                color: opportunity.isActive ? AppColors.success : AppColors.textSecondary,
+              ),
+              const SizedBox(width: AppTheme.space4),
+              Text(
+                opportunity.statusText,
+                style: TextStyle(
+                  color: opportunity.isActive ? AppColors.success : AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 20),
+                onPressed: () => _showEditOpportunityDialog(opportunity),
+                tooltip: 'Edit',
+                color: AppColors.primary,
+              ),
+              IconButton(
+                icon: Icon(
+                  opportunity.isActive ? Icons.visibility_off : Icons.visibility,
+                  size: 20,
+                ),
+                onPressed: () => _toggleOpportunityStatus(opportunity),
+                tooltip: opportunity.isActive ? 'Hide' : 'Show',
+                color: opportunity.isActive ? AppColors.warning : AppColors.success,
+              ),
+            ],
           ),
         ],
       ),

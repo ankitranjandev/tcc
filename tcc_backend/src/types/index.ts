@@ -72,6 +72,12 @@ export enum BillType {
   OTHER = 'OTHER',
 }
 
+export enum ElectionStatus {
+  ACTIVE = 'active',
+  ENDED = 'ended',
+  PAUSED = 'paused',
+}
+
 export enum PollStatus {
   DRAFT = 'DRAFT',
   ACTIVE = 'ACTIVE',
@@ -343,4 +349,266 @@ export interface WalletAuditTrail {
   transaction_id?: string;
   ip_address?: string;
   created_at: Date;
+}
+
+// Investment Product Versioning Types
+export interface ProductVersion {
+  id: string;
+  tenure_id: string;
+  version_number: number;
+  return_percentage: number;
+  effective_from: Date;
+  effective_until?: Date;
+  is_current: boolean;
+  change_reason?: string;
+  changed_by?: string;
+  metadata?: any;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface InvestmentTenure {
+  id: string;
+  category_id: string;
+  duration_months: number;
+  return_percentage: number;
+  agreement_template_url?: string;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface InvestmentCategoryData {
+  id: string;
+  name: InvestmentCategory;
+  display_name: string;
+  description?: string;
+  sub_categories?: string[];
+  icon_url?: string;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface InvestmentUnit {
+  id: string;
+  category: InvestmentCategory;
+  unit_name: string;
+  unit_price: number;
+  description?: string;
+  icon_url?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface TenureWithVersionHistory {
+  tenure: InvestmentTenure;
+  current_version: ProductVersion;
+  version_history: ProductVersion[];
+  investment_count: number;
+  total_amount: number;
+}
+
+export interface InvestmentCategoryWithVersions {
+  category: InvestmentCategoryData;
+  tenures: TenureWithVersionHistory[];
+}
+
+export interface RateChangeNotification {
+  id: string;
+  version_id: string;
+  user_id: string;
+  notification_id?: string;
+  category: InvestmentCategory;
+  tenure_months: number;
+  old_rate: number;
+  new_rate: number;
+  sent_at: Date;
+  read_at?: Date;
+  created_at: Date;
+}
+
+export interface RateChangeHistoryItem {
+  version_id: string;
+  tenure_id: string;
+  category: InvestmentCategory;
+  category_display_name: string;
+  tenure_months: number;
+  version_number: number;
+  old_rate: number;
+  new_rate: number;
+  change_reason?: string;
+  changed_by?: string;
+  admin_name?: string;
+  effective_from: Date;
+  users_notified: number;
+  active_investments: number;
+}
+
+export interface VersionReport {
+  tenure_id: string;
+  category: InvestmentCategory;
+  tenure_months: number;
+  versions: {
+    version_id: string;
+    version_number: number;
+    return_percentage: number;
+    effective_from: Date;
+    effective_until?: Date;
+    is_current: boolean;
+    investment_count: number;
+    total_amount: number;
+    active_count: number;
+  }[];
+  summary: {
+    total_versions: number;
+    total_investments: number;
+    total_amount: number;
+    current_rate: number;
+  };
+}
+
+// DTOs for Investment Product Management
+export interface CreateCategoryDTO {
+  name: InvestmentCategory;
+  display_name: string;
+  description?: string;
+  sub_categories?: string[];
+  icon_url?: string;
+}
+
+export interface UpdateCategoryDTO {
+  display_name?: string;
+  description?: string;
+  sub_categories?: string[];
+  icon_url?: string;
+  is_active?: boolean;
+}
+
+export interface CreateTenureDTO {
+  category_id: string;
+  duration_months: number;
+  return_percentage: number;
+  agreement_template_url?: string;
+}
+
+export interface UpdateRateDTO {
+  new_rate: number;
+  change_reason: string;
+}
+
+export interface CreateUnitDTO {
+  category: InvestmentCategory;
+  unit_name: string;
+  unit_price: number;
+  description?: string;
+  icon_url?: string;
+  display_order?: number;
+}
+
+export interface UpdateUnitDTO {
+  unit_name?: string;
+  unit_price?: number;
+  description?: string;
+  icon_url?: string;
+  display_order?: number;
+  is_active?: boolean;
+}
+
+export interface VersionReportParams {
+  category?: InvestmentCategory;
+  tenure_id?: string;
+  from_date?: Date;
+  to_date?: Date;
+}
+
+export interface RateChangeFilters {
+  category?: InvestmentCategory;
+  from_date?: Date;
+  to_date?: Date;
+  admin_id?: string;
+}
+
+// E-Voting Types
+export interface Election {
+  id: string;
+  title: string;
+  question: string;
+  voting_charge: number;
+  start_time: Date;
+  end_time: Date;
+  status: ElectionStatus;
+  created_by?: string;
+  created_at: Date;
+  updated_at: Date;
+  ended_at?: Date;
+  total_votes: number;
+  total_revenue: number;
+}
+
+export interface ElectionOption {
+  id: string;
+  election_id: string;
+  option_text: string;
+  vote_count: number;
+  created_at: Date;
+}
+
+export interface ElectionVote {
+  id: string;
+  election_id: string;
+  option_id: string;
+  user_id: string;
+  vote_charge: number;
+  voted_at: Date;
+}
+
+export interface ElectionWithOptions extends Election {
+  options: ElectionOption[];
+}
+
+export interface ElectionResult extends ElectionWithOptions {
+  user_vote?: {
+    option_id: string;
+    voted_at: Date;
+  };
+}
+
+export interface ElectionStats extends Election {
+  options: (ElectionOption & {
+    percentage: number;
+  })[];
+  voters: {
+    user_id: string;
+    first_name: string;
+    last_name: string;
+    option_id: string;
+    option_text: string;
+    voted_at: Date;
+    vote_charge: number;
+  }[];
+}
+
+// DTOs for E-Voting
+export interface CreateElectionDTO {
+  title: string;
+  question: string;
+  options: string[];
+  voting_charge: number;
+  end_time: Date;
+}
+
+export interface UpdateElectionDTO {
+  title?: string;
+  question?: string;
+  options?: string[];
+  voting_charge?: number;
+  end_time?: Date;
+}
+
+export interface CastVoteDTO {
+  election_id: string;
+  option_id: string;
 }

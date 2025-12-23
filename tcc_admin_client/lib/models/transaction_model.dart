@@ -201,6 +201,31 @@ enum TransactionType {
   commission,
   agentCredit;
 
+  String get name {
+    switch (this) {
+      case TransactionType.deposit:
+        return 'deposit';
+      case TransactionType.withdrawal:
+        return 'withdrawal';
+      case TransactionType.transfer:
+        return 'transfer';
+      case TransactionType.billPayment:
+        return 'billPayment';
+      case TransactionType.investment:
+        return 'investment';
+      case TransactionType.investmentReturn:
+        return 'investmentReturn';
+      case TransactionType.voting:
+        return 'voting';
+      case TransactionType.refund:
+        return 'refund';
+      case TransactionType.commission:
+        return 'commission';
+      case TransactionType.agentCredit:
+        return 'agentCredit';
+    }
+  }
+
   String get displayName {
     switch (this) {
       case TransactionType.deposit:
@@ -235,6 +260,23 @@ enum TransactionStatus {
   failed,
   cancelled,
   rejected;
+
+  String get name {
+    switch (this) {
+      case TransactionStatus.pending:
+        return 'pending';
+      case TransactionStatus.processing:
+        return 'processing';
+      case TransactionStatus.completed:
+        return 'completed';
+      case TransactionStatus.failed:
+        return 'failed';
+      case TransactionStatus.cancelled:
+        return 'cancelled';
+      case TransactionStatus.rejected:
+        return 'rejected';
+    }
+  }
 
   String get displayName {
     switch (this) {

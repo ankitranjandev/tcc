@@ -196,6 +196,11 @@ class App {
     this.app.use(`${apiPrefix}/polls`, pollRoutes.default);
     logger.info('Poll routes registered');
 
+    // Election/E-Voting routes
+    const electionRoutes = await import('./routes/election.routes');
+    this.app.use(`${apiPrefix}`, electionRoutes.default);
+    logger.info('Election routes registered');
+
     // Upload routes
     const uploadRoutes = await import('./routes/upload.routes');
     this.app.use(`${apiPrefix}/uploads`, uploadRoutes.default);

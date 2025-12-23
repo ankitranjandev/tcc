@@ -1606,8 +1606,8 @@ export class AdminService {
     format?: string;
   }): Promise<any> {
     try {
-      const dateFilter = params.dateRange
-        ? `WHERE u.created_at BETWEEN '${params.dateRange.from.toISOString()}' AND '${params.dateRange.to.toISOString()}'`
+      const dateCondition = params.dateRange
+        ? `AND u.created_at BETWEEN '${params.dateRange.from.toISOString()}' AND '${params.dateRange.to.toISOString()}'`
         : '';
 
       // Get user statistics
@@ -1621,7 +1621,7 @@ export class AdminService {
           COUNT(*) FILTER (WHERE DATE(created_at) >= CURRENT_DATE - INTERVAL '30 days') as new_users_this_month,
           COUNT(*) FILTER (WHERE last_login_at >= CURRENT_DATE - INTERVAL '7 days') as active_last_week
         FROM users u
-        WHERE role = 'USER' ${dateFilter ? `AND ${dateFilter.substring(6)}` : ''}
+        WHERE role = 'USER' ${dateCondition}
       `);
 
       // Get user list with activity
@@ -1641,7 +1641,7 @@ export class AdminService {
           (SELECT COUNT(*) FROM investments WHERE user_id = u.id) as investment_count
         FROM users u
         LEFT JOIN wallets w ON u.id = w.user_id
-        WHERE u.role = 'USER' ${dateFilter ? `AND ${dateFilter.substring(6)}` : ''}
+        WHERE u.role = 'USER' ${dateCondition}
         ORDER BY u.created_at DESC
         LIMIT 100
       `);
@@ -1668,8 +1668,8 @@ export class AdminService {
     format?: string;
   }): Promise<any> {
     try {
-      const dateFilter = params.dateRange
-        ? `WHERE created_at BETWEEN '${params.dateRange.from.toISOString()}' AND '${params.dateRange.to.toISOString()}'`
+      const dateCondition = params.dateRange
+        ? `created_at BETWEEN '${params.dateRange.from.toISOString()}' AND '${params.dateRange.to.toISOString()}' AND`
         : '';
 
       // Get revenue summary
@@ -1681,7 +1681,7 @@ export class AdminService {
           COUNT(*) as transaction_count,
           COALESCE(AVG(amount), 0) as avg_transaction_value
         FROM transactions
-        ${dateFilter} AND status = 'COMPLETED'
+        WHERE ${dateCondition} status = 'COMPLETED'
       `);
 
       // Get revenue by day/week/month based on groupBy
@@ -1700,7 +1700,7 @@ export class AdminService {
           COALESCE(SUM(fee), 0) as fees,
           COUNT(*) as transaction_count
         FROM transactions
-        ${dateFilter} AND status = 'COMPLETED'
+        WHERE ${dateCondition} status = 'COMPLETED'
         GROUP BY period
         ORDER BY period DESC
         LIMIT 50
@@ -1713,7 +1713,7 @@ export class AdminService {
           COALESCE(SUM(amount), 0) as revenue,
           COUNT(*) as count
         FROM transactions
-        ${dateFilter} AND status = 'COMPLETED'
+        WHERE ${dateCondition} status = 'COMPLETED'
         GROUP BY type
         ORDER BY revenue DESC
       `);
@@ -1910,5 +1910,369 @@ export class AdminService {
       logger.error('Error getting agent performance report', error);
       throw error;
     }
+  }
+
+  /**
+   * Create investment opportunity (Admin only)
+   */
+  static async createOpportunity(
+    adminId: string,
+    data: {
+      category_id: string;
+      title: string;
+      description: string;
+      min_investment: number;
+      max_investment: number;
+      tenure_months: number;
+      return_rate: number;
+      total_units: number;
+      image_url?: string;
+      metadata?: any;
+    }
+  ): Promise<any> {
+    try {
+      // Validate category (only Agriculture and Education)
+      const categories = await db.query(
+        `SELECT id, name FROM investment_categories WHERE id = $1`,
+        [data.category_id]
+      );
+
+      if (categories.length === 0) {
+        throw new Error('CATEGORY_NOT_FOUND');
+      }
+
+      const category = categories[0];
+      if (category.name !== 'AGRICULTURE' && category.name !== 'EDUCATION') {
+        throw new Error('INVALID_CATEGORY');
+      }
+
+      // Check 16 opportunity limit
+      const countResult = await db.query(
+        `SELECT COUNT(*) as count FROM investment_opportunities WHERE category_id = $1`,
+        [data.category_id]
+      );
+
+      if (parseInt(countResult[0].count) >= 16) {
+        throw new Error('CATEGORY_OPPORTUNITY_LIMIT_REACHED');
+      }
+
+      // Insert opportunity
+      const result = await db.query(
+        `INSERT INTO investment_opportunities (
+          category_id, title, description, min_investment, max_investment,
+          tenure_months, return_rate, total_units, available_units, image_url, metadata
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING *`,
+        [
+          data.category_id,
+          data.title,
+          data.description,
+          data.min_investment,
+          data.max_investment,
+          data.tenure_months,
+          data.return_rate,
+          data.total_units,
+          data.total_units, // available_units = total_units initially
+          data.image_url || null,
+          data.metadata ? JSON.stringify(data.metadata) : null,
+        ]
+      );
+
+      logger.info('Investment opportunity created', {
+        adminId,
+        opportunityId: result[0].id,
+        category: category.name,
+      });
+
+      return this.formatOpportunity(result[0], category.name);
+    } catch (error) {
+      logger.error('Error creating investment opportunity', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update investment opportunity (Admin only)
+   */
+  static async updateOpportunity(
+    adminId: string,
+    opportunityId: string,
+    data: {
+      title?: string;
+      description?: string;
+      min_investment?: number;
+      max_investment?: number;
+      tenure_months?: number;
+      return_rate?: number;
+      total_units?: number;
+      image_url?: string;
+      metadata?: any;
+    }
+  ): Promise<any> {
+    try {
+      // Check if opportunity exists
+      const existing = await db.query(
+        `SELECT io.*, ic.name as category_name
+         FROM investment_opportunities io
+         JOIN investment_categories ic ON io.category_id = ic.id
+         WHERE io.id = $1`,
+        [opportunityId]
+      );
+
+      if (existing.length === 0) {
+        throw new Error('OPPORTUNITY_NOT_FOUND');
+      }
+
+      // Build update query dynamically
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramCount = 1;
+
+      if (data.title !== undefined) {
+        updates.push(`title = $${paramCount}`);
+        params.push(data.title);
+        paramCount++;
+      }
+
+      if (data.description !== undefined) {
+        updates.push(`description = $${paramCount}`);
+        params.push(data.description);
+        paramCount++;
+      }
+
+      if (data.min_investment !== undefined) {
+        updates.push(`min_investment = $${paramCount}`);
+        params.push(data.min_investment);
+        paramCount++;
+      }
+
+      if (data.max_investment !== undefined) {
+        updates.push(`max_investment = $${paramCount}`);
+        params.push(data.max_investment);
+        paramCount++;
+      }
+
+      if (data.tenure_months !== undefined) {
+        updates.push(`tenure_months = $${paramCount}`);
+        params.push(data.tenure_months);
+        paramCount++;
+      }
+
+      if (data.return_rate !== undefined) {
+        updates.push(`return_rate = $${paramCount}`);
+        params.push(data.return_rate);
+        paramCount++;
+      }
+
+      if (data.total_units !== undefined) {
+        updates.push(`total_units = $${paramCount}`);
+        params.push(data.total_units);
+        paramCount++;
+      }
+
+      if (data.image_url !== undefined) {
+        updates.push(`image_url = $${paramCount}`);
+        params.push(data.image_url);
+        paramCount++;
+      }
+
+      if (data.metadata !== undefined) {
+        updates.push(`metadata = $${paramCount}`);
+        params.push(JSON.stringify(data.metadata));
+        paramCount++;
+      }
+
+      if (updates.length === 0) {
+        return this.formatOpportunity(existing[0], existing[0].category_name);
+      }
+
+      params.push(opportunityId);
+      const result = await db.query(
+        `UPDATE investment_opportunities
+         SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $${paramCount}
+         RETURNING *`,
+        params
+      );
+
+      logger.info('Investment opportunity updated', {
+        adminId,
+        opportunityId,
+      });
+
+      return this.formatOpportunity(result[0], existing[0].category_name);
+    } catch (error) {
+      logger.error('Error updating investment opportunity', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Toggle opportunity status (hide/show)
+   */
+  static async toggleOpportunityStatus(
+    adminId: string,
+    opportunityId: string,
+    isActive: boolean
+  ): Promise<any> {
+    try {
+      const result = await db.query(
+        `UPDATE investment_opportunities
+         SET is_active = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2
+         RETURNING *`,
+        [isActive, opportunityId]
+      );
+
+      if (result.length === 0) {
+        throw new Error('OPPORTUNITY_NOT_FOUND');
+      }
+
+      logger.info('Investment opportunity status toggled', {
+        adminId,
+        opportunityId,
+        isActive,
+      });
+
+      return { success: true, isActive };
+    } catch (error) {
+      logger.error('Error toggling opportunity status', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all opportunities with pagination and filters
+   */
+  static async getOpportunities(
+    pagination: PaginationParams,
+    filters?: {
+      category?: string;
+      is_active?: boolean;
+      search?: string;
+    }
+  ): Promise<{
+    opportunities: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    try {
+      const conditions = ['1=1'];
+      const params: any[] = [];
+      let paramCount = 1;
+
+      if (filters?.category) {
+        conditions.push(`ic.name = $${paramCount}`);
+        params.push(filters.category);
+        paramCount++;
+      }
+
+      if (filters?.is_active !== undefined) {
+        conditions.push(`io.is_active = $${paramCount}`);
+        params.push(filters.is_active);
+        paramCount++;
+      }
+
+      if (filters?.search) {
+        conditions.push(`(io.title ILIKE $${paramCount} OR io.description ILIKE $${paramCount})`);
+        params.push(`%${filters.search}%`);
+        paramCount++;
+      }
+
+      const whereClause = conditions.join(' AND ');
+
+      // Get total count
+      const countResult = await db.query(
+        `SELECT COUNT(*) as total
+         FROM investment_opportunities io
+         JOIN investment_categories ic ON io.category_id = ic.id
+         WHERE ${whereClause}`,
+        params
+      );
+      const total = parseInt(countResult[0].total);
+
+      // Get opportunities
+      const opportunities = await db.query(
+        `SELECT io.*, ic.name as category_name, ic.display_name as category_display_name
+         FROM investment_opportunities io
+         JOIN investment_categories ic ON io.category_id = ic.id
+         WHERE ${whereClause}
+         ORDER BY io.display_order, io.created_at DESC
+         LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
+        [...params, pagination.limit, pagination.offset]
+      );
+
+      const formattedOpportunities = opportunities.map((opp: any) =>
+        this.formatOpportunity(opp, opp.category_name)
+      );
+
+      const totalPages = Math.ceil(total / pagination.limit);
+
+      return {
+        opportunities: formattedOpportunities,
+        pagination: {
+          page: pagination.page,
+          limit: pagination.limit,
+          total,
+          totalPages,
+        },
+      };
+    } catch (error) {
+      logger.error('Error getting opportunities', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get single opportunity details
+   */
+  static async getOpportunityDetails(opportunityId: string): Promise<any> {
+    try {
+      const result = await db.query(
+        `SELECT io.*, ic.name as category_name, ic.display_name as category_display_name
+         FROM investment_opportunities io
+         JOIN investment_categories ic ON io.category_id = ic.id
+         WHERE io.id = $1`,
+        [opportunityId]
+      );
+
+      if (result.length === 0) {
+        throw new Error('OPPORTUNITY_NOT_FOUND');
+      }
+
+      return this.formatOpportunity(result[0], result[0].category_name);
+    } catch (error) {
+      logger.error('Error getting opportunity details', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Format opportunity object
+   */
+  private static formatOpportunity(opp: any, categoryName: string): any {
+    return {
+      id: opp.id,
+      categoryId: opp.category_id,
+      categoryName: categoryName,
+      title: opp.title,
+      description: opp.description,
+      minInvestment: parseFloat(opp.min_investment),
+      maxInvestment: parseFloat(opp.max_investment),
+      tenureMonths: opp.tenure_months,
+      returnRate: parseFloat(opp.return_rate),
+      totalUnits: opp.total_units,
+      availableUnits: opp.available_units,
+      imageUrl: opp.image_url,
+      isActive: opp.is_active,
+      displayOrder: opp.display_order,
+      metadata: opp.metadata,
+      createdAt: opp.created_at,
+      updatedAt: opp.updated_at,
+    };
   }
 }

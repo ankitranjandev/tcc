@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
 import '../../models/agent_model.dart';
-import '../../models/bank_account_model.dart';
 import '../../services/agent_management_service.dart';
-import '../../services/bank_account_service.dart';
 import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
@@ -25,6 +24,8 @@ class AgentsScreen extends StatefulWidget {
 class _AgentsScreenState extends State<AgentsScreen> {
   final _agentService = AgentManagementService();
   final _exportService = ExportService();
+  final _searchController = TextEditingController();
+  Timer? _searchDebounceTimer;
   List<AgentModel> _agents = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -40,6 +41,13 @@ class _AgentsScreenState extends State<AgentsScreen> {
   void initState() {
     super.initState();
     _loadAgents();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchDebounceTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadAgents() async {
@@ -77,11 +85,14 @@ class _AgentsScreenState extends State<AgentsScreen> {
   }
 
   void _onSearchChanged(String value) {
-    setState(() {
-      _searchQuery = value;
-      _currentPage = 1;
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = value;
+        _currentPage = 1;
+      });
+      _loadAgents();
     });
-    _loadAgents();
   }
 
   void _onFilterChanged(String? value) {
@@ -294,7 +305,7 @@ class _AgentsScreenState extends State<AgentsScreen> {
                     OutlinedButton.icon(
                       onPressed: () {
                         // Navigate to KYC submissions with agent filter
-                        Navigator.pushNamed(context, '/kyc-submissions');
+                        context.go('/kyc-submissions');
                       },
                       icon: const Icon(Icons.verified_user),
                       label: const Text('Review All KYC'),
@@ -404,6 +415,7 @@ class _AgentsScreenState extends State<AgentsScreen> {
                     children: [
                       // Search Bar
                       TextField(
+                        controller: _searchController,
                         onChanged: _onSearchChanged,
                         decoration: InputDecoration(
                           hintText: 'Search by name, business, email, or phone...',
@@ -432,6 +444,7 @@ class _AgentsScreenState extends State<AgentsScreen> {
                       const SizedBox(height: AppTheme.space12),
                       // Status Filter
                       DropdownButtonFormField<String>(
+                        key: ValueKey(_filterStatus),
                         initialValue: _filterStatus,
                         decoration: InputDecoration(
                           labelText: 'Status Filter',
@@ -480,6 +493,7 @@ class _AgentsScreenState extends State<AgentsScreen> {
                       Expanded(
                         flex: 2,
                         child: TextField(
+                          controller: _searchController,
                           onChanged: _onSearchChanged,
                           decoration: InputDecoration(
                             hintText: 'Search by name, business, email, or phone...',

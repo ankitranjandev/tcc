@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
@@ -7,7 +8,6 @@ import '../../services/export_service.dart';
 import '../../utils/formatters.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/badges/status_badge.dart';
-import '../../widgets/dialogs/add_user_dialog.dart';
 import '../../widgets/dialogs/edit_user_dialog.dart';
 import '../../widgets/dialogs/view_user_dialog.dart';
 import '../../widgets/dialogs/export_dialog.dart';
@@ -23,6 +23,8 @@ class UsersScreen extends StatefulWidget {
 class _UsersScreenState extends State<UsersScreen> {
   final _userService = UserManagementService();
   final _exportService = ExportService();
+  final _searchController = TextEditingController();
+  Timer? _searchDebounceTimer;
   List<UserModel> _users = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -37,6 +39,13 @@ class _UsersScreenState extends State<UsersScreen> {
   void initState() {
     super.initState();
     _loadUsers();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchDebounceTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUsers() async {
@@ -67,11 +76,6 @@ class _UsersScreenState extends State<UsersScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> _addUser(UserModel user) async {
-    // Refresh the list to include the newly added user
-    await _loadUsers();
   }
 
   void _viewUserDetails(UserModel user) {
@@ -150,11 +154,14 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   void _onSearchChanged(String value) {
-    setState(() {
-      _searchQuery = value;
-      _currentPage = 1;
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = value;
+        _currentPage = 1;
+      });
+      _loadUsers();
     });
-    _loadUsers();
   }
 
   void _onFilterChanged(String? value) {
@@ -283,30 +290,6 @@ class _UsersScreenState extends State<UsersScreen> {
                             fontSize: 14,
                           ),
                     ),
-                    const SizedBox(height: AppTheme.space16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AddUserDialog(
-                              onUserAdded: _addUser,
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Consumer'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accentBlue,
-                          foregroundColor: AppColors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppTheme.space20,
-                            vertical: AppTheme.space12,
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 )
               : Row(
@@ -325,26 +308,6 @@ class _UsersScreenState extends State<UsersScreen> {
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AddUserDialog(
-                            onUserAdded: _addUser,
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Consumer'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentBlue,
-                        foregroundColor: AppColors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppTheme.space24,
-                          vertical: AppTheme.space16,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -413,6 +376,7 @@ class _UsersScreenState extends State<UsersScreen> {
                         children: [
                           // Search Bar
                           TextField(
+                            controller: _searchController,
                             onChanged: _onSearchChanged,
                             decoration: InputDecoration(
                               hintText: 'Search by name, email, or phone...',
@@ -442,6 +406,7 @@ class _UsersScreenState extends State<UsersScreen> {
 
                           // Status Filter
                           DropdownButtonFormField<String>(
+                            key: ValueKey(_filterStatus),
                             initialValue: _filterStatus,
                             decoration: InputDecoration(
                               labelText: 'Status Filter',
@@ -490,6 +455,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           Expanded(
                             flex: 2,
                             child: TextField(
+                              controller: _searchController,
                               onChanged: _onSearchChanged,
                               decoration: InputDecoration(
                                 hintText: 'Search by name, email, or phone...',
@@ -516,6 +482,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           // Status Filter
                           Expanded(
                             child: DropdownButtonFormField<String>(
+                              key: ValueKey(_filterStatus),
                               initialValue: _filterStatus,
                               decoration: InputDecoration(
                                 labelText: 'Status Filter',

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest, TransactionStatus, UserRole, KYCStatus } from '../types';
 import { AdminService } from '../services/admin.service';
+import { InvestmentProductService } from '../services/investment-product.service';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
 import { AuditTrailService } from '../services/audit-trail.service';
@@ -1142,6 +1143,529 @@ export class AdminController {
     } catch (error: any) {
       logger.error('Export reports error', error);
       return ApiResponseUtil.internalError(res, error.message);
+    }
+  }
+
+  /**
+   * Create investment opportunity
+   */
+  static async createOpportunity(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const adminId = req.user!.id;
+      const {
+        category_id,
+        title,
+        description,
+        min_investment,
+        max_investment,
+        tenure_months,
+        return_rate,
+        total_units,
+        image_url,
+        metadata,
+      } = req.body;
+
+      const opportunity = await AdminService.createOpportunity(adminId, {
+        category_id,
+        title,
+        description,
+        min_investment,
+        max_investment,
+        tenure_months,
+        return_rate,
+        total_units,
+        image_url,
+        metadata,
+      });
+
+      return ApiResponseUtil.created(
+        res,
+        opportunity,
+        'Investment opportunity created successfully'
+      );
+    } catch (error: any) {
+      if (error.message === 'CATEGORY_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment category not found');
+      }
+      if (error.message === 'INVALID_CATEGORY') {
+        return ApiResponseUtil.badRequest(
+          res,
+          'Invalid category. Only Agriculture and Education categories are allowed.'
+        );
+      }
+      if (error.message === 'CATEGORY_OPPORTUNITY_LIMIT_REACHED') {
+        return ApiResponseUtil.badRequest(
+          res,
+          'Maximum limit of 16 opportunities per category has been reached.'
+        );
+      }
+      logger.error('Create opportunity error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Update investment opportunity
+   */
+  static async updateOpportunity(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const adminId = req.user!.id;
+      const { opportunityId } = req.params;
+      const updateData = req.body;
+
+      const opportunity = await AdminService.updateOpportunity(adminId, opportunityId, updateData);
+
+      return ApiResponseUtil.success(res, opportunity, 'Investment opportunity updated successfully');
+    } catch (error: any) {
+      if (error.message === 'OPPORTUNITY_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment opportunity not found');
+      }
+      logger.error('Update opportunity error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Toggle opportunity status (hide/show)
+   */
+  static async toggleOpportunityStatus(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const adminId = req.user!.id;
+      const { opportunityId } = req.params;
+      const { is_active } = req.body;
+
+      const result = await AdminService.toggleOpportunityStatus(adminId, opportunityId, is_active);
+
+      return ApiResponseUtil.success(
+        res,
+        result,
+        `Opportunity ${is_active ? 'shown' : 'hidden'} successfully`
+      );
+    } catch (error: any) {
+      if (error.message === 'OPPORTUNITY_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment opportunity not found');
+      }
+      logger.error('Toggle opportunity status error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Get all opportunities with pagination and filters
+   */
+  static async getOpportunities(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const perPage = parseInt(req.query.per_page as string) || 25;
+
+      const filters = {
+        category: req.query.category as string | undefined,
+        is_active: req.query.is_active ? req.query.is_active === 'true' : undefined,
+        search: req.query.search as string | undefined,
+      };
+
+      const result = await AdminService.getOpportunities(
+        {
+          page,
+          limit: perPage,
+          offset: (page - 1) * perPage,
+        },
+        filters
+      );
+
+      return ApiResponseUtil.success(res, result);
+    } catch (error: any) {
+      logger.error('Get opportunities error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Get single opportunity details
+   */
+  static async getOpportunityDetails(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { opportunityId } = req.params;
+
+      const opportunity = await AdminService.getOpportunityDetails(opportunityId);
+
+      return ApiResponseUtil.success(res, opportunity);
+    } catch (error: any) {
+      if (error.message === 'OPPORTUNITY_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment opportunity not found');
+      }
+      logger.error('Get opportunity details error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  // =====================================================
+  // INVESTMENT PRODUCT MANAGEMENT
+  // =====================================================
+
+  /**
+   * Get all investment categories with version information
+   */
+  static async getInvestmentCategories(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const categories = await InvestmentProductService.getCategories();
+      return ApiResponseUtil.success(res, categories);
+    } catch (error: any) {
+      logger.error('Get investment categories error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to fetch investment categories');
+    }
+  }
+
+  /**
+   * Create a new investment category
+   */
+  static async createInvestmentCategory(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { name, display_name, description, sub_categories, icon_url } = req.body;
+
+      if (!name || !display_name) {
+        return ApiResponseUtil.badRequest(res, 'Name and display name are required');
+      }
+
+      const category = await InvestmentProductService.createCategory({
+        name,
+        display_name,
+        description,
+        sub_categories,
+        icon_url,
+      });
+
+      return ApiResponseUtil.success(res, category, 'Investment category created successfully');
+    } catch (error: any) {
+      logger.error('Create investment category error', error);
+      if (error.code === '23505') {
+        return ApiResponseUtil.badRequest(res, 'Category with this name already exists');
+      }
+      return ApiResponseUtil.internalError(res, 'Failed to create investment category');
+    }
+  }
+
+  /**
+   * Update an investment category
+   */
+  static async updateInvestmentCategory(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { categoryId } = req.params;
+      const { display_name, description, sub_categories, icon_url, is_active } = req.body;
+
+      const category = await InvestmentProductService.updateCategory(categoryId, {
+        display_name,
+        description,
+        sub_categories,
+        icon_url,
+        is_active,
+      });
+
+      return ApiResponseUtil.success(res, category, 'Investment category updated successfully');
+    } catch (error: any) {
+      if (error.message === 'CATEGORY_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment category not found');
+      }
+      if (error.message === 'NO_UPDATES_PROVIDED') {
+        return ApiResponseUtil.badRequest(res, 'No updates provided');
+      }
+      logger.error('Update investment category error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to update investment category');
+    }
+  }
+
+  /**
+   * Deactivate an investment category
+   */
+  static async deactivateInvestmentCategory(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { categoryId } = req.params;
+
+      await InvestmentProductService.deactivateCategory(categoryId);
+
+      return ApiResponseUtil.success(res, null, 'Investment category deactivated successfully');
+    } catch (error: any) {
+      if (error.message === 'CATEGORY_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment category not found');
+      }
+      logger.error('Deactivate investment category error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to deactivate investment category');
+    }
+  }
+
+  /**
+   * Get all tenures for a category
+   */
+  static async getInvestmentTenures(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { categoryId } = req.params;
+
+      const tenures = await InvestmentProductService.getTenures(categoryId);
+
+      return ApiResponseUtil.success(res, tenures);
+    } catch (error: any) {
+      logger.error('Get investment tenures error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to fetch investment tenures');
+    }
+  }
+
+  /**
+   * Create a new investment tenure
+   */
+  static async createInvestmentTenure(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { categoryId } = req.params;
+      const { duration_months, return_percentage, agreement_template_url } = req.body;
+
+      if (!duration_months || !return_percentage) {
+        return ApiResponseUtil.badRequest(res, 'Duration and return percentage are required');
+      }
+
+      if (duration_months <= 0) {
+        return ApiResponseUtil.badRequest(res, 'Duration must be greater than 0');
+      }
+
+      if (return_percentage < 0) {
+        return ApiResponseUtil.badRequest(res, 'Return percentage must be non-negative');
+      }
+
+      const tenure = await InvestmentProductService.createTenure(categoryId, {
+        category_id: categoryId,
+        duration_months,
+        return_percentage,
+        agreement_template_url,
+      });
+
+      return ApiResponseUtil.success(res, tenure, 'Investment tenure created successfully');
+    } catch (error: any) {
+      logger.error('Create investment tenure error', error);
+      if (error.code === '23505') {
+        return ApiResponseUtil.badRequest(res, 'Tenure with this duration already exists for this category');
+      }
+      return ApiResponseUtil.internalError(res, 'Failed to create investment tenure');
+    }
+  }
+
+  /**
+   * Update tenure rate - creates a new version
+   */
+  static async updateTenureRate(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { tenureId } = req.params;
+      const { new_rate, change_reason } = req.body;
+      const adminId = req.user?.id;
+
+      if (!new_rate || new_rate < 0) {
+        return ApiResponseUtil.badRequest(res, 'Valid new rate is required');
+      }
+
+      if (!change_reason || change_reason.trim() === '') {
+        return ApiResponseUtil.badRequest(res, 'Change reason is required');
+      }
+
+      if (!adminId) {
+        return ApiResponseUtil.unauthorized(res, 'Admin authentication required');
+      }
+
+      const newVersion = await InvestmentProductService.updateTenureRate(
+        tenureId,
+        new_rate,
+        change_reason,
+        adminId
+      );
+
+      return ApiResponseUtil.success(
+        res,
+        newVersion,
+        'Investment rate updated successfully. Users have been notified.'
+      );
+    } catch (error: any) {
+      if (error.message === 'TENURE_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment tenure not found');
+      }
+      if (error.message === 'NO_CURRENT_VERSION_FOUND') {
+        return ApiResponseUtil.badRequest(res, 'No current version found for this tenure');
+      }
+      if (error.message === 'RATE_UNCHANGED') {
+        return ApiResponseUtil.badRequest(res, 'New rate is the same as current rate');
+      }
+      logger.error('Update tenure rate error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to update investment rate');
+    }
+  }
+
+  /**
+   * Get version history for a tenure
+   */
+  static async getTenureVersionHistory(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { tenureId } = req.params;
+
+      const versions = await InvestmentProductService.getTenureVersionHistory(tenureId);
+
+      return ApiResponseUtil.success(res, versions);
+    } catch (error: any) {
+      logger.error('Get tenure version history error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to fetch version history');
+    }
+  }
+
+  /**
+   * Get investment units for a category
+   */
+  static async getInvestmentUnits(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { categoryId } = req.params;
+
+      // First get the category to get its name
+      const categories = await InvestmentProductService.getCategories();
+      const category = categories.find((c) => c.category.id === categoryId);
+
+      if (!category) {
+        return ApiResponseUtil.notFound(res, 'Category not found');
+      }
+
+      const units = await InvestmentProductService.getUnits(category.category.name);
+
+      return ApiResponseUtil.success(res, units);
+    } catch (error: any) {
+      logger.error('Get investment units error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to fetch investment units');
+    }
+  }
+
+  /**
+   * Create a new investment unit
+   */
+  static async createInvestmentUnit(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { category, unit_name, unit_price, description, icon_url, display_order } = req.body;
+
+      if (!category || !unit_name || !unit_price) {
+        return ApiResponseUtil.badRequest(res, 'Category, unit name, and unit price are required');
+      }
+
+      if (unit_price <= 0) {
+        return ApiResponseUtil.badRequest(res, 'Unit price must be greater than 0');
+      }
+
+      const unit = await InvestmentProductService.createUnit({
+        category,
+        unit_name,
+        unit_price,
+        description,
+        icon_url,
+        display_order,
+      });
+
+      return ApiResponseUtil.success(res, unit, 'Investment unit created successfully');
+    } catch (error: any) {
+      logger.error('Create investment unit error', error);
+      if (error.code === '23505') {
+        return ApiResponseUtil.badRequest(res, 'Unit with this name already exists for this category');
+      }
+      return ApiResponseUtil.internalError(res, 'Failed to create investment unit');
+    }
+  }
+
+  /**
+   * Update an investment unit
+   */
+  static async updateInvestmentUnit(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { unitId } = req.params;
+      const { unit_name, unit_price, description, icon_url, display_order, is_active } = req.body;
+
+      if (unit_price !== undefined && unit_price <= 0) {
+        return ApiResponseUtil.badRequest(res, 'Unit price must be greater than 0');
+      }
+
+      const unit = await InvestmentProductService.updateUnit(unitId, {
+        unit_name,
+        unit_price,
+        description,
+        icon_url,
+        display_order,
+        is_active,
+      });
+
+      return ApiResponseUtil.success(res, unit, 'Investment unit updated successfully');
+    } catch (error: any) {
+      if (error.message === 'UNIT_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment unit not found');
+      }
+      if (error.message === 'NO_UPDATES_PROVIDED') {
+        return ApiResponseUtil.badRequest(res, 'No updates provided');
+      }
+      logger.error('Update investment unit error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to update investment unit');
+    }
+  }
+
+  /**
+   * Delete an investment unit
+   */
+  static async deleteInvestmentUnit(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { unitId } = req.params;
+
+      await InvestmentProductService.deleteUnit(unitId);
+
+      return ApiResponseUtil.success(res, null, 'Investment unit deleted successfully');
+    } catch (error: any) {
+      if (error.message === 'UNIT_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment unit not found');
+      }
+      logger.error('Delete investment unit error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to delete investment unit');
+    }
+  }
+
+  /**
+   * Get rate change history
+   */
+  static async getRateChangeHistory(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const category = req.query.category as string | undefined;
+      const from_date = req.query.from_date ? new Date(req.query.from_date as string) : undefined;
+      const to_date = req.query.to_date ? new Date(req.query.to_date as string) : undefined;
+      const admin_id = req.query.admin_id as string | undefined;
+
+      const history = await InvestmentProductService.getRateChangeHistory({
+        category: category as any,
+        from_date,
+        to_date,
+        admin_id,
+      });
+
+      return ApiResponseUtil.success(res, history);
+    } catch (error: any) {
+      logger.error('Get rate change history error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to fetch rate change history');
+    }
+  }
+
+  /**
+   * Get version-based report
+   */
+  static async getVersionBasedReport(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const category = req.query.category as string | undefined;
+      const tenure_id = req.query.tenure_id as string | undefined;
+      const from_date = req.query.from_date ? new Date(req.query.from_date as string) : undefined;
+      const to_date = req.query.to_date ? new Date(req.query.to_date as string) : undefined;
+
+      const report = await InvestmentProductService.getVersionBasedReport({
+        category: category as any,
+        tenure_id,
+        from_date,
+        to_date,
+      });
+
+      return ApiResponseUtil.success(res, report);
+    } catch (error: any) {
+      logger.error('Get version based report error', error);
+      return ApiResponseUtil.internalError(res, 'Failed to generate version report');
     }
   }
 }

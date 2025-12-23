@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_theme.dart';
@@ -21,6 +22,8 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen> {
   final _transactionService = TransactionService();
   final _exportService = ExportService();
+  final _searchController = TextEditingController();
+  Timer? _searchDebounceTimer;
   List<TransactionModel> _transactions = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -36,6 +39,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void initState() {
     super.initState();
     _loadTransactions();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchDebounceTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTransactions() async {
@@ -68,11 +78,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   void _onSearchChanged(String value) {
-    setState(() {
-      _searchQuery = value;
-      _currentPage = 1;
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = value;
+        _currentPage = 1;
+      });
+      _loadTransactions();
     });
-    _loadTransactions();
   }
 
   void _onTypeFilterChanged(String? value) {
@@ -378,6 +391,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     children: [
                       // Search Bar
                       TextField(
+                        controller: _searchController,
                         onChanged: _onSearchChanged,
                         decoration: InputDecoration(
                           hintText: 'Search transactions...',
@@ -401,6 +415,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       const SizedBox(height: AppTheme.space12),
                       // Type Filter
                       DropdownButtonFormField<String>(
+                        key: ValueKey('type_$_filterType'),
                         initialValue: _filterType,
                         decoration: InputDecoration(
                           labelText: 'Transaction Type',
@@ -421,6 +436,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       const SizedBox(height: AppTheme.space12),
                       // Status Filter
                       DropdownButtonFormField<String>(
+                        key: ValueKey('status_$_filterStatus'),
                         initialValue: _filterStatus,
                         decoration: InputDecoration(
                           labelText: 'Status Filter',
@@ -447,6 +463,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       Expanded(
                         flex: 2,
                         child: TextField(
+                          controller: _searchController,
                           onChanged: _onSearchChanged,
                           decoration: InputDecoration(
                             hintText: 'Search by transaction ID, user ID, or agent ID...',
@@ -841,17 +858,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Flexible(
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),

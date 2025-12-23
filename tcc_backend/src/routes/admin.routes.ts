@@ -4,6 +4,7 @@ import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import { UserRole } from '../types';
 import { z } from 'zod';
+import investmentProductSchemas from '../validation/investment-product-schemas';
 
 const router = Router();
 
@@ -173,6 +174,36 @@ router.get('/bill-payments/export', AdminController.exportBillPayments);
 // Investments
 router.get('/investments', AdminController.getInvestments);
 router.get('/investments/export', AdminController.exportInvestments);
+
+// Investment Opportunities
+router.post('/investments/opportunities', AdminController.createOpportunity);
+router.put('/investments/opportunities/:opportunityId', AdminController.updateOpportunity);
+router.patch('/investments/opportunities/:opportunityId/toggle-status', AdminController.toggleOpportunityStatus);
+router.get('/investments/opportunities', AdminController.getOpportunities);
+router.get('/investments/opportunities/:opportunityId', AdminController.getOpportunityDetails);
+
+// Investment Product Management (Versioning)
+// Categories
+router.get('/investment-products/categories', AdminController.getInvestmentCategories);
+router.post('/investment-products/categories', validate(investmentProductSchemas.createCategory), AdminController.createInvestmentCategory);
+router.put('/investment-products/categories/:categoryId', validate(investmentProductSchemas.updateCategory), AdminController.updateInvestmentCategory);
+router.delete('/investment-products/categories/:categoryId', validate(investmentProductSchemas.deleteCategory), AdminController.deactivateInvestmentCategory);
+
+// Tenures with Versioning
+router.get('/investment-products/categories/:categoryId/tenures', validate(investmentProductSchemas.getTenures), AdminController.getInvestmentTenures);
+router.post('/investment-products/categories/:categoryId/tenures', validate(investmentProductSchemas.createTenure), AdminController.createInvestmentTenure);
+router.put('/investment-products/tenures/:tenureId/rate', validate(investmentProductSchemas.updateTenureRate), AdminController.updateTenureRate);
+router.get('/investment-products/tenures/:tenureId/versions', validate(investmentProductSchemas.getTenureVersionHistory), AdminController.getTenureVersionHistory);
+
+// Units
+router.get('/investment-products/categories/:categoryId/units', validate(investmentProductSchemas.getUnits), AdminController.getInvestmentUnits);
+router.post('/investment-products/units', validate(investmentProductSchemas.createUnit), AdminController.createInvestmentUnit);
+router.put('/investment-products/units/:unitId', validate(investmentProductSchemas.updateUnit), AdminController.updateInvestmentUnit);
+router.delete('/investment-products/units/:unitId', validate(investmentProductSchemas.deleteUnit), AdminController.deleteInvestmentUnit);
+
+// Reports and History
+router.get('/investment-products/rate-changes/history', validate(investmentProductSchemas.getRateChangeHistory), AdminController.getRateChangeHistory);
+router.get('/investment-products/versions/report', validate(investmentProductSchemas.getVersionReport), AdminController.getVersionBasedReport);
 
 // Wallet management
 router.post('/wallet/adjust-balance', AdminController.adjustWalletBalance);

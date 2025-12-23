@@ -66,16 +66,6 @@ class _TopbarState extends State<Topbar> {
             ),
           ),
 
-          // Search
-          if (!isMobile)
-            IconButton(
-              icon: Icon(Icons.search, color: AppColors.gray700),
-              onPressed: () => _showSearchDialog(context),
-              tooltip: 'Search',
-            ),
-
-          if (!isMobile) const SizedBox(width: AppTheme.space8),
-
           // Notifications
           IconButton(
             key: _notificationButtonKey,
@@ -151,102 +141,6 @@ class _TopbarState extends State<Topbar> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          width: 600,
-          padding: const EdgeInsets.all(AppTheme.space24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.search, color: AppColors.gray700),
-                  const SizedBox(width: AppTheme.space12),
-                  Expanded(
-                    child: TextField(
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'Search users, agents, transactions...',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(color: AppColors.gray500),
-                      ),
-                      style: const TextStyle(fontSize: 18),
-                      onSubmitted: (query) {
-                        // TODO: Implement actual search
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Searching for: $query'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const Divider(),
-              const SizedBox(height: AppTheme.space16),
-              // Quick Links
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Quick Links',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.space12),
-                  _buildQuickLink(context, Icons.people, 'Users', '/users'),
-                  _buildQuickLink(context, Icons.store, 'Agents', '/agents'),
-                  _buildQuickLink(context, Icons.receipt_long, 'Transactions', '/transactions'),
-                  _buildQuickLink(context, Icons.trending_up, 'Investments', '/investments'),
-                  _buildQuickLink(context, Icons.poll, 'E-Voting', '/e-voting'),
-                  _buildQuickLink(context, Icons.bar_chart, 'Reports', '/reports'),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickLink(BuildContext context, IconData icon, String label, String route) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).pop();
-        context.go(route);
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppTheme.space8,
-          horizontal: AppTheme.space12,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: AppColors.gray700),
-            const SizedBox(width: AppTheme.space12),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ],
-        ),
       ),
     );
   }

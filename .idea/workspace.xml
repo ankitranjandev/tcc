@@ -4,24 +4,23 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="updated bank account management and data export features">
+    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="kyc changes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/android/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/android/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database_schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database_schema.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/models/transaction_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/models/transaction_model.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/agents/agents_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/agents/agents_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/investments/investments_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/investments/investments_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/view_user_dialog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/widgets/dialogs/view_user_dialog.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/providers/auth_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/providers/auth_provider.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/screens/dashboard/dashboard_home_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/screens/dashboard/dashboard_home_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/webhook.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/webhook.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/transaction.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/transaction.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/app.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/admin.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/admin.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/investment.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/investment.service.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tcc_backend/src/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/types/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/android/app/src/main/kotlin/com/tcc/tcc_user_mobile_client/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/android/app/src/main/kotlin/com/tcc/tcc_user_mobile_client/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner/AppDelegate.swift" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/ios/Runner/AppDelegate.swift" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_status_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/auth/kyc_status_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/main_navigation.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/lib/screens/dashboard/main_navigation.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,12 +108,29 @@
       <option name="project" value="LOCAL" />
       <updated>1766243641603</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="kyc changes">
+      <option name="closed" value="true" />
+      <created>1766377151702</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1766377151702</updated>
+    </task>
+    <task id="LOCAL-00005" summary="kyc changes">
+      <option name="closed" value="true" />
+      <created>1766377172717</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1766377172717</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="updates" />
     <MESSAGE value="updated bank account management and data export features" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated bank account management and data export features" />
+    <MESSAGE value="kyc changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="kyc changes" />
   </component>
 </project>

@@ -1,6 +1,7 @@
 import { PoolClient } from 'pg';
 import db from '../database';
 import { WalletService } from './wallet.service';
+import { InvestmentProductService } from './investment-product.service';
 import logger from '../utils/logger';
 import {
   InvestmentCategory,
@@ -54,7 +55,7 @@ export class InvestmentService {
          ORDER BY ic.display_name`
       );
 
-      // Get tenures for each category
+      // Get tenures and opportunities for each category
       const categoriesWithTenures = await Promise.all(
         categories.map(async (category) => {
           const tenures = await db.query<any>(
@@ -62,6 +63,18 @@ export class InvestmentService {
              FROM investment_tenures
              WHERE category_id = $1 AND is_active = true
              ORDER BY duration_months`,
+            [category.id]
+          );
+
+          // Get opportunities for this category
+          const opportunities = await db.query<any>(
+            `SELECT
+              id, title, description, min_investment, max_investment,
+              tenure_months, return_rate, total_units, available_units,
+              image_url, metadata, display_order
+             FROM investment_opportunities
+             WHERE category_id = $1 AND is_active = true
+             ORDER BY display_order, created_at`,
             [category.id]
           );
 
@@ -76,6 +89,20 @@ export class InvestmentService {
               id: t.id,
               duration_months: t.duration_months,
               return_percentage: parseFloat(t.return_percentage),
+            })),
+            opportunities: opportunities.map((o) => ({
+              id: o.id,
+              title: o.title,
+              description: o.description,
+              min_investment: parseFloat(o.min_investment),
+              max_investment: parseFloat(o.max_investment),
+              tenure_months: o.tenure_months,
+              return_rate: parseFloat(o.return_rate),
+              total_units: o.total_units,
+              available_units: o.available_units,
+              image_url: o.image_url,
+              metadata: o.metadata,
+              display_order: o.display_order,
             })),
           };
         })
@@ -162,11 +189,14 @@ export class InvestmentService {
 
       const tenure = tenures[0];
 
-      // Calculate returns
+      // Get current product version
+      const currentVersion = await InvestmentProductService.getCurrentVersion(tenure.id);
+
+      // Calculate returns using version rate
       const expectedReturn = this.calculateReturns(
         amount,
         tenureMonths,
-        parseFloat(tenure.return_percentage)
+        parseFloat(currentVersion.return_percentage as any)
       );
 
       // Calculate insurance cost if requested
@@ -218,14 +248,14 @@ export class InvestmentService {
           [totalAmount, userId]
         );
 
-        // Create investment record
+        // Create investment record with product version
         const investments = await client.query(
           `INSERT INTO investments (
             user_id, category, sub_category, tenure_id, amount,
             tenure_months, return_rate, expected_return,
             start_date, end_date, insurance_taken, insurance_cost,
-            status, transaction_id, agreement_url
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            status, transaction_id, agreement_url, product_version_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
           RETURNING id, user_id, category, sub_category, amount, tenure_months,
                     return_rate, expected_return, start_date, end_date,
                     insurance_taken, insurance_cost, status, created_at`,
@@ -236,7 +266,7 @@ export class InvestmentService {
             tenure.id,
             amount,
             tenureMonths,
-            tenure.return_percentage,
+            currentVersion.return_percentage,
             expectedReturn,
             startDate,
             endDate,
@@ -245,6 +275,7 @@ export class InvestmentService {
             InvestmentStatus.ACTIVE,
             transaction.id,
             tenure.agreement_template_url,
+            currentVersion.id, // Link to current product version
           ]
         );
 
