@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
 import '../../models/election_model.dart';
 import '../../services/election_service.dart';
 
 class ElectionDetailsScreen extends StatefulWidget {
   final int electionId;
 
-  const ElectionDetailsScreen({Key? key, required this.electionId}) : super(key: key);
+  const ElectionDetailsScreen({super.key, required this.electionId});
 
   @override
   State<ElectionDetailsScreen> createState() => _ElectionDetailsScreenState();
@@ -256,7 +255,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(election.status).withOpacity(0.2),
+                    color: _getStatusColor(election.status).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
@@ -402,7 +401,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -475,13 +474,13 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                         minHeight: 8,
                         backgroundColor: Colors.grey[200],
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.blue.withOpacity(0.8),
+                          Colors.blue.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
                   ),
                 );
-              }).toList(),
+              }),
           ],
         ),
       ),

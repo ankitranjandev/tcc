@@ -3,7 +3,7 @@ import '../../models/election_model.dart';
 import '../../services/election_service.dart';
 
 class CreateElectionDialog extends StatefulWidget {
-  const CreateElectionDialog({Key? key}) : super(key: key);
+  const CreateElectionDialog({super.key});
 
   @override
   State<CreateElectionDialog> createState() => _CreateElectionDialogState();
@@ -268,7 +268,7 @@ class _CreateElectionDialogState extends State<CreateElectionDialog> {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
