@@ -79,7 +79,6 @@ class AuthProvider with ChangeNotifier {
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
 
     try {
       final result = await _authService.login(
@@ -110,27 +109,23 @@ class AuthProvider with ChangeNotifier {
           name: 'TCC.AuthProvider',
         );
 
-        developer.log('🔔 [AUTH_PROVIDER] Calling notifyListeners()', name: 'TCC.AuthProvider');
-        notifyListeners();
-        developer.log('✅ [AUTH_PROVIDER] notifyListeners() completed', name: 'TCC.AuthProvider');
         return true;
       } else {
         _error = result.error ?? 'Login failed';
         _isAuthenticated = false;
         developer.log('❌ [AUTH_PROVIDER] Login failed: $_error', name: 'TCC.AuthProvider');
-        notifyListeners();
         return false;
       }
     } catch (e) {
       developer.log('❌ [AUTH_PROVIDER] Login exception: ${e.toString()}', name: 'TCC.AuthProvider');
       _error = e.toString();
       _isAuthenticated = false;
-      notifyListeners();
       return false;
     } finally {
       _isLoading = false;
-      developer.log('✅ [AUTH_PROVIDER] Login process complete', name: 'TCC.AuthProvider');
+      developer.log('🔔 [AUTH_PROVIDER] Calling notifyListeners() once in finally block', name: 'TCC.AuthProvider');
       notifyListeners();
+      developer.log('✅ [AUTH_PROVIDER] Login process complete', name: 'TCC.AuthProvider');
     }
   }
 
@@ -143,9 +138,16 @@ class AuthProvider with ChangeNotifier {
     required String password,
     String? profilePictureUrl,
   }) async {
+    developer.log(
+      '📝 [AUTH_PROVIDER] Registration starting:\n'
+      '  Name: $firstName $lastName\n'
+      '  Email: $email\n'
+      '  Mobile: $mobileNumber',
+      name: 'TCC.AuthProvider',
+    );
+
     _isLoading = true;
     _error = null;
-    notifyListeners();
 
     try {
       final result = await _authService.register(
@@ -157,17 +159,31 @@ class AuthProvider with ChangeNotifier {
         profilePictureUrl: profilePictureUrl,
       );
 
+      developer.log(
+        '📦 [AUTH_PROVIDER] Registration result:\n'
+        '  Success: ${result.success}\n'
+        '  Message: ${result.message ?? 'none'}\n'
+        '  Error: ${result.error ?? 'none'}',
+        name: 'TCC.AuthProvider',
+      );
+
       if (!result.success) {
         _error = result.error;
+        developer.log('❌ [AUTH_PROVIDER] Registration failed: $_error', name: 'TCC.AuthProvider');
+      } else {
+        developer.log('✅ [AUTH_PROVIDER] Registration successful, OTP sent', name: 'TCC.AuthProvider');
       }
 
       return result;
     } catch (e) {
+      developer.log('❌ [AUTH_PROVIDER] Registration exception: ${e.toString()}', name: 'TCC.AuthProvider');
       _error = e.toString();
       return AuthResult(success: false, error: e.toString());
     } finally {
       _isLoading = false;
+      developer.log('🔔 [AUTH_PROVIDER] Calling notifyListeners() once in finally block', name: 'TCC.AuthProvider');
       notifyListeners();
+      developer.log('✅ [AUTH_PROVIDER] Registration process complete', name: 'TCC.AuthProvider');
     }
   }
 
@@ -176,9 +192,15 @@ class AuthProvider with ChangeNotifier {
     required String mobileNumber,
     required String otp,
   }) async {
+    developer.log(
+      '🔐 [AUTH_PROVIDER] OTP verification starting:\n'
+      '  Mobile: $mobileNumber\n'
+      '  OTP: ${otp.replaceAll(RegExp(r'.'), '*')}',
+      name: 'TCC.AuthProvider',
+    );
+
     _isLoading = true;
     _error = null;
-    notifyListeners();
 
     try {
       final result = await _authService.verifyOtp(
@@ -186,20 +208,40 @@ class AuthProvider with ChangeNotifier {
         otp: otp,
       );
 
+      developer.log(
+        '📦 [AUTH_PROVIDER] OTP verification result:\n'
+        '  Success: ${result.success}\n'
+        '  Has Agent: ${result.agent != null}\n'
+        '  Message: ${result.message ?? 'none'}\n'
+        '  Error: ${result.error ?? 'none'}',
+        name: 'TCC.AuthProvider',
+      );
+
       if (result.success && result.agent != null) {
         _agent = result.agent;
         _isAuthenticated = true;
+        developer.log(
+          '✅ [AUTH_PROVIDER] OTP verified, user authenticated:\n'
+          '  Agent: ${_agent?.fullName}\n'
+          '  Status: ${_agent?.status}\n'
+          '  isPendingVerification: $isPendingVerification',
+          name: 'TCC.AuthProvider',
+        );
       } else if (!result.success) {
         _error = result.error;
+        developer.log('❌ [AUTH_PROVIDER] OTP verification failed: $_error', name: 'TCC.AuthProvider');
       }
 
       return result;
     } catch (e) {
+      developer.log('❌ [AUTH_PROVIDER] OTP verification exception: ${e.toString()}', name: 'TCC.AuthProvider');
       _error = e.toString();
       return AuthResult(success: false, error: e.toString());
     } finally {
       _isLoading = false;
+      developer.log('🔔 [AUTH_PROVIDER] Calling notifyListeners() once in finally block', name: 'TCC.AuthProvider');
       notifyListeners();
+      developer.log('✅ [AUTH_PROVIDER] OTP verification process complete', name: 'TCC.AuthProvider');
     }
   }
 
@@ -209,7 +251,6 @@ class AuthProvider with ChangeNotifier {
   }) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
 
     try {
       final result = await _authService.resendOtp(
@@ -240,7 +281,6 @@ class AuthProvider with ChangeNotifier {
   }) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
 
     try {
       final result = await _authService.submitKyc(
@@ -273,7 +313,6 @@ class AuthProvider with ChangeNotifier {
   }) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
 
     try {
       final result = await _authService.forgotPassword(
@@ -302,7 +341,6 @@ class AuthProvider with ChangeNotifier {
   }) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
 
     try {
       final result = await _authService.resetPassword(
@@ -328,7 +366,6 @@ class AuthProvider with ChangeNotifier {
   // Logout
   Future<void> logout() async {
     _isLoading = true;
-    notifyListeners();
 
     try {
       await _authService.logout();

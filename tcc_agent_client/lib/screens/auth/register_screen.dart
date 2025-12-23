@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -43,9 +44,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    developer.log('📝 [REGISTER_SCREEN] Register button pressed', name: 'TCC.RegisterScreen');
+
+    if (!_formKey.currentState!.validate()) {
+      developer.log('❌ [REGISTER_SCREEN] Form validation failed', name: 'TCC.RegisterScreen');
+      return;
+    }
+
+    developer.log('✅ [REGISTER_SCREEN] Form validation passed', name: 'TCC.RegisterScreen');
 
     if (!_agreedToTerms) {
+      developer.log('⚠️ [REGISTER_SCREEN] Terms not agreed', name: 'TCC.RegisterScreen');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please agree to the Terms and Conditions'),
@@ -55,9 +64,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    developer.log('✅ [REGISTER_SCREEN] Terms agreed, proceeding with registration', name: 'TCC.RegisterScreen');
     setState(() => _isLoading = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    developer.log(
+      '📞 [REGISTER_SCREEN] Calling authProvider.register():\n'
+      '  Name: ${_firstNameController.text.trim()} ${_lastNameController.text.trim()}\n'
+      '  Email: ${_emailController.text.trim()}\n'
+      '  Mobile: ${_mobileController.text.trim()}',
+      name: 'TCC.RegisterScreen',
+    );
 
     final result = await authProvider.register(
       firstName: _firstNameController.text.trim(),
@@ -67,11 +85,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       password: _passwordController.text,
     );
 
-    if (!mounted) return;
+    developer.log('📦 [REGISTER_SCREEN] Registration result: ${result.success}', name: 'TCC.RegisterScreen');
+
+    if (!mounted) {
+      developer.log('⚠️ [REGISTER_SCREEN] Widget not mounted, returning', name: 'TCC.RegisterScreen');
+      return;
+    }
 
     setState(() => _isLoading = false);
 
     if (result.success) {
+      developer.log('✅ [REGISTER_SCREEN] Registration successful, showing success message', name: 'TCC.RegisterScreen');
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -91,11 +115,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       // Navigate to OTP verification
+      developer.log('🧭 [REGISTER_SCREEN] Navigating to OTP verification screen', name: 'TCC.RegisterScreen');
       context.push('/otp-verification', extra: {
         'mobile_number': _mobileController.text.trim(),
         'is_from_registration': true,
       });
+      developer.log('✅ [REGISTER_SCREEN] Navigation complete', name: 'TCC.RegisterScreen');
     } else {
+      developer.log('❌ [REGISTER_SCREEN] Registration failed: ${result.error}', name: 'TCC.RegisterScreen');
       // Show detailed error message
       final errorMessage = result.error ?? 'Registration failed. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(

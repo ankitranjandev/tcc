@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
@@ -65,7 +66,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   Future<void> _handleVerifyOTP() async {
+    developer.log('🔐 [OTP_SCREEN] Verify OTP button pressed', name: 'TCC.OTPScreen');
+
     if (_otpController.text.length != AppConstants.otpLength) {
+      developer.log('❌ [OTP_SCREEN] Invalid OTP length: ${_otpController.text.length}', name: 'TCC.OTPScreen');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please enter ${AppConstants.otpLength}-digit OTP'),
@@ -75,24 +79,41 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       return;
     }
 
+    developer.log('✅ [OTP_SCREEN] OTP length valid, proceeding with verification', name: 'TCC.OTPScreen');
     setState(() => _isLoading = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    developer.log(
+      '📞 [OTP_SCREEN] Calling authProvider.verifyOtp():\n'
+      '  Mobile: ${widget.mobileNumber}\n'
+      '  isFromRegistration: ${widget.isFromRegistration}',
+      name: 'TCC.OTPScreen',
+    );
 
     final result = await authProvider.verifyOtp(
       mobileNumber: widget.mobileNumber,
       otp: _otpController.text,
     );
 
-    if (!mounted) return;
+    developer.log('📦 [OTP_SCREEN] OTP verification result: ${result.success}', name: 'TCC.OTPScreen');
+
+    if (!mounted) {
+      developer.log('⚠️ [OTP_SCREEN] Widget not mounted, returning', name: 'TCC.OTPScreen');
+      return;
+    }
 
     setState(() => _isLoading = false);
 
     if (result.success) {
+      developer.log('✅ [OTP_SCREEN] OTP verification successful', name: 'TCC.OTPScreen');
       if (widget.isFromRegistration) {
+        developer.log('🧭 [OTP_SCREEN] Navigating to KYC verification (from registration)', name: 'TCC.OTPScreen');
         // Navigate to KYC verification
         context.go('/kyc-verification');
+        developer.log('✅ [OTP_SCREEN] Navigation to KYC complete', name: 'TCC.OTPScreen');
       } else {
+        developer.log('ℹ️ [OTP_SCREEN] OTP verified for password reset flow', name: 'TCC.OTPScreen');
         // OTP verified for password reset
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -103,6 +124,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         // This case is handled in reset password flow
       }
     } else {
+      developer.log('❌ [OTP_SCREEN] OTP verification failed: ${result.error}', name: 'TCC.OTPScreen');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.error ?? 'OTP verification failed'),
@@ -113,21 +135,35 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   Future<void> _handleResendOTP() async {
-    if (!_canResend) return;
+    developer.log('🔄 [OTP_SCREEN] Resend OTP button pressed', name: 'TCC.OTPScreen');
 
+    if (!_canResend) {
+      developer.log('⚠️ [OTP_SCREEN] Cannot resend yet, timer not expired', name: 'TCC.OTPScreen');
+      return;
+    }
+
+    developer.log('✅ [OTP_SCREEN] Resend allowed, proceeding', name: 'TCC.OTPScreen');
     setState(() => _isLoading = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    developer.log('📞 [OTP_SCREEN] Calling authProvider.resendOtp() for ${widget.mobileNumber}', name: 'TCC.OTPScreen');
 
     final result = await authProvider.resendOtp(
       mobileNumber: widget.mobileNumber,
     );
 
-    if (!mounted) return;
+    developer.log('📦 [OTP_SCREEN] Resend OTP result: ${result.success}', name: 'TCC.OTPScreen');
+
+    if (!mounted) {
+      developer.log('⚠️ [OTP_SCREEN] Widget not mounted, returning', name: 'TCC.OTPScreen');
+      return;
+    }
 
     setState(() => _isLoading = false);
 
     if (result.success) {
+      developer.log('✅ [OTP_SCREEN] OTP resent successfully', name: 'TCC.OTPScreen');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('OTP sent successfully'),
@@ -137,6 +173,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       _otpController.clear();
       _startResendTimer();
     } else {
+      developer.log('❌ [OTP_SCREEN] Resend OTP failed: ${result.error}', name: 'TCC.OTPScreen');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.error ?? 'Failed to resend OTP'),
