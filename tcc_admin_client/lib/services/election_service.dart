@@ -1,215 +1,122 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
 import '../models/election_model.dart';
-import '../utils/auth_storage.dart';
+import 'api_service.dart';
 
 class ElectionService {
-  final String baseUrl = ApiConfig.baseUrl;
-
-  Future<Map<String, String>> _getHeaders() async {
-    final token = await AuthStorage.getToken();
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
+  final ApiService _apiService = ApiService();
 
   // Get all elections
   Future<List<Election>> getAllElections() async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/admin/elections'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          final elections = (jsonResponse['data'] as List)
-              .map((e) => Election.fromJson(e))
-              .toList();
-          return elections;
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to fetch elections');
+    final response = await _apiService.get<List<Election>>(
+      '/admin/elections',
+      fromJson: (data) {
+        if (data is List) {
+          return data.map((e) => Election.fromJson(e as Map<String, dynamic>)).toList();
         }
-      } else {
-        throw Exception('Failed to fetch elections: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching elections: $e');
+        return [];
+      },
+    );
+
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.message ?? 'Failed to fetch elections');
     }
   }
 
   // Get election statistics
   Future<ElectionStats> getElectionStats(int electionId) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/admin/elections/$electionId/stats'),
-        headers: headers,
-      );
+    final response = await _apiService.get<ElectionStats>(
+      '/admin/elections/$electionId/stats',
+      fromJson: (data) => ElectionStats.fromJson(data as Map<String, dynamic>),
+    );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return ElectionStats.fromJson(jsonResponse['data']);
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to fetch election stats');
-        }
-      } else {
-        throw Exception('Failed to fetch election stats: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching election stats: $e');
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.message ?? 'Failed to fetch election stats');
     }
   }
 
   // Create new election
   Future<Election> createElection(CreateElectionRequest request) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/elections'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
+    final response = await _apiService.post<Election>(
+      '/admin/elections',
+      data: request.toJson(),
+      fromJson: (data) => Election.fromJson(data as Map<String, dynamic>),
+    );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return Election.fromJson(jsonResponse['data']);
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to create election');
-        }
-      } else {
-        final errorResponse = json.decode(response.body);
-        throw Exception(errorResponse['message'] ?? 'Failed to create election');
-      }
-    } catch (e) {
-      throw Exception('Error creating election: $e');
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.message ?? 'Failed to create election');
     }
   }
 
   // Update election
   Future<Election> updateElection(int electionId, UpdateElectionRequest request) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.put(
-        Uri.parse('$baseUrl/admin/elections/$electionId'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
+    final response = await _apiService.put<Election>(
+      '/admin/elections/$electionId',
+      data: request.toJson(),
+      fromJson: (data) => Election.fromJson(data as Map<String, dynamic>),
+    );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return Election.fromJson(jsonResponse['data']);
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to update election');
-        }
-      } else {
-        final errorResponse = json.decode(response.body);
-        throw Exception(errorResponse['message'] ?? 'Failed to update election');
-      }
-    } catch (e) {
-      throw Exception('Error updating election: $e');
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.message ?? 'Failed to update election');
     }
   }
 
   // End election
   Future<Election> endElection(int electionId) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/elections/$electionId/end'),
-        headers: headers,
-      );
+    final response = await _apiService.post<Election>(
+      '/admin/elections/$electionId/end',
+      fromJson: (data) => Election.fromJson(data as Map<String, dynamic>),
+    );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return Election.fromJson(jsonResponse['data']);
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to end election');
-        }
-      } else {
-        throw Exception('Failed to end election: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error ending election: $e');
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.message ?? 'Failed to end election');
     }
   }
 
   // Pause election
   Future<Election> pauseElection(int electionId) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/elections/$electionId/pause'),
-        headers: headers,
-      );
+    final response = await _apiService.post<Election>(
+      '/admin/elections/$electionId/pause',
+      fromJson: (data) => Election.fromJson(data as Map<String, dynamic>),
+    );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return Election.fromJson(jsonResponse['data']);
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to pause election');
-        }
-      } else {
-        throw Exception('Failed to pause election: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error pausing election: $e');
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.message ?? 'Failed to pause election');
     }
   }
 
   // Resume election
   Future<Election> resumeElection(int electionId) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/elections/$electionId/resume'),
-        headers: headers,
-      );
+    final response = await _apiService.post<Election>(
+      '/admin/elections/$electionId/resume',
+      fromJson: (data) => Election.fromJson(data as Map<String, dynamic>),
+    );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return Election.fromJson(jsonResponse['data']);
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to resume election');
-        }
-      } else {
-        throw Exception('Failed to resume election: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error resuming election: $e');
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.message ?? 'Failed to resume election');
     }
   }
 
   // Delete election
   Future<void> deleteElection(int electionId) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.delete(
-        Uri.parse('$baseUrl/admin/elections/$electionId'),
-        headers: headers,
-      );
+    final response = await _apiService.delete<void>(
+      '/admin/elections/$electionId',
+    );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] != true) {
-          throw Exception(jsonResponse['message'] ?? 'Failed to delete election');
-        }
-      } else {
-        final errorResponse = json.decode(response.body);
-        throw Exception(errorResponse['message'] ?? 'Failed to delete election');
-      }
-    } catch (e) {
-      throw Exception('Error deleting election: $e');
+    if (!response.success) {
+      throw Exception(response.message ?? 'Failed to delete election');
     }
   }
 }

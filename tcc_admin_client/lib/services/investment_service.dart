@@ -82,7 +82,9 @@ class InvestmentService {
     return await _apiService.get(
       '/investments/categories',
       fromJson: (data) {
-        final categories = (data as List<dynamic>)
+        // Handle nested response structure: { categories: [...] }
+        final responseData = data as Map<String, dynamic>;
+        final categories = (responseData['categories'] as List<dynamic>)
             .map((e) => e as Map<String, dynamic>)
             .toList();
         return categories;

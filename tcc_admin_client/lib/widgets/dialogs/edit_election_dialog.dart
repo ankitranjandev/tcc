@@ -5,7 +5,7 @@ import '../../services/election_service.dart';
 class EditElectionDialog extends StatefulWidget {
   final Election election;
 
-  const EditElectionDialog({Key? key, required this.election}) : super(key: key);
+  const EditElectionDialog({super.key, required this.election});
 
   @override
   State<EditElectionDialog> createState() => _EditElectionDialogState();
@@ -192,7 +192,7 @@ class _EditElectionDialogState extends State<EditElectionDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -325,7 +325,7 @@ class _EditElectionDialogState extends State<EditElectionDialog> {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

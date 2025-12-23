@@ -7,7 +7,7 @@ import '../../widgets/dialogs/edit_election_dialog.dart';
 import 'election_details_screen.dart';
 
 class ElectionsScreen extends StatefulWidget {
-  const ElectionsScreen({Key? key}) : super(key: key);
+  const ElectionsScreen({super.key});
 
   @override
   State<ElectionsScreen> createState() => _ElectionsScreenState();
@@ -293,7 +293,7 @@ class _ElectionsScreenState extends State<ElectionsScreen> with SingleTickerProv
             Text(
               _selectedFilter == 'all'
                   ? 'No elections yet'
-                  : 'No ${_selectedFilter} elections',
+                  : 'No $_selectedFilter elections',
               style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
             if (_selectedFilter == 'all') ...[
@@ -358,7 +358,7 @@ class _ElectionsScreenState extends State<ElectionsScreen> with SingleTickerProv
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(election.status).withOpacity(0.2),
+                      color: _getStatusColor(election.status).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
