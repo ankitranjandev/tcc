@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_colors.dart';
 import '../../models/investment_model.dart';
-import '../../services/mock_data_service.dart';
+import '../../services/investment_service.dart';
 
-class InvestmentCategoryScreen extends StatelessWidget {
+class InvestmentCategoryScreen extends StatefulWidget {
   final String category;
 
   const InvestmentCategoryScreen({
@@ -12,8 +12,67 @@ class InvestmentCategoryScreen extends StatelessWidget {
     required this.category,
   });
 
+  @override
+  State<InvestmentCategoryScreen> createState() => _InvestmentCategoryScreenState();
+}
+
+class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
+  final InvestmentService _investmentService = InvestmentService();
+  List<InvestmentOpportunity> _opportunities = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOpportunities();
+  }
+
+  Future<void> _loadOpportunities() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _investmentService.getOpportunities(
+        category: widget.category.toUpperCase(),
+      );
+
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'];
+        final opportunities = data['opportunities'] as List<dynamic>?;
+
+        if (opportunities != null) {
+          setState(() {
+            _opportunities = opportunities
+                .map((json) => InvestmentOpportunity.fromJson(json as Map<String, dynamic>))
+                .where((opp) => opp.isActive && opp.hasUnitsAvailable)
+                .toList();
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = 'Invalid response format';
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = response['error']?.toString() ?? 'Failed to load opportunities';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
   String get _categoryTitle {
-    switch (category.toUpperCase()) {
+    switch (widget.category.toUpperCase()) {
       case 'AGRICULTURE':
         return 'Agriculture';
       case 'MINERALS':
@@ -26,7 +85,7 @@ class InvestmentCategoryScreen extends StatelessWidget {
   }
 
   String get _categoryDescription {
-    switch (category.toUpperCase()) {
+    switch (widget.category.toUpperCase()) {
       case 'AGRICULTURE':
         return 'Invest in agricultural projects with fixed returns. Support local farming and earn stable income.';
       case 'MINERALS':
@@ -41,7 +100,7 @@ class InvestmentCategoryScreen extends StatelessWidget {
   }
 
   Color get _categoryColor {
-    switch (category.toUpperCase()) {
+    switch (widget.category.toUpperCase()) {
       case 'AGRICULTURE':
         return AppColors.secondaryGreen;
       case 'MINERALS':
@@ -56,7 +115,7 @@ class InvestmentCategoryScreen extends StatelessWidget {
   }
 
   String get _categoryBadgeText {
-    switch (category.toUpperCase()) {
+    switch (widget.category.toUpperCase()) {
       case 'AGRICULTURE':
         return 'Risk free investment';
       case 'MINERALS':
@@ -72,8 +131,6 @@ class InvestmentCategoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final products = MockDataService().getProductsByCategory(category);
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -103,37 +160,96 @@ class InvestmentCategoryScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: products.isEmpty
-          ? _buildEmptyState(context)
-          : SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _categoryTitle,
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.titleLarge?.color,
+      body: _isLoading
+          ? _buildLoadingState()
+          : _errorMessage != null
+              ? _buildErrorState(context)
+              : _opportunities.isEmpty
+                  ? _buildEmptyState(context)
+                  : SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _categoryTitle,
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).textTheme.titleLarge?.color,
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              _categoryDescription,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).textTheme.bodySmall?.color,
+                                height: 1.5,
+                              ),
+                            ),
+                            SizedBox(height: 32),
+                            ..._opportunities.map((opportunity) => _buildOpportunityCard(context, opportunity)),
+                          ],
+                        ),
                       ),
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      _categoryDescription,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                        height: 1.5,
-                      ),
-                    ),
-                    SizedBox(height: 32),
-                    ...products.map((product) => _buildProductCard(context, product)),
-                  ],
-                ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(_categoryColor),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 80,
+              color: AppColors.error,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Oops! Something went wrong',
+              style: TextStyle(
+                fontSize: 18,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+                fontWeight: FontWeight.w500,
               ),
             ),
+            SizedBox(height: 8),
+            Text(
+              _errorMessage ?? 'Unknown error',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadOpportunities,
+              icon: Icon(Icons.refresh),
+              label: Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _categoryColor,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -169,12 +285,12 @@ class InvestmentCategoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, InvestmentProduct product) {
+  Widget _buildOpportunityCard(BuildContext context, InvestmentOpportunity opportunity) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () {
-          context.push('/investments/${category.toLowerCase()}/${product.id}', extra: product);
+          context.push('/investments/${widget.category.toLowerCase()}/${opportunity.id}', extra: opportunity);
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -193,7 +309,7 @@ class InvestmentCategoryScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Product icon/image
+              // Opportunity icon/image
               Container(
                 width: 60,
                 height: 60,
@@ -202,19 +318,19 @@ class InvestmentCategoryScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  _getProductIcon(product.name),
+                  _getOpportunityIcon(opportunity.title),
                   color: _categoryColor,
                   size: 32,
                 ),
               ),
               SizedBox(width: 16),
-              // Product details
+              // Opportunity details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      product.name,
+                      opportunity.title,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -223,25 +339,40 @@ class InvestmentCategoryScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Min Period: ${product.minPeriod} months',
+                      'Tenure: ${opportunity.tenureMonths} months',
                       style: TextStyle(
                         fontSize: 13,
                         color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
+                    SizedBox(height: 2),
+                    Text(
+                      '${opportunity.availableUnits}/${opportunity.totalUnits} units available',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
                   ],
                 ),
               ),
-              // Price and ROI
+              // Investment range and ROI
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'TCC${product.price.toStringAsFixed(0)}',
+                    'TCC ${opportunity.minInvestment.toStringAsFixed(0)}',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).textTheme.titleLarge?.color,
+                    ),
+                  ),
+                  Text(
+                    '- ${opportunity.maxInvestment.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                   ),
                   SizedBox(height: 4),
@@ -252,7 +383,7 @@ class InvestmentCategoryScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${product.roi.toStringAsFixed(1)}% ROI',
+                      '${opportunity.returnRate.toStringAsFixed(1)}% ROI',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -269,8 +400,8 @@ class InvestmentCategoryScreen extends StatelessWidget {
     );
   }
 
-  IconData _getProductIcon(String productName) {
-    final name = productName.toLowerCase();
+  IconData _getOpportunityIcon(String title) {
+    final name = title.toLowerCase();
     if (name.contains('land') || name.contains('lease')) {
       return Icons.landscape;
     } else if (name.contains('processing')) {

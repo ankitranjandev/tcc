@@ -153,4 +153,42 @@ class InvestmentService {
       return {'success': false, 'error': e.toString()};
     }
   }
+
+  // Get investment opportunities (products) by category
+  Future<Map<String, dynamic>> getOpportunities({
+    String? category,
+    int? page,
+    int? perPage,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (category != null && category.isNotEmpty) queryParams['category'] = category;
+      if (page != null) queryParams['page'] = page.toString();
+      if (perPage != null) queryParams['per_page'] = perPage.toString();
+
+      final response = await _apiService.get(
+        '/investments/opportunities',
+        queryParams: queryParams,
+        requiresAuth: false, // Public endpoint
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  // Get opportunity details by ID
+  Future<Map<String, dynamic>> getOpportunityDetails({
+    required String opportunityId,
+  }) async {
+    try {
+      final response = await _apiService.get(
+        '/investments/opportunities/$opportunityId',
+        requiresAuth: false, // Public endpoint
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }

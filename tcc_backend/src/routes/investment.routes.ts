@@ -133,4 +133,18 @@ router.post(
   InvestmentController.requestWithdrawal
 );
 
+/**
+ * @route   GET /investments/opportunities
+ * @desc    Get all active investment opportunities (public)
+ * @access  Public
+ */
+router.get('/opportunities', InvestmentController.getPublicOpportunities);
+
+/**
+ * @route   GET /investments/opportunities/:opportunityId
+ * @desc    Get single opportunity details (public)
+ * @access  Public
+ */
+router.get('/opportunities/:opportunityId', InvestmentController.getPublicOpportunityDetails);
+
 export default router;

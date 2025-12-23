@@ -317,4 +317,64 @@ export class InvestmentController {
       return ApiResponseUtil.internalError(res);
     }
   }
+
+  /**
+   * Get all active investment opportunities (public endpoint)
+   */
+  static async getPublicOpportunities(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const perPage = parseInt(req.query.per_page as string) || 25;
+
+      const filters = {
+        category: req.query.category as string | undefined,
+        is_active: true, // Only show active opportunities to public
+        search: req.query.search as string | undefined,
+      };
+
+      // Import AdminService dynamically to avoid circular dependency
+      const { AdminService } = await import('../services/admin.service');
+
+      const result = await AdminService.getOpportunities(
+        {
+          page,
+          limit: perPage,
+          offset: (page - 1) * perPage,
+        },
+        filters
+      );
+
+      return ApiResponseUtil.success(res, result);
+    } catch (error: any) {
+      logger.error('Get public opportunities error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Get single opportunity details (public endpoint)
+   */
+  static async getPublicOpportunityDetails(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const { opportunityId } = req.params;
+
+      // Import AdminService dynamically to avoid circular dependency
+      const { AdminService } = await import('../services/admin.service');
+
+      const opportunity = await AdminService.getOpportunityDetails(opportunityId);
+
+      // Only return if opportunity is active
+      if (!opportunity.is_active) {
+        return ApiResponseUtil.notFound(res, 'Investment opportunity not found');
+      }
+
+      return ApiResponseUtil.success(res, opportunity);
+    } catch (error: any) {
+      if (error.message === 'OPPORTUNITY_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Investment opportunity not found');
+      }
+      logger.error('Get public opportunity details error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
 }

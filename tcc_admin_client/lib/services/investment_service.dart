@@ -159,12 +159,25 @@ class InvestmentService {
     };
 
     final response = await _apiService.get(
-      '/investments/opportunities',
+      '/admin/investments/opportunities',
       queryParameters: queryParameters,
-      fromJson: (data) => PaginatedResponse.fromJson(
-        data as Map<String, dynamic>,
-        (json) => json,
-      ),
+      fromJson: (data) {
+        // Transform API response structure to match PaginatedResponse expectations
+        final responseData = data as Map<String, dynamic>;
+        final opportunities = responseData['opportunities'] as List<dynamic>;
+        final pagination = responseData['pagination'] as Map<String, dynamic>;
+
+        return PaginatedResponse.fromJson(
+          {
+            'data': opportunities,
+            'total': pagination['total'],
+            'page': pagination['page'],
+            'per_page': pagination['limit'],
+            'total_pages': pagination['totalPages'],
+          },
+          (json) => json,
+        );
+      },
     );
 
     return response;
@@ -184,7 +197,7 @@ class InvestmentService {
     Map<String, dynamic>? metadata,
   }) async {
     return await _apiService.post(
-      '/investments/opportunities',
+      '/admin/investments/opportunities',
       data: {
         'category_id': categoryId,
         'title': title,
@@ -216,7 +229,7 @@ class InvestmentService {
     Map<String, dynamic>? metadata,
   }) async {
     return await _apiService.put(
-      '/investments/opportunities/$opportunityId',
+      '/admin/investments/opportunities/$opportunityId',
       data: {
         if (title != null && title.isNotEmpty) 'title': title,
         if (description != null && description.isNotEmpty) 'description': description,
@@ -236,7 +249,7 @@ class InvestmentService {
   /// Delete investment opportunity (admin only)
   Future<ApiResponse<void>> deleteInvestmentOpportunity(String opportunityId) async {
     return await _apiService.delete(
-      '/investments/opportunities/$opportunityId',
+      '/admin/investments/opportunities/$opportunityId',
     );
   }
 
