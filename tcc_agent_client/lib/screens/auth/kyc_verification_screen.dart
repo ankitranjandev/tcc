@@ -334,7 +334,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
 
                   // Document Type Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedDocumentType,
+                    initialValue: _selectedDocumentType,
                     decoration: InputDecoration(
                       labelText: 'Document Type',
                       border: OutlineInputBorder(

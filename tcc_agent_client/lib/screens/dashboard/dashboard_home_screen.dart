@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
+import '../../models/agent_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/responsive_helper.dart';
 

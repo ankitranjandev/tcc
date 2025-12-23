@@ -132,19 +132,6 @@ class TCCAgentApp extends StatelessWidget {
         );
 
         // Routes that are always accessible (even without KYC)
-        final alwaysAccessibleRoutes = [
-          '/dashboard',
-          '/profile',
-          '/settings',
-          '/support',
-          '/notifications',
-          '/kyc-status',
-        ];
-
-        final isOnAlwaysAccessibleRoute = alwaysAccessibleRoutes.any(
-          (route) => currentLocation.startsWith(route),
-        );
-
         developer.log(
           '🔀 [ROUTER] Redirect check:\n'
           '  Current: $currentLocation\n'

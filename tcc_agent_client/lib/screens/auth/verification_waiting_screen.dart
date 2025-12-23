@@ -426,8 +426,7 @@ class _VerificationWaitingScreenState extends State<VerificationWaitingScreen> {
                                           ],
                                         ),
                                       );
-                                    })
-                                    .toList(),
+                                    }),
                               ],
                             ),
                           ),
