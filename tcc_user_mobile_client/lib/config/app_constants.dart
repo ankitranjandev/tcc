@@ -30,6 +30,11 @@ class AppConstants {
   // Stripe Configuration
   static const String stripePublishableKey = 'pk_test_51Sf11DFU6W2alheKWH7Dt3Zb2jE1iMxBSJXCtknmsYZXEKtBMjFumnhEx48i66Pdqp6ttNRtcy3vO6hGbpU1NEOG00QrGPsDjF';
 
+  // CurrencyBeacon API Configuration
+  // Get your free API key from: https://currencybeacon.com/
+  static const String currencyBeaconApiKey = '9Snsrfa8QPSNMuq7GY5xtLDWmvs0cxXt';
+  static const String currencyBeaconBaseUrl = 'https://api.currencybeacon.com/v1';
+
   // Transaction Types
   static const String transactionTypeDeposit = 'deposit';
   static const String transactionTypeWithdrawal = 'withdrawal';

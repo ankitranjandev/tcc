@@ -332,4 +332,31 @@ export class UserService {
       throw error;
     }
   }
+
+  /**
+   * Update user profile picture
+   */
+  static async updateProfilePicture(userId: string, profilePictureUrl: string): Promise<Partial<User>> {
+    try {
+      const result = await db.query<User>(
+        `UPDATE users
+         SET profile_picture_url = $1, updated_at = NOW()
+         WHERE id = $2
+         RETURNING id, first_name, last_name, email, phone, country_code,
+                   profile_picture_url, kyc_status, created_at, updated_at`,
+        [profilePictureUrl, userId]
+      );
+
+      if (result.length === 0) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      logger.info('Profile picture updated', { userId, profilePictureUrl });
+
+      return result[0];
+    } catch (error) {
+      logger.error('Error updating profile picture', error);
+      throw error;
+    }
+  }
 }

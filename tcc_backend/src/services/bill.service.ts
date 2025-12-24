@@ -478,6 +478,157 @@ export class BillService {
     }
   }
 
+  /**
+   * Create Stripe payment intent for bill payment
+   */
+  static async createPaymentIntent(
+    userId: string,
+    providerId: string,
+    accountNumber: string,
+    amount: number,
+    metadata?: {
+      customerName?: string;
+      billPeriod?: string;
+      dueDate?: string;
+    }
+  ): Promise<{
+    clientSecret: string;
+    paymentIntentId: string;
+    transactionId: string;
+    amount: number;
+    fee: number;
+    total: number;
+    currency: string;
+    publishableKey: string;
+  }> {
+    try {
+      // Validate amount
+      if (amount <= 0) {
+        throw new Error('INVALID_AMOUNT');
+      }
+
+      // Verify provider exists
+      const providers = await db.query(
+        'SELECT id, name, type FROM bill_providers WHERE id = $1 AND is_active = true',
+        [providerId]
+      );
+
+      if (providers.length === 0) {
+        throw new Error('PROVIDER_NOT_FOUND');
+      }
+
+      const provider = providers[0];
+
+      // Get user details
+      const users = await db.query(
+        'SELECT id, email, first_name, last_name, phone, stripe_customer_id FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (users.length === 0) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const user = users[0];
+
+      // Calculate fee (1% for bill payments)
+      const fee = Math.max(20, amount * 0.01);
+      const totalAmount = amount + fee;
+
+      // Create or get Stripe customer
+      const { createStripeCustomer, createPaymentIntent: createStripePaymentIntent } = await import('./stripe.service');
+      let stripeCustomerId = user.stripe_customer_id;
+
+      if (!stripeCustomerId) {
+        const stripeCustomer = await createStripeCustomer(
+          user.id,
+          user.email,
+          `${user.first_name} ${user.last_name}`,
+          user.phone
+        );
+        stripeCustomerId = stripeCustomer.id;
+
+        // Update user with Stripe customer ID
+        await db.query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [
+          stripeCustomerId,
+          userId,
+        ]);
+      }
+
+      // Generate transaction ID
+      const transactionId = WalletService.generateTransactionId();
+
+      // Create pending transaction in database
+      const result = await db.transaction(async (client: PoolClient) => {
+        // Create Stripe payment intent
+        const paymentIntent = await createStripePaymentIntent(
+          totalAmount,
+          userId,
+          transactionId,
+          stripeCustomerId
+        );
+
+        // Insert transaction record
+        await client.query(
+          `INSERT INTO transactions (
+            transaction_id, type, from_user_id, amount, fee, net_amount,
+            status, description, metadata,
+            stripe_payment_intent_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            transactionId,
+            TransactionType.BILL_PAYMENT,
+            userId,
+            amount,
+            fee,
+            amount,
+            TransactionStatus.PENDING,
+            `Bill payment to ${provider.name}`,
+            JSON.stringify({
+              providerId,
+              providerName: provider.name,
+              accountNumber,
+              customerName: metadata?.customerName,
+              billPeriod: metadata?.billPeriod,
+              dueDate: metadata?.dueDate,
+              paymentGateway: 'stripe',
+              paymentIntentId: paymentIntent.id,
+            }),
+            paymentIntent.id,
+          ]
+        );
+
+        // Get config
+        const config = (await import('../config')).default;
+
+        return {
+          clientSecret: paymentIntent.client_secret!,
+          paymentIntentId: paymentIntent.id,
+          transactionId,
+          amount,
+          fee,
+          total: totalAmount,
+          currency: config.stripe.currency,
+          publishableKey: config.stripe.publishableKey,
+        };
+      });
+
+      logger.info('Bill payment intent created', {
+        userId,
+        transactionId,
+        providerId,
+        amount,
+        fee,
+        paymentIntentId: result.paymentIntentId,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Error creating bill payment intent', error);
+      throw error;
+    }
+  }
+
   // =====================================================
   // MOCK HELPER METHODS
   // TODO: Remove these when integrating with real APIs

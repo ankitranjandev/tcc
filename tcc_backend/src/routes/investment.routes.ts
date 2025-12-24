@@ -47,6 +47,23 @@ const calculateReturnsSchema = z.object({
 });
 
 // Routes
+
+/**
+ * @route   GET /investments/opportunities
+ * @desc    Get all active investment opportunities (public)
+ * @access  Public
+ * NOTE: This route MUST come before /:investmentId to avoid route conflicts
+ */
+router.get('/opportunities', InvestmentController.getPublicOpportunities);
+
+/**
+ * @route   GET /investments/opportunities/:opportunityId
+ * @desc    Get single opportunity details (public)
+ * @access  Public
+ * NOTE: This route MUST come before /:investmentId to avoid route conflicts
+ */
+router.get('/opportunities/:opportunityId', InvestmentController.getPublicOpportunityDetails);
+
 /**
  * @route   GET /investments/categories
  * @desc    Get investment categories with tenures
@@ -89,6 +106,7 @@ router.get(
  * @route   GET /investments/:investmentId
  * @desc    Get single investment details
  * @access  Private
+ * NOTE: This route MUST come after all static routes like /opportunities, /categories, etc.
  */
 router.get(
   '/:investmentId',
@@ -132,19 +150,5 @@ router.post(
   validate(investmentIdSchema),
   InvestmentController.requestWithdrawal
 );
-
-/**
- * @route   GET /investments/opportunities
- * @desc    Get all active investment opportunities (public)
- * @access  Public
- */
-router.get('/opportunities', InvestmentController.getPublicOpportunities);
-
-/**
- * @route   GET /investments/opportunities/:opportunityId
- * @desc    Get single opportunity details (public)
- * @access  Public
- */
-router.get('/opportunities/:opportunityId', InvestmentController.getPublicOpportunityDetails);
 
 export default router;

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import 'manage_bank_account_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -120,7 +122,7 @@ class _AccountScreenState extends State<AccountScreen> {
             icon: Icons.account_balance,
             title: 'Bank Accounts',
             subtitle: 'Manage your linked bank accounts',
-            onTap: () => _showBankAccountsDialog(context),
+            onTap: () => _navigateToBankAccounts(context),
           ),
           _buildSettingsTile(
             icon: Icons.security,
@@ -339,106 +341,11 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  void _showBankAccountsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.account_balance, color: AppColors.primaryBlue),
-            SizedBox(width: 8),
-            Text('Bank Accounts'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildBankCard('Bank of Sierra Leone', '****4567', true),
-            SizedBox(height: 12),
-            _buildBankCard('Rokel Commercial Bank', '****8901', false),
-            SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Add bank account feature coming soon!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              icon: Icon(Icons.add),
-              label: Text('Add Bank Account'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryBlue,
-                side: BorderSide(color: AppColors.primaryBlue),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBankCard(String bankName, String accountNumber, bool isPrimary) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isPrimary ? AppColors.primaryBlue : Theme.of(context).dividerColor,
-          width: isPrimary ? 2 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.account_balance, color: AppColors.primaryBlue),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  bankName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  accountNumber,
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isPrimary)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'Primary',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-        ],
+  Future<void> _navigateToBankAccounts(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ManageBankAccountScreen(),
       ),
     );
   }
@@ -740,61 +647,106 @@ class _AccountScreenState extends State<AccountScreen> {
             SizedBox(height: 16),
             _buildSupportOption(
               icon: Icons.email,
-              title: 'Email Support',
+              title: 'Email',
               subtitle: 'support@tcc.com',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Opening email client...'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
+              onTap: () async {
+                final Uri emailUri = Uri(
+                  scheme: 'mailto',
+                  path: 'support@tcc.com',
                 );
+                try {
+                  final bool canLaunch = await canLaunchUrl(emailUri);
+                  if (canLaunch) {
+                    await launchUrl(emailUri);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('No email app found. Contact: support@tcc.com'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Email: support@tcc.com'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
               },
             ),
             SizedBox(height: 12),
             _buildSupportOption(
               icon: Icons.phone,
-              title: 'Phone Support',
-              subtitle: '+232 XX XXX XXXX',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Opening phone dialer...'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
+              title: 'Phone',
+              subtitle: '+232 123 456 789',
+              onTap: () async {
+                final Uri phoneUri = Uri(
+                  scheme: 'tel',
+                  path: '+232123456789',
                 );
+                try {
+                  final bool canLaunch = await canLaunchUrl(phoneUri);
+                  if (canLaunch) {
+                    await launchUrl(phoneUri);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('No phone app found. Call: +232 123 456 789'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Phone: +232 123 456 789'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
               },
             ),
             SizedBox(height: 12),
             _buildSupportOption(
-              icon: Icons.chat_bubble_outline,
-              title: 'Live Chat',
-              subtitle: 'Chat with our team',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Live chat feature coming soon!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
-            SizedBox(height: 12),
-            _buildSupportOption(
-              icon: Icons.help_outline,
-              title: 'FAQ',
-              subtitle: 'Find quick answers',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('FAQ page coming soon!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+              icon: Icons.chat,
+              title: 'WhatsApp',
+              subtitle: '+232 123 456 789',
+              onTap: () async {
+                final Uri whatsappUri = Uri.parse('https://wa.me/232123456789');
+                try {
+                  final bool canLaunch = await canLaunchUrl(whatsappUri);
+                  if (canLaunch) {
+                    await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('WhatsApp not installed. Number: +232 123 456 789'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('WhatsApp: +232 123 456 789'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
               },
             ),
           ],

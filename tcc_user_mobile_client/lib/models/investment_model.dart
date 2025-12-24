@@ -9,6 +9,7 @@ class InvestmentModel {
   final DateTime startDate;
   final DateTime endDate;
   final String status;
+  final DateTime createdAt;
 
   InvestmentModel({
     required this.id,
@@ -21,11 +22,48 @@ class InvestmentModel {
     required this.startDate,
     required this.endDate,
     this.status = 'ACTIVE',
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? startDate;
 
   int get daysLeft => endDate.difference(DateTime.now()).inDays;
   double get progress => DateTime.now().difference(startDate).inDays /
                           endDate.difference(startDate).inDays;
+
+  bool get isActive => status.toUpperCase() == 'ACTIVE';
+
+  factory InvestmentModel.fromJson(Map<String, dynamic> json) {
+    return InvestmentModel(
+      id: json['id'] as String,
+      name: json['name'] as String? ?? json['title'] as String? ?? 'Investment',
+      category: json['category'] as String? ?? json['categoryName'] as String? ?? 'General',
+      amount: (json['amount'] as num).toDouble(),
+      roi: (json['roi'] as num?)?.toDouble() ?? (json['returnRate'] as num?)?.toDouble() ?? 0.0,
+      period: json['period'] as int? ?? json['tenureMonths'] as int? ?? 12,
+      expectedReturn: (json['expectedReturn'] as num?)?.toDouble() ??
+                      (json['totalReturn'] as num?)?.toDouble() ??
+                      (json['amount'] as num).toDouble(),
+      startDate: DateTime.parse(json['startDate'] as String? ?? json['createdAt'] as String),
+      endDate: DateTime.parse(json['endDate'] as String? ?? json['maturityDate'] as String),
+      status: json['status'] as String? ?? 'ACTIVE',
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'category': category,
+      'amount': amount,
+      'roi': roi,
+      'period': period,
+      'expectedReturn': expectedReturn,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate.toIso8601String(),
+      'status': status,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
 }
 
 class InvestmentProduct {

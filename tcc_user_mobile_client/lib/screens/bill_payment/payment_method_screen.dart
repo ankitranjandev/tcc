@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../config/app_colors.dart';
+import '../../services/bill_service.dart';
+import '../../services/stripe_service.dart';
 import 'payment_success_screen.dart';
 import 'add_bank_account_screen.dart';
 import 'upload_payment_details_screen.dart';
@@ -8,6 +11,7 @@ import 'upload_payment_details_screen.dart';
 class PaymentMethodScreen extends StatefulWidget {
   final String billType;
   final String provider;
+  final String? providerId;
   final double amount;
   final String accountNumber;
 
@@ -15,6 +19,7 @@ class PaymentMethodScreen extends StatefulWidget {
     super.key,
     required this.billType,
     required this.provider,
+    this.providerId,
     required this.amount,
     required this.accountNumber,
   });
@@ -25,6 +30,8 @@ class PaymentMethodScreen extends StatefulWidget {
 
 class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 2);
+  final BillService _billService = BillService();
+  final StripeService _stripeService = StripeService();
   String? _selectedMethod;
   bool _isProcessing = false;
   bool _showPriceBreakup = false;
@@ -68,11 +75,17 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       return;
     }
 
+    // Handle Stripe payment separately
+    if (_selectedMethod == 'stripe') {
+      await _processStripePayment();
+      return;
+    }
+
     setState(() {
       _isProcessing = true;
     });
 
-    // Simulate payment processing
+    // Simulate payment processing for other methods
     await Future.delayed(Duration(seconds: 2));
 
     if (mounted) {
@@ -99,6 +112,75 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             transactionId: 'TXN${DateTime.now().millisecondsSinceEpoch}',
           ),
         ),
+      );
+    }
+  }
+
+  Future<void> _processStripePayment() async {
+    setState(() => _isProcessing = true);
+
+    try {
+      // Step 1: Create Stripe payment intent for bill
+      final result = await _billService.createBillPaymentIntent(
+        providerId: widget.providerId ?? widget.provider,
+        accountNumber: widget.accountNumber,
+        amount: widget.amount,
+      );
+
+      if (!result['success']) {
+        throw Exception(result['error'] ?? 'Failed to create payment intent');
+      }
+
+      final data = result['data']['data'];
+      final clientSecret = data['client_secret'];
+      final paymentIntentId = _stripeService.extractPaymentIntentId(clientSecret);
+
+      setState(() => _isProcessing = false);
+
+      // Step 2: Process Stripe payment
+      if (!mounted) return;
+      final paymentSuccessful = await _stripeService.processPayment(
+        clientSecret: clientSecret,
+        merchantName: 'TCC - ${widget.provider}',
+        context: context,
+      );
+
+      if (!paymentSuccessful) {
+        // User cancelled payment
+        return;
+      }
+
+      // Step 3: Navigate to success screen
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentSuccessScreen(
+              billType: widget.billType,
+              provider: widget.provider,
+              amount: widget.amount,
+              accountNumber: widget.accountNumber,
+              paymentMethod: 'Stripe (Card Payment)',
+              transactionId: paymentIntentId,
+            ),
+          ),
+        );
+      }
+    } on StripeException catch (e) {
+      setState(() => _isProcessing = false);
+      if (e.error.code != FailureCode.Canceled) {
+        if (!mounted) return;
+        _stripeService.showErrorDialog(
+          context,
+          e.error.message ?? 'Payment failed. Please try again.',
+        );
+      }
+    } catch (e) {
+      setState(() => _isProcessing = false);
+      if (!mounted) return;
+      _stripeService.showErrorDialog(
+        context,
+        e.toString().replaceAll('Exception: ', ''),
       );
     }
   }
@@ -238,6 +320,21 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
                   // Mobile Money Options
                   ...mobileMoney.map((mobile) => _buildMobileMoneyOption(mobile)),
+
+                  SizedBox(height: 32),
+
+                  // Pay with Card Section (Stripe)
+                  Text(
+                    'Pay with Card',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+
+                  _buildStripeOption(),
 
                   SizedBox(height: 32),
 
@@ -536,6 +633,100 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   fontWeight: FontWeight.w500,
                   color: Colors.black,
                 ),
+              ),
+            ),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? AppColors.primaryBlue : Colors.grey[400]!,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primaryBlue,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStripeOption() {
+    final isSelected = _selectedMethod == 'stripe';
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedMethod = 'stripe';
+        });
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryBlue : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.credit_card,
+                color: AppColors.primaryBlue,
+                size: 20,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Credit or Debit Card',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(Icons.lock_outline, size: 12, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text(
+                        'Secured by Stripe',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             Container(

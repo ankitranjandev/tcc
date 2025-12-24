@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/wallet_service.dart';
@@ -16,7 +17,6 @@ class SendGiftScreen extends StatefulWidget {
 class _SendGiftScreenState extends State<SendGiftScreen> {
   final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
 
-  String _sendVia = 'TCC ID';
   final _amountController = TextEditingController();
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
@@ -54,46 +54,26 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Send Via Selection
-              Text(
-                'Send via',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildSendViaOption('TCC ID', Icons.badge),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Theme.of(context).dividerColor,
-                    ),
-                    Expanded(
-                      child: _buildSendViaOption('Mobile', Icons.phone),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 24),
-
               // Recipient Input
-              Text(
-                _sendVia == 'TCC ID' ? 'Recipient TCC ID' : 'Recipient Mobile Number',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Recipient Mobile Number',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _pickContact,
+                    icon: Icon(Icons.contact_phone, size: 18),
+                    label: Text('From Contacts'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primaryBlue,
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 8),
               Container(
@@ -104,14 +84,13 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                 ),
                 child: TextField(
                   controller: _recipientController,
+                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    hintText: _sendVia == 'TCC ID'
-                        ? 'e.g., john.doe@tcc'
-                        : 'e.g., 076123456',
+                    hintText: 'e.g., 076123456',
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     prefixIcon: Icon(
-                      _sendVia == 'TCC ID' ? Icons.person : Icons.phone,
+                      Icons.phone,
                       color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.5),
                     ),
                   ),
@@ -227,10 +206,8 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                         color: AppColors.primaryBlue,
                       ),
                     ),
-                    SizedBox(height: 12),
-                    _buildSummaryRow('Send via', _sendVia),
                     if (_amountController.text.isNotEmpty) ...[
-                      SizedBox(height: 8),
+                      SizedBox(height: 12),
                       _buildSummaryRow(
                         'Amount',
                         'TCC${_amountController.text}',
@@ -279,44 +256,55 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
     );
   }
 
-  Widget _buildSendViaOption(String text, IconData icon) {
-    final isSelected = _sendVia == text;
+  Future<void> _pickContact() async {
+    try {
+      // Request permission first
+      if (!await FlutterContacts.requestPermission()) {
+        if (mounted) {
+          _showError('Contact permission is required to select a contact');
+        }
+        return;
+      }
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _sendVia = text;
-          _recipientController.clear();
-        });
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryBlue.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(11),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected ? AppColors.primaryBlue : null,
-            ),
-            SizedBox(width: 8),
-            Text(
-              text,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primaryBlue : null,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      // Pick a contact with properties
+      final contact = await FlutterContacts.openExternalPick();
+
+      if (contact != null) {
+        // Fetch full contact details including phone numbers
+        final fullContact = await FlutterContacts.getContact(
+          contact.id,
+          withProperties: true,
+        );
+
+        if (fullContact != null && fullContact.phones.isNotEmpty) {
+          // Get the first phone number and clean it
+          String phoneNumber = fullContact.phones.first.number;
+
+          // Remove all non-digit characters except leading +
+          phoneNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+
+          // Remove country code if present (assuming Sierra Leone +232)
+          if (phoneNumber.startsWith('+232')) {
+            phoneNumber = phoneNumber.substring(4);
+          } else if (phoneNumber.startsWith('232')) {
+            phoneNumber = phoneNumber.substring(3);
+          }
+
+          // Update the recipient controller
+          setState(() {
+            _recipientController.text = phoneNumber;
+          });
+        } else {
+          if (mounted) {
+            _showError('Selected contact has no phone number');
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Failed to pick contact: ${e.toString()}');
+      }
+    }
   }
 
   Widget _buildQuickAmountChip(String amount) {
@@ -527,7 +515,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Processing gift...'),
+                Text('Verifying recipient...'),
               ],
             ),
           ),
@@ -536,8 +524,51 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
     );
 
     try {
-      // First, request OTP for transfer
       final walletService = WalletService();
+
+      // First, verify if the recipient user exists
+      final verifyResult = await walletService.verifyUserExists(
+        phoneNumber: _recipientController.text,
+      );
+
+      if (verifyResult['success'] != true) {
+        // Close loading dialog
+        if (mounted) Navigator.pop(context);
+
+        if (mounted) {
+          _showErrorDialog(
+            'The phone number you entered is not registered with TCC. '
+            'Please make sure the recipient has a TCC account.',
+          );
+        }
+        return;
+      }
+
+      // Update loading message
+      if (mounted) {
+        Navigator.pop(context);
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Processing gift...'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      // Request OTP for transfer
       final otpResult = await walletService.requestTransferOTP(
         recipientPhoneNumber: _recipientController.text,
         amount: amount,

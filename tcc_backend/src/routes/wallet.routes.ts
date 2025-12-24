@@ -31,6 +31,12 @@ const paymentIntentSchema = z.object({
   }),
 });
 
+const verifyPaymentSchema = z.object({
+  body: z.object({
+    payment_intent_id: z.string().min(1, 'Payment intent ID is required'),
+  }),
+});
+
 const withdrawSchema = z.object({
   body: z.object({
     amount: z.number().positive().min(500),
@@ -70,6 +76,13 @@ router.post('/deposit', authenticate, validate(depositSchema), WalletController.
  * @access  Private
  */
 router.post('/create-payment-intent', authenticate, validate(paymentIntentSchema), WalletController.createPaymentIntent);
+
+/**
+ * @route   POST /wallet/verify-stripe-payment
+ * @desc    Verify Stripe payment and return updated balance
+ * @access  Private
+ */
+router.post('/verify-stripe-payment', authenticate, validate(verifyPaymentSchema), WalletController.verifyStripePayment);
 
 /**
  * @route   POST /wallet/withdraw/request-otp

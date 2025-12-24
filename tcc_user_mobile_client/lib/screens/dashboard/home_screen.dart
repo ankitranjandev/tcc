@@ -6,11 +6,14 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/wallet_service.dart';
+import '../../services/stripe_service.dart';
 import '../../services/investment_service.dart';
 import '../../services/metal_price_service.dart';
 import '../../services/currency_service.dart';
 import '../../services/election_service.dart';
 import '../../models/currency_rate_model.dart';
+import '../../models/investment_model.dart';
+import '../currency/live_currency_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,6 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Voting data
   int _activeElectionsCount = 0;
+
+  // Agriculture opportunities
+  List<InvestmentOpportunity> _agroOpportunities = [];
+
+  // Education opportunities
+  List<InvestmentOpportunity> _educationOpportunities = [];
 
   @override
   void initState() {
@@ -106,6 +115,54 @@ class _HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         debugPrint('Failed to load elections: $e');
         _activeElectionsCount = 0;
+      }
+
+      // Fetch agriculture opportunities
+      try {
+        final agroResponse = await _investmentService.getOpportunities(
+          category: 'AGRICULTURE',
+          perPage: 2, // Only fetch top 2 for home screen
+        );
+
+        if (agroResponse['success'] == true && agroResponse['data'] != null) {
+          final data = agroResponse['data'];
+          final opportunities = data['opportunities'] as List<dynamic>?;
+
+          if (opportunities != null) {
+            _agroOpportunities = opportunities
+                .map((json) => InvestmentOpportunity.fromJson(json as Map<String, dynamic>))
+                .where((opp) => opp.isActive && opp.hasUnitsAvailable)
+                .take(2)
+                .toList();
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to load agriculture opportunities: $e');
+        _agroOpportunities = [];
+      }
+
+      // Fetch education opportunities
+      try {
+        final educationResponse = await _investmentService.getOpportunities(
+          category: 'EDUCATION',
+          perPage: 2, // Only fetch top 2 for home screen
+        );
+
+        if (educationResponse['success'] == true && educationResponse['data'] != null) {
+          final data = educationResponse['data'];
+          final opportunities = data['opportunities'] as List<dynamic>?;
+
+          if (opportunities != null) {
+            _educationOpportunities = opportunities
+                .map((json) => InvestmentOpportunity.fromJson(json as Map<String, dynamic>))
+                .where((opp) => opp.isActive && opp.hasUnitsAvailable)
+                .take(2)
+                .toList();
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to load education opportunities: $e');
+        _educationOpportunities = [];
       }
 
       setState(() {
@@ -610,7 +667,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: 12),
           GestureDetector(
-            onTap: () => context.push('/investments/currency'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LiveCurrencyScreen(),
+                ),
+              );
+            },
             child: Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -882,6 +946,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAgroSection() {
+    final tccFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -912,25 +978,66 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(height: 12),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildAgroCard('Land Lease', 'TCC2,217', '+5% +5.6'),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: _buildAgroCard('Processing', 'TCC2,217', '+5% +6.1'),
-                ),
-              ],
-            ),
+            child: _agroOpportunities.isEmpty
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: _buildAgroCard('Land Lease', 'TCC2,217', '+5% +5.6', null),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildAgroCard('Processing', 'TCC2,217', '+5% +6.1', null),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: _agroOpportunities.length == 1
+                        ? [
+                            Expanded(
+                              child: _buildAgroCard(
+                                _agroOpportunities[0].title,
+                                tccFormat.format(_agroOpportunities[0].minInvestment),
+                                '${_agroOpportunities[0].returnRate}% ROI',
+                                _agroOpportunities[0],
+                              ),
+                            ),
+                          ]
+                        : [
+                            Expanded(
+                              child: _buildAgroCard(
+                                _agroOpportunities[0].title,
+                                tccFormat.format(_agroOpportunities[0].minInvestment),
+                                '${_agroOpportunities[0].returnRate}% ROI',
+                                _agroOpportunities[0],
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: _buildAgroCard(
+                                _agroOpportunities[1].title,
+                                tccFormat.format(_agroOpportunities[1].minInvestment),
+                                '${_agroOpportunities[1].returnRate}% ROI',
+                                _agroOpportunities[1],
+                              ),
+                            ),
+                          ],
+                  ),
           ),
         ],
     );
   }
 
-  Widget _buildAgroCard(String name, String value, String percentage) {
+  Widget _buildAgroCard(String name, String value, String percentage, InvestmentOpportunity? opportunity) {
     return GestureDetector(
-      onTap: () => context.push('/investments/agriculture'),
+      onTap: () {
+        if (opportunity != null && opportunity.id.isNotEmpty) {
+          // Navigate to specific opportunity details
+          context.push('/investments/opportunities/${opportunity.id}');
+        } else {
+          // Navigate to agriculture category page
+          context.push('/investments/agriculture');
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -969,6 +1076,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4),
                   Text(
@@ -998,6 +1107,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildEducationSection() {
+    final tccFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1028,25 +1139,66 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(height: 12),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildEducationCard('Institutions', 'TCC2,217', '+5% +5.6'),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: _buildEducationCard('Dormitory', 'TCC2,217', '+5% +6.1'),
-                ),
-              ],
-            ),
+            child: _educationOpportunities.isEmpty
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: _buildEducationCard('Institutions', 'TCC2,217', '+5% +5.6', null),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildEducationCard('Dormitory', 'TCC2,217', '+5% +6.1', null),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: _educationOpportunities.length == 1
+                        ? [
+                            Expanded(
+                              child: _buildEducationCard(
+                                _educationOpportunities[0].title,
+                                tccFormat.format(_educationOpportunities[0].minInvestment),
+                                '${_educationOpportunities[0].returnRate}% ROI',
+                                _educationOpportunities[0],
+                              ),
+                            ),
+                          ]
+                        : [
+                            Expanded(
+                              child: _buildEducationCard(
+                                _educationOpportunities[0].title,
+                                tccFormat.format(_educationOpportunities[0].minInvestment),
+                                '${_educationOpportunities[0].returnRate}% ROI',
+                                _educationOpportunities[0],
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: _buildEducationCard(
+                                _educationOpportunities[1].title,
+                                tccFormat.format(_educationOpportunities[1].minInvestment),
+                                '${_educationOpportunities[1].returnRate}% ROI',
+                                _educationOpportunities[1],
+                              ),
+                            ),
+                          ],
+                  ),
           ),
         ],
     );
   }
 
-  Widget _buildEducationCard(String name, String value, String percentage) {
+  Widget _buildEducationCard(String name, String value, String percentage, InvestmentOpportunity? opportunity) {
     return GestureDetector(
-      onTap: () => context.push('/investments/education'),
+      onTap: () {
+        if (opportunity != null && opportunity.id.isNotEmpty) {
+          // Navigate to specific opportunity details
+          context.push('/investments/opportunities/${opportunity.id}');
+        } else {
+          // Navigate to education category page
+          context.push('/investments/education');
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1085,6 +1237,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4),
                   Text(
@@ -1159,7 +1313,12 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _AddMoneyBottomSheet(),
+      builder: (context) => _AddMoneyBottomSheet(
+        onSuccess: () {
+          // Refresh the HomeScreen data to show updated balance
+          _loadData();
+        },
+      ),
     );
   }
 }
@@ -1192,6 +1351,10 @@ class MiniChartPainter extends CustomPainter {
 
 // Add Money Bottom Sheet with Stripe integration
 class _AddMoneyBottomSheet extends StatefulWidget {
+  final VoidCallback? onSuccess;
+
+  const _AddMoneyBottomSheet({this.onSuccess});
+
   @override
   _AddMoneyBottomSheetState createState() => _AddMoneyBottomSheetState();
 }
@@ -1199,8 +1362,10 @@ class _AddMoneyBottomSheet extends StatefulWidget {
 class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
   final TextEditingController _amountController = TextEditingController();
   final WalletService _walletService = WalletService();
+  final StripeService _stripeService = StripeService();
   bool _isLoading = false;
   String? _errorMessage;
+  String? _paymentIntentId;
 
   final List<int> _quickAmounts = [1000, 5000, 10000, 25000];
 
@@ -1242,7 +1407,7 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
     });
 
     try {
-      // Create payment intent
+      // Step 1: Create payment intent
       final result = await _walletService.createPaymentIntent(amount: amount);
 
       if (!result['success']) {
@@ -1252,37 +1417,80 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
       final data = result['data']['data'];
       final clientSecret = data['client_secret'];
 
-      // Initialize Stripe payment sheet
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          merchantDisplayName: 'TCC',
-          paymentIntentClientSecret: clientSecret,
-          returnURL: 'tccapp://stripe-redirect',
-          style: ThemeMode.light,
-          appearance: PaymentSheetAppearance(
-            colors: PaymentSheetAppearanceColors(
-              primary: Color(0xFF2C3E50),
-            ),
-          ),
-        ),
+      // Extract payment intent ID
+      _paymentIntentId = _stripeService.extractPaymentIntentId(clientSecret);
+
+      setState(() => _isLoading = false);
+
+      // Step 2: Process Stripe payment
+      if (!mounted) return;
+      final paymentSuccessful = await _stripeService.processPayment(
+        clientSecret: clientSecret,
+        merchantName: 'TCC Wallet Top-up',
+        context: context,
       );
 
-      // Present payment sheet
-      await Stripe.instance.presentPaymentSheet();
+      if (!paymentSuccessful) {
+        // User cancelled payment
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Payment cancelled';
+          });
+        }
+        return;
+      }
 
-      // Payment successful
+      // Step 3: Verify payment with backend
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment successful! Your wallet will be credited shortly.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
+        _stripeService.showVerificationDialog(context);
+      }
 
-        // Refresh the page to show updated balance
-        setState(() {});
+      final verificationResult = await _stripeService.verifyPaymentWithPolling(
+        paymentIntentId: _paymentIntentId!,
+        maxAttempts: 5,
+        delaySeconds: 2,
+      );
+
+      if (mounted) {
+        // Close verification dialog
+        Navigator.of(context).pop();
+
+        if (verificationResult['verified'] == true) {
+          // Payment verified successfully
+          // Close the bottom sheet
+          Navigator.pop(context);
+
+          // Show success message
+          final isTestMode = verificationResult['test_mode'] == true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isTestMode
+                    ? 'Payment successful! (Test mode - backend verification skipped)'
+                    : 'Payment successful! Your wallet has been credited.',
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+
+          // Refresh parent screen balance
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          }
+        } else if (verificationResult['timeout'] == true) {
+          // Verification timeout - payment is processing
+          // Close the bottom sheet
+          Navigator.pop(context);
+
+          // Show processing dialog
+          _stripeService.showProcessingDialog(context, _paymentIntentId!);
+        } else {
+          // Verification failed
+          setState(() {
+            _errorMessage = verificationResult['error'] ?? 'Payment verification failed';
+          });
+        }
       }
     } on StripeException catch (e) {
       setState(() {

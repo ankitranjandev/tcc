@@ -320,21 +320,24 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
                 'Investment Started',
                 dateFormat.format(investment.startDate),
                 true,
-                Icons.play_circle,
+                Icons.rocket_launch,
+                AppColors.primaryBlue,
               ),
               _buildTimelineItem(
                 context,
-                'Current Status',
+                'In Progress',
                 'Day ${DateTime.now().difference(investment.startDate).inDays} of ${investment.endDate.difference(investment.startDate).inDays}',
-                true,
-                Icons.pending,
+                investment.isActive,
+                Icons.trending_up,
+                AppColors.secondaryYellow,
               ),
               _buildTimelineItem(
                 context,
                 'Maturity Date',
                 dateFormat.format(investment.endDate),
-                false,
-                Icons.check_circle,
+                investment.daysLeft <= 0,
+                investment.daysLeft <= 0 ? Icons.celebration : Icons.verified,
+                investment.daysLeft <= 0 ? AppColors.success : _categoryColor,
               ),
               SizedBox(height: 32),
 
@@ -445,24 +448,37 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTimelineItem(BuildContext context, String title, String subtitle, bool isCompleted, IconData icon) {
+  Widget _buildTimelineItem(
+    BuildContext context,
+    String title,
+    String subtitle,
+    bool isCompleted,
+    IconData icon,
+    Color iconColor,
+  ) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: 20),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: isCompleted
-                  ? _categoryColor.withValues(alpha: 0.1)
-                  : Theme.of(context).dividerColor,
-              borderRadius: BorderRadius.circular(20),
+                  ? iconColor.withValues(alpha: 0.15)
+                  : Theme.of(context).dividerColor.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isCompleted
+                    ? iconColor.withValues(alpha: 0.3)
+                    : Theme.of(context).dividerColor,
+                width: 2,
+              ),
             ),
             child: Icon(
               icon,
-              color: isCompleted ? _categoryColor : Theme.of(context).disabledColor,
-              size: 20,
+              color: isCompleted ? iconColor : Theme.of(context).disabledColor,
+              size: 24,
             ),
           ),
           SizedBox(width: 16),
@@ -475,10 +491,12 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isCompleted ? Colors.black : Theme.of(context).textTheme.bodySmall?.color,
+                    color: isCompleted
+                        ? Theme.of(context).textTheme.titleLarge?.color
+                        : Theme.of(context).textTheme.bodySmall?.color,
                   ),
                 ),
-                SizedBox(height: 2),
+                SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: TextStyle(
@@ -489,6 +507,19 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
               ],
             ),
           ),
+          if (isCompleted)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.check,
+                size: 16,
+                color: iconColor,
+              ),
+            ),
         ],
       ),
     );

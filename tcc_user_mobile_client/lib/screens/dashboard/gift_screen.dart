@@ -116,10 +116,10 @@ class GiftScreen extends StatelessWidget {
               SizedBox(height: 24),
 
               // Instructions
-              _buildInstructionTile(1, 'Select the type of gift you want to send - money, airtime, or vouchers.'),
-              _buildInstructionTile(2, 'Enter recipient details using their TCC ID or mobile number.'),
-              _buildInstructionTile(3, 'Choose the amount and add a personal message if desired.'),
-              _buildInstructionTile(4, 'Review and confirm to send your gift instantly.'),
+              _buildInstructionTile(1, 'Enter the recipient\'s mobile number or select from your contacts.'),
+              _buildInstructionTile(2, 'Choose the gift amount from quick options or enter a custom amount.'),
+              _buildInstructionTile(3, 'Add a personal message to make your gift more special (optional).'),
+              _buildInstructionTile(4, 'Verify the recipient exists and confirm the transfer with OTP.'),
             ],
           ),
         ),

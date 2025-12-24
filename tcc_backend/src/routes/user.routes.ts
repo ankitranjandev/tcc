@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { UserController } from '../controllers/user.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validation';
+import { uploadSingle, validateUpload } from '../middleware/upload.middleware';
+import { FileType } from '../services/file-upload.service';
 import { z } from 'zod';
 
 const router = Router();
@@ -54,6 +56,12 @@ const addBankAccountSchema = z.object({
 // Routes
 router.get('/profile', UserController.getProfile);
 router.patch('/profile', validate(updateProfileSchema), UserController.updateProfile);
+router.post(
+  '/profile-picture',
+  uploadSingle('profile_picture'),
+  validateUpload(FileType.PROFILE_PICTURE),
+  UserController.uploadProfilePicture
+);
 router.post('/change-phone', validate(changePhoneSchema), UserController.changePhone);
 router.post('/change-password', validate(changePasswordSchema), UserController.changePassword);
 router.post('/delete-account', UserController.deleteAccount);

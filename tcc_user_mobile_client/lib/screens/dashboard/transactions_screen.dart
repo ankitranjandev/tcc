@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../config/app_colors.dart';
 import '../../services/transaction_service.dart';
 import '../../models/transaction_model.dart';
+import '../../utils/date_utils.dart' as date_utils;
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -256,10 +257,12 @@ class _TransactionsScreenState extends State<TransactionsScreen>
               ),
             SizedBox(height: 4),
             Text(
-              DateFormat('MMM dd, yyyy • hh:mm a').format(transaction.date),
+              date_utils.DateUtils.formatTransactionDate(transaction.date),
               style: TextStyle(
                 fontSize: 11,
-                color: Theme.of(context).textTheme.bodySmall?.color,
+                color: Theme.of(context).textTheme.bodySmall?.color?.withValues(
+                  alpha: date_utils.DateUtils.isValidDate(transaction.date) ? 1.0 : 0.5,
+                ),
               ),
             ),
           ],

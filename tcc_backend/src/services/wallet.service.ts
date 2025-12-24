@@ -632,4 +632,112 @@ export class WalletService {
       throw error;
     }
   }
+
+  /**
+   * Verify Stripe payment and return updated balance
+   */
+  static async verifyStripePayment(
+    userId: string,
+    paymentIntentId: string
+  ): Promise<{
+    success: boolean;
+    transaction_id: string;
+    amount: number;
+    balance: number;
+    currency: string;
+  }> {
+    try {
+      // Get transaction details from database
+      const transactions = await db.query(
+        `SELECT id, transaction_id, to_user_id, amount, status, stripe_payment_intent_id
+         FROM transactions
+         WHERE stripe_payment_intent_id = $1`,
+        [paymentIntentId]
+      );
+
+      if (transactions.length === 0) {
+        throw new Error('TRANSACTION_NOT_FOUND');
+      }
+
+      const transaction = transactions[0];
+
+      // Verify the transaction belongs to the user
+      if (transaction.to_user_id !== userId) {
+        throw new Error('UNAUTHORIZED');
+      }
+
+      // Check if transaction is already completed
+      if (transaction.status === TransactionStatus.COMPLETED) {
+        // Get updated wallet balance
+        const wallet = await this.getBalance(userId);
+
+        return {
+          success: true,
+          transaction_id: transaction.transaction_id,
+          amount: parseFloat(transaction.amount),
+          balance: parseFloat(wallet.balance.toString()),
+          currency: wallet.currency,
+        };
+      }
+
+      // If transaction is still pending, retrieve payment intent from Stripe
+      const { retrievePaymentIntent } = await import('./stripe.service');
+      const paymentIntent = await retrievePaymentIntent(paymentIntentId);
+
+      // Check payment intent status
+      if (paymentIntent.status !== 'succeeded') {
+        throw new Error('PAYMENT_NOT_COMPLETED');
+      }
+
+      // Update transaction and wallet in a single database transaction
+      const result = await db.transaction(async (client: PoolClient) => {
+        // Update transaction status to completed
+        await client.query(
+          `UPDATE transactions
+           SET status = $1,
+               processed_at = NOW(),
+               payment_gateway_response = $2,
+               updated_at = NOW()
+           WHERE id = $3`,
+          [TransactionStatus.COMPLETED, JSON.stringify(paymentIntent), transaction.id]
+        );
+
+        // Credit user's wallet
+        await client.query(
+          `UPDATE wallets
+           SET balance = balance + $1,
+               last_transaction_at = NOW(),
+               updated_at = NOW()
+           WHERE user_id = $2`,
+          [transaction.amount, transaction.to_user_id]
+        );
+
+        // Get updated wallet balance
+        const wallets = await client.query(
+          'SELECT balance, currency FROM wallets WHERE user_id = $1',
+          [userId]
+        );
+
+        return {
+          success: true,
+          transaction_id: transaction.transaction_id,
+          amount: parseFloat(transaction.amount),
+          balance: parseFloat(wallets[0].balance),
+          currency: wallets[0].currency,
+        };
+      });
+
+      logger.info('Stripe payment verified and wallet updated', {
+        userId,
+        paymentIntentId,
+        transactionId: transaction.transaction_id,
+        amount: transaction.amount,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Error verifying Stripe payment', error);
+      throw error;
+    }
+  }
 }

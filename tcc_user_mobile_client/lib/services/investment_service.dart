@@ -21,14 +21,16 @@ class InvestmentService {
     required String categoryId,
     required double amount,
     required int tenureMonths,
+    bool hasInsurance = false,
   }) async {
     try {
       final response = await _apiService.post(
         '/investments',
         body: {
-          'categoryId': categoryId,
+          'category_id': categoryId,
           'amount': amount,
-          'tenureMonths': tenureMonths,
+          'tenure_months': tenureMonths,
+          'has_insurance': hasInsurance,
         },
         requiresAuth: true,
       );
@@ -169,7 +171,7 @@ class InvestmentService {
       final response = await _apiService.get(
         '/investments/opportunities',
         queryParams: queryParams,
-        requiresAuth: false, // Public endpoint
+        requiresAuth: true,
       );
       return {'success': true, 'data': response};
     } catch (e) {
@@ -184,7 +186,7 @@ class InvestmentService {
     try {
       final response = await _apiService.get(
         '/investments/opportunities/$opportunityId',
-        requiresAuth: false, // Public endpoint
+        requiresAuth: true,
       );
       return {'success': true, 'data': response};
     } catch (e) {

@@ -1,13 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
-import '../wallet/wallet_screen.dart';
+import '../../providers/bank_account_provider.dart';
+import '../../models/bank_account_model.dart';
 import '../profile/profile_screen.dart';
+import '../profile/manage_bank_account_screen.dart';
 
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
+
+  @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch bank accounts when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBankAccounts();
+    });
+  }
+
+  Future<void> _loadBankAccounts() async {
+    final provider = Provider.of<BankAccountProvider>(context, listen: false);
+    await provider.fetchAccounts();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,28 +45,12 @@ class MoreScreen extends StatelessWidget {
               // Header
               Padding(
                 padding: EdgeInsets.all(24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'My Account',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.account_balance_wallet_outlined),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => WalletScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                child: Text(
+                  'My Account',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
 
@@ -79,12 +85,24 @@ class MoreScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                user?.firstName ?? 'User',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    user?.firstName ?? 'User',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (user != null && user.isKycApproved) ...[
+                                    SizedBox(width: 6),
+                                    Icon(
+                                      Icons.verified,
+                                      size: 20,
+                                      color: AppColors.success,
+                                    ),
+                                  ],
+                                ],
                               ),
                               SizedBox(height: 4),
                               Text(
@@ -188,21 +206,11 @@ class MoreScreen extends StatelessWidget {
               // Menu Items
               _buildMenuItem(
                 context,
-                icon: Icons.notifications_outlined,
-                title: 'Notification',
-                trailing: Switch(
-                  value: true,
-                  onChanged: (value) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(value ? 'Notifications enabled' : 'Notifications disabled'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  activeThumbColor: AppColors.primaryBlue,
-                ),
-                onTap: null,
+                icon: Icons.headset_mic_outlined,
+                title: 'Support',
+                onTap: () {
+                  _showSupportDialog(context);
+                },
               ),
               _buildMenuItem(
                 context,
@@ -210,14 +218,6 @@ class MoreScreen extends StatelessWidget {
                 title: 'Banks',
                 onTap: () {
                   _showBanksDialog(context);
-                },
-              ),
-              _buildMenuItem(
-                context,
-                icon: Icons.headset_mic_outlined,
-                title: 'Support',
-                onTap: () {
-                  _showSupportDialog(context);
                 },
               ),
 
@@ -306,65 +306,289 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
-  static void _showBanksDialog(BuildContext context) {
+  void _showBanksDialog(BuildContext context) {
     showDialog(
       context: context,
+      builder: (dialogContext) => Consumer<BankAccountProvider>(
+        builder: (context, provider, child) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.account_balance, color: AppColors.primaryBlue),
+                SizedBox(width: 8),
+                Text('Bank Accounts'),
+              ],
+            ),
+            content: Container(
+              width: double.maxFinite,
+              constraints: BoxConstraints(maxHeight: 400),
+              child: provider.isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryBlue,
+                      ),
+                    )
+                  : provider.accounts.isEmpty
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.account_balance_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'No bank accounts added',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Add a bank account to get started',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        )
+                      : SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ...provider.accounts.map((account) => Padding(
+                                    padding: EdgeInsets.only(bottom: 12),
+                                    child: _buildBankCard(
+                                      context,
+                                      account,
+                                      onEdit: () async {
+                                        Navigator.pop(dialogContext);
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ManageBankAccountScreen(account: account),
+                                          ),
+                                        );
+                                        if (result == true && mounted) {
+                                          _loadBankAccounts();
+                                        }
+                                      },
+                                      onDelete: () async {
+                                        final confirm = await _showDeleteConfirmation(context, account);
+                                        if (confirm == true) {
+                                          final success = await provider.deleteAccount(account.id);
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  success
+                                                      ? 'Bank account deleted'
+                                                      : 'Failed to delete bank account',
+                                                ),
+                                                backgroundColor:
+                                                    success ? AppColors.success : AppColors.error,
+                                                behavior: SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      onSetPrimary: account.isPrimary
+                                          ? null
+                                          : () async {
+                                              final success = await provider.setPrimaryAccount(account.id);
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      success
+                                                          ? 'Primary account updated'
+                                                          : 'Failed to update primary account',
+                                                    ),
+                                                    backgroundColor:
+                                                        success ? AppColors.success : AppColors.error,
+                                                    behavior: SnackBarBehavior.floating,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                    ),
+                                  )),
+                            ],
+                          ),
+                        ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text('Close'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ManageBankAccountScreen(),
+                    ),
+                  );
+                  if (result == true && mounted) {
+                    _loadBankAccounts();
+                  }
+                },
+                icon: Icon(Icons.add),
+                label: Text('Add Account'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool?> _showDeleteConfirmation(BuildContext context, BankAccountModel account) {
+    return showDialog<bool>(
+      context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.account_balance, color: AppColors.primaryBlue),
-            SizedBox(width: 12),
-            Text('My Banks'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildBankCard('HDFC Bank', '********2193'),
-            SizedBox(height: 12),
-            _buildBankCard('SBI Bank', '********4567'),
-          ],
+        title: Text('Delete Bank Account'),
+        content: Text(
+          'Are you sure you want to delete ${account.bankName}?\n\nThis action cannot be undone.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Add bank feature coming soon!')),
-              );
-            },
-            child: Text('Add Bank'),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: Text('Delete'),
           ),
         ],
       ),
     );
   }
 
-  static Widget _buildBankCard(String bankName, String accountNumber) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.credit_card, color: AppColors.primaryBlue),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(bankName, style: TextStyle(fontWeight: FontWeight.w600)),
-                Text(accountNumber, style: TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
+  Widget _buildBankCard(
+    BuildContext context,
+    BankAccountModel account, {
+    VoidCallback? onEdit,
+    VoidCallback? onDelete,
+    VoidCallback? onSetPrimary,
+  }) {
+    return InkWell(
+      onTap: () => _showBankAccountOptions(context, account, onEdit, onDelete, onSetPrimary),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: account.isPrimary ? AppColors.primaryBlue : Colors.grey.shade300,
+            width: account.isPrimary ? 2 : 1,
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.account_balance, color: AppColors.primaryBlue),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    account.bankName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    account.displayAccountNumber,
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (account.isPrimary)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Primary',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            SizedBox(width: 8),
+            Icon(Icons.more_vert, size: 20, color: Colors.grey[600]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBankAccountOptions(
+    BuildContext context,
+    BankAccountModel account,
+    VoidCallback? onEdit,
+    VoidCallback? onDelete,
+    VoidCallback? onSetPrimary,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.edit, color: AppColors.primaryBlue),
+              title: Text('Edit'),
+              onTap: () {
+                Navigator.pop(context);
+                onEdit?.call();
+              },
+            ),
+            if (!account.isPrimary)
+              ListTile(
+                leading: Icon(Icons.star, color: AppColors.warning),
+                title: Text('Set as Primary'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onSetPrimary?.call();
+                },
+              ),
+            ListTile(
+              leading: Icon(Icons.delete, color: AppColors.error),
+              title: Text('Delete'),
+              onTap: () {
+                Navigator.pop(context);
+                onDelete?.call();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -386,23 +610,119 @@ class MoreScreen extends StatelessWidget {
           children: [
             Text('Need help? Contact us:'),
             SizedBox(height: 16),
-            ListTile(
-              leading: Icon(Icons.email, color: AppColors.primaryBlue),
-              title: Text('Email'),
-              subtitle: Text('support@tcc.com'),
-              contentPadding: EdgeInsets.zero,
+            InkWell(
+              onTap: () async {
+                final Uri emailUri = Uri(
+                  scheme: 'mailto',
+                  path: 'support@tcc.com',
+                );
+                try {
+                  final bool canLaunch = await canLaunchUrl(emailUri);
+                  if (canLaunch) {
+                    await launchUrl(emailUri);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('No email app found. Contact: support@tcc.com'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Email: support@tcc.com'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: ListTile(
+                leading: Icon(Icons.email, color: AppColors.primaryBlue),
+                title: Text('Email'),
+                subtitle: Text('support@tcc.com'),
+                contentPadding: EdgeInsets.zero,
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+              ),
             ),
-            ListTile(
-              leading: Icon(Icons.phone, color: AppColors.primaryBlue),
-              title: Text('Phone'),
-              subtitle: Text('+232 123 456 789'),
-              contentPadding: EdgeInsets.zero,
+            InkWell(
+              onTap: () async {
+                final Uri phoneUri = Uri(
+                  scheme: 'tel',
+                  path: '+232123456789',
+                );
+                try {
+                  final bool canLaunch = await canLaunchUrl(phoneUri);
+                  if (canLaunch) {
+                    await launchUrl(phoneUri);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('No phone app found. Call: +232 123 456 789'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Phone: +232 123 456 789'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: ListTile(
+                leading: Icon(Icons.phone, color: AppColors.primaryBlue),
+                title: Text('Phone'),
+                subtitle: Text('+232 123 456 789'),
+                contentPadding: EdgeInsets.zero,
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+              ),
             ),
-            ListTile(
-              leading: Icon(Icons.chat, color: AppColors.primaryBlue),
-              title: Text('Live Chat'),
-              subtitle: Text('Available 24/7'),
-              contentPadding: EdgeInsets.zero,
+            InkWell(
+              onTap: () async {
+                final Uri whatsappUri = Uri.parse('https://wa.me/232123456789');
+                try {
+                  final bool canLaunch = await canLaunchUrl(whatsappUri);
+                  if (canLaunch) {
+                    await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('WhatsApp not installed. Number: +232 123 456 789'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('WhatsApp: +232 123 456 789'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: ListTile(
+                leading: Icon(Icons.chat, color: AppColors.primaryBlue),
+                title: Text('WhatsApp'),
+                subtitle: Text('+232 123 456 789'),
+                contentPadding: EdgeInsets.zero,
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+              ),
             ),
           ],
         ),

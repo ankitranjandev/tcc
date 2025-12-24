@@ -5,8 +5,11 @@ import 'package:share_plus/share_plus.dart';
 import '../../config/app_colors.dart';
 import '../../models/transaction_model.dart';
 import '../../widgets/payment_bottom_sheet.dart';
+import '../../utils/date_utils.dart' as date_utils;
+import '../../services/transaction_service.dart';
+import '../../services/wallet_service.dart';
 
-class TransactionDetailScreen extends StatelessWidget {
+class TransactionDetailScreen extends StatefulWidget {
   final TransactionModel transaction;
 
   const TransactionDetailScreen({
@@ -14,8 +17,70 @@ class TransactionDetailScreen extends StatelessWidget {
     required this.transaction,
   });
 
+  @override
+  State<TransactionDetailScreen> createState() => _TransactionDetailScreenState();
+}
+
+class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
+  final TransactionService _transactionService = TransactionService();
+  final WalletService _walletService = WalletService();
+  late TransactionModel _currentTransaction;
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTransaction = widget.transaction;
+  }
+
+  Future<void> _refreshPaymentStatus() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      // Fetch updated transaction details
+      final result = await _transactionService.getTransactionDetails(
+        transactionId: _currentTransaction.id,
+      );
+
+      if (result['success'] == true && result['data'] != null) {
+        setState(() {
+          _currentTransaction = TransactionModel.fromJson(result['data']);
+          _isRefreshing = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Payment status updated: ${_currentTransaction.statusText}'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Failed to fetch transaction');
+      }
+    } catch (e) {
+      setState(() {
+        _isRefreshing = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh payment status'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Color _statusColor(BuildContext context) {
-    switch (transaction.status) {
+    switch (_currentTransaction.status) {
       case 'COMPLETED':
         return AppColors.success;
       case 'PENDING':
@@ -28,7 +93,7 @@ class TransactionDetailScreen extends StatelessWidget {
   }
 
   Color get _typeColor {
-    if (transaction.isCredit) {
+    if (_currentTransaction.isCredit) {
       return AppColors.success;
     } else {
       return AppColors.error;
@@ -38,8 +103,6 @@ class TransactionDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
-    final dateFormat = DateFormat('MMMM dd, yyyy');
-    final timeFormat = DateFormat('hh:mm a');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -59,6 +122,21 @@ class TransactionDetailScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          if (_currentTransaction.status == 'PENDING')
+            IconButton(
+              icon: _isRefreshing
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                      ),
+                    )
+                  : Icon(Icons.refresh, color: Theme.of(context).iconTheme.color),
+              onPressed: _isRefreshing ? null : _refreshPaymentStatus,
+              tooltip: 'Refresh payment status',
+            ),
           IconButton(
             icon: Icon(Icons.share, color: Theme.of(context).iconTheme.color),
             onPressed: () => _shareTransactionReceipt(context),
@@ -92,14 +170,14 @@ class TransactionDetailScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      _getTransactionIcon(transaction.type),
+                      _getTransactionIcon(_currentTransaction.type),
                       color: _typeColor,
                       size: 40,
                     ),
                   ),
                   SizedBox(height: 16),
                   Text(
-                    '${transaction.isCredit ? '+' : ''}${currencyFormat.format(transaction.amount)}',
+                    '${_currentTransaction.isCredit ? '+' : ''}${currencyFormat.format(_currentTransaction.amount)}',
                     style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
@@ -114,7 +192,7 @@ class TransactionDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      transaction.statusText,
+                      _currentTransaction.statusText,
                       style: TextStyle(
                         color: _statusColor(context),
                         fontSize: 14,
@@ -151,23 +229,23 @@ class TransactionDetailScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow(context, 'Type', _getTransactionTypeName(transaction.type)),
+                        _buildDetailRow(context, 'Type', _getTransactionTypeName(_currentTransaction.type)),
                         SizedBox(height: 16),
-                        _buildDetailRow(context, 'Description', transaction.description ?? 'N/A'),
-                        if (transaction.recipient != null) ...[
+                        _buildDetailRow(context, 'Description', _currentTransaction.description ?? 'N/A'),
+                        if (_currentTransaction.recipient != null) ...[
                           SizedBox(height: 16),
-                          _buildDetailRow(context, 'Recipient', transaction.recipient!),
+                          _buildDetailRow(context, 'Recipient', _currentTransaction.recipient!),
                         ],
-                        if (transaction.accountInfo != null) ...[
+                        if (_currentTransaction.accountInfo != null) ...[
                           SizedBox(height: 16),
-                          _buildDetailRow(context, 'Account', transaction.accountInfo!),
+                          _buildDetailRow(context, 'Account', _currentTransaction.accountInfo!),
                         ],
                         SizedBox(height: 16),
-                        _buildDetailRow(context, 'Date', dateFormat.format(transaction.date)),
+                        _buildDetailRow(context, 'Date', date_utils.DateUtils.formatDetailDate(_currentTransaction.date)),
                         SizedBox(height: 16),
-                        _buildDetailRow(context, 'Time', timeFormat.format(transaction.date)),
+                        _buildDetailRow(context, 'Time', date_utils.DateUtils.formatDetailTime(_currentTransaction.date)),
                         SizedBox(height: 16),
-                        _buildDetailRow(context, 'Transaction ID', transaction.id),
+                        _buildDetailRow(context, 'Transaction ID', _currentTransaction.id),
                       ],
                     ),
                   ),
@@ -193,7 +271,7 @@ class TransactionDetailScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildAmountRow(context, 'Amount', currencyFormat.format(transaction.amount.abs())),
+                        _buildAmountRow(context, 'Amount', currencyFormat.format(_currentTransaction.amount.abs())),
                         SizedBox(height: 12),
                         _buildAmountRow(context, 'Fee', currencyFormat.format(0)),
                         SizedBox(height: 12),
@@ -211,7 +289,7 @@ class TransactionDetailScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              currencyFormat.format(transaction.amount.abs()),
+                              currencyFormat.format(_currentTransaction.amount.abs()),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -226,7 +304,7 @@ class TransactionDetailScreen extends StatelessWidget {
                   SizedBox(height: 32),
 
                   // Action Buttons
-                  if (transaction.status == 'COMPLETED') ...[
+                  if (_currentTransaction.status == 'COMPLETED') ...[
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -289,7 +367,7 @@ class TransactionDetailScreen extends StatelessWidget {
                     ),
                   ],
 
-                  if (transaction.status == 'PENDING') ...[
+                  if (_currentTransaction.status == 'PENDING') ...[
                     Container(
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -317,7 +395,7 @@ class TransactionDetailScreen extends StatelessWidget {
                     ),
                   ],
 
-                  if (transaction.status == 'FAILED') ...[
+                  if (_currentTransaction.status == 'FAILED') ...[
                     Container(
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -459,34 +537,32 @@ class TransactionDetailScreen extends StatelessWidget {
 
   Future<void> _shareTransactionReceipt(BuildContext context) async {
     final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
-    final dateFormat = DateFormat('MMMM dd, yyyy');
-    final timeFormat = DateFormat('hh:mm a');
 
     // Generate receipt text
     final StringBuffer receipt = StringBuffer();
     receipt.writeln('==== TRANSACTION RECEIPT ====');
     receipt.writeln('');
-    receipt.writeln('Transaction ID: ${transaction.id}');
-    receipt.writeln('Status: ${transaction.statusText}');
-    receipt.writeln('Type: ${_getTransactionTypeName(transaction.type)}');
+    receipt.writeln('Transaction ID: ${_currentTransaction.id}');
+    receipt.writeln('Status: ${_currentTransaction.statusText}');
+    receipt.writeln('Type: ${_getTransactionTypeName(_currentTransaction.type)}');
     receipt.writeln('');
-    receipt.writeln('Amount: ${transaction.isCredit ? '+' : ''}${currencyFormat.format(transaction.amount)}');
+    receipt.writeln('Amount: ${_currentTransaction.isCredit ? '+' : ''}${currencyFormat.format(_currentTransaction.amount)}');
 
-    if (transaction.description != null) {
-      receipt.writeln('Description: ${transaction.description}');
+    if (_currentTransaction.description != null) {
+      receipt.writeln('Description: ${_currentTransaction.description}');
     }
 
-    if (transaction.recipient != null) {
-      receipt.writeln('Recipient: ${transaction.recipient}');
+    if (_currentTransaction.recipient != null) {
+      receipt.writeln('Recipient: ${_currentTransaction.recipient}');
     }
 
-    if (transaction.accountInfo != null) {
-      receipt.writeln('Account: ${transaction.accountInfo}');
+    if (_currentTransaction.accountInfo != null) {
+      receipt.writeln('Account: ${_currentTransaction.accountInfo}');
     }
 
     receipt.writeln('');
-    receipt.writeln('Date: ${dateFormat.format(transaction.date)}');
-    receipt.writeln('Time: ${timeFormat.format(transaction.date)}');
+    receipt.writeln('Date: ${date_utils.DateUtils.formatDetailDate(_currentTransaction.date)}');
+    receipt.writeln('Time: ${date_utils.DateUtils.formatDetailTime(_currentTransaction.date)}');
     receipt.writeln('');
     receipt.writeln('-----------------------------');
     receipt.writeln('Thank you for using TCC Mobile');
@@ -495,7 +571,7 @@ class TransactionDetailScreen extends StatelessWidget {
     try {
       await Share.share(
         receipt.toString(),
-        subject: 'Transaction Receipt - ${transaction.id}',
+        subject: 'Transaction Receipt - ${_currentTransaction.id}',
       );
     } catch (e) {
       if (context.mounted) {
@@ -526,7 +602,7 @@ class TransactionDetailScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Transaction ID: ${transaction.id}'),
+            Text('Transaction ID: ${_currentTransaction.id}'),
             SizedBox(height: 16),
             Text(
               'Our support team is available to help you with this transaction.',
@@ -582,15 +658,15 @@ class TransactionDetailScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PaymentBottomSheet(
-        amount: transaction.amount.abs(),
-        title: 'Retry ${_getTransactionTypeName(transaction.type)}',
-        description: 'Retry failed transaction for Le ${transaction.amount.abs().toStringAsFixed(0)}',
+        amount: _currentTransaction.amount.abs(),
+        title: 'Retry ${_getTransactionTypeName(_currentTransaction.type)}',
+        description: 'Retry failed transaction for Le ${_currentTransaction.amount.abs().toStringAsFixed(0)}',
         metadata: {
           'type': 'retry_transaction',
-          'original_transaction_id': transaction.id,
-          'transaction_type': transaction.type,
-          'description': transaction.description,
-          'recipient': transaction.recipient,
+          'original_transaction_id': _currentTransaction.id,
+          'transaction_type': _currentTransaction.type,
+          'description': _currentTransaction.description,
+          'recipient': _currentTransaction.recipient,
         },
         onSuccess: (result) {
           ScaffoldMessenger.of(context).showSnackBar(

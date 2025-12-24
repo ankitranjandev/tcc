@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../types';
 import { UserService } from '../services/user.service';
+import { fileUploadService, FileType } from '../services/file-upload.service';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
 
@@ -155,6 +156,55 @@ export class UserController {
     } catch (error: any) {
       logger.error('Get bank accounts error', error);
       return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  static async uploadProfilePicture(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return ApiResponseUtil.unauthorized(res);
+
+      const file = req.file;
+      if (!file) {
+        return ApiResponseUtil.badRequest(res, 'No file provided');
+      }
+
+      logger.info('Profile picture upload request', {
+        userId,
+        filename: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+      });
+
+      // Save the uploaded file
+      const uploadedFile = await fileUploadService.saveFile(
+        file,
+        FileType.PROFILE_PICTURE,
+        userId
+      );
+
+      // Update user profile with the new picture URL
+      const updatedUser = await UserService.updateProfilePicture(userId, uploadedFile.url);
+
+      return ApiResponseUtil.success(
+        res,
+        {
+          profile_picture_url: uploadedFile.url,
+          user: updatedUser,
+        },
+        'Profile picture uploaded successfully'
+      );
+    } catch (error: any) {
+      logger.error('Profile picture upload error', error);
+
+      if (error.message === 'Invalid file type') {
+        return ApiResponseUtil.badRequest(res, 'Invalid file type. Only JPEG and PNG are allowed.');
+      }
+      if (error.message === 'File size exceeds maximum allowed size') {
+        return ApiResponseUtil.badRequest(res, 'File size exceeds maximum allowed size (5MB)');
+      }
+
+      return ApiResponseUtil.internalError(res, 'Failed to upload profile picture');
     }
   }
 }

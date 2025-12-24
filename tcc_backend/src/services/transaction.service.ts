@@ -147,6 +147,7 @@ export class TransactionService {
               phone: txn.other_party_phone ? `****${txn.other_party_phone.slice(-4)}` : null,
             }
           : null,
+        date: txn.created_at ? new Date(txn.created_at).toISOString() : new Date().toISOString(),
         created_at: txn.created_at,
         completed_at: txn.processed_at,
         failed_at: txn.failed_at,
@@ -246,6 +247,7 @@ export class TransactionService {
             }
           : null,
         metadata,
+        date: txn.created_at ? new Date(txn.created_at).toISOString() : new Date().toISOString(),
         created_at: txn.created_at,
         processed_at: txn.processed_at,
         failed_at: txn.failed_at,

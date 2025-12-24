@@ -25,6 +25,7 @@ import 'screens/auth/reset_password_screen.dart';
 import 'screens/dashboard/main_navigation.dart';
 import 'screens/investments/investment_category_screen.dart';
 import 'screens/investments/investment_product_detail_screen.dart';
+import 'screens/investments/investment_opportunity_detail_screen.dart';
 import 'screens/investments/change_deposit_period_screen.dart';
 import 'screens/investments/withdraw_investment_screen.dart';
 import 'screens/investments/withdraw_agreement_screen.dart';
@@ -235,6 +236,13 @@ class _TCCAppState extends State<TCCApp> {
         GoRoute(
           path: '/dashboard',
           builder: (context, state) => MainNavigation(),
+        ),
+        GoRoute(
+          path: '/investments/opportunities/:opportunityId',
+          builder: (context, state) {
+            final opportunityId = state.pathParameters['opportunityId']!;
+            return InvestmentOpportunityDetailScreen(opportunityId: opportunityId);
+          },
         ),
         GoRoute(
           path: '/investments/:category',

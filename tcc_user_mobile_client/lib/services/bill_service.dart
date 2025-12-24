@@ -118,4 +118,52 @@ class BillService {
       return {'success': false, 'error': e.toString()};
     }
   }
+
+  // Create Stripe payment intent for bill payment
+  Future<Map<String, dynamic>> createBillPaymentIntent({
+    required String providerId,
+    required String accountNumber,
+    required double amount,
+    String? customerName,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'providerId': providerId,
+        'accountNumber': accountNumber,
+        'amount': amount,
+      };
+      if (customerName != null) body['customerName'] = customerName;
+
+      final response = await _apiService.post(
+        '/bills/create-payment-intent',
+        body: body,
+        requiresAuth: true,
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  // Confirm bill payment with Stripe (optional - can use webhooks instead)
+  Future<Map<String, dynamic>> confirmBillPayment({
+    required String paymentIntentId,
+    required String providerId,
+    required String accountNumber,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/bills/confirm-stripe-payment',
+        body: {
+          'paymentIntentId': paymentIntentId,
+          'providerId': providerId,
+          'accountNumber': accountNumber,
+        },
+        requiresAuth: true,
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }

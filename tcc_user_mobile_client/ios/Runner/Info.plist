@@ -51,6 +51,8 @@
 		<string>We need access to save payment receipts to your photo library</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>We need access to your photo library to save payment receipts</string>
+		<key>NSContactsUsageDescription</key>
+		<string>We need access to your contacts to help you easily select a recipient for gift transfers</string>
 		<!-- Firebase Cloud Messaging -->
 		<key>FirebaseAppDelegateProxyEnabled</key>
 		<false/>
@@ -72,6 +74,14 @@
 					<string>tccapp</string>
 				</array>
 			</dict>
+		</array>
+		<!-- URL Launcher schemes -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>mailto</string>
+			<string>tel</string>
+			<string>https</string>
+			<string>whatsapp</string>
 		</array>
 	</dict>
 </plist>

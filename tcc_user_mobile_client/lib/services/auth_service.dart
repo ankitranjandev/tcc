@@ -342,4 +342,27 @@ class AuthService {
       return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }
+
+  // Upload profile picture
+  Future<Map<String, dynamic>> uploadProfilePicture({
+    required String filePath,
+  }) async {
+    try {
+      developer.log('📤 AuthService: Uploading profile picture', name: 'AuthService');
+      developer.log('📤 AuthService: File path: $filePath', name: 'AuthService');
+
+      final response = await _apiService.uploadFile(
+        '/users/profile-picture',
+        filePath,
+        'profile_picture',
+        requiresAuth: true,
+      );
+
+      developer.log('✅ AuthService: Profile picture uploaded successfully', name: 'AuthService');
+      return {'success': true, 'data': response};
+    } catch (e) {
+      developer.log('❌ AuthService: Upload profile picture error: $e', name: 'AuthService');
+      return {'success': false, 'error': _extractErrorMessage(e)};
+    }
+  }
 }

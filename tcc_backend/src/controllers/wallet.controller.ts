@@ -351,4 +351,47 @@ export class WalletController {
       return ApiResponseUtil.internalError(res);
     }
   }
+
+  /**
+   * Verify Stripe payment and return updated balance
+   */
+  static async verifyStripePayment(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return ApiResponseUtil.unauthorized(res);
+      }
+
+      const { payment_intent_id } = req.body;
+
+      if (!payment_intent_id) {
+        return ApiResponseUtil.badRequest(res, 'Payment intent ID is required');
+      }
+
+      const result = await WalletService.verifyStripePayment(userId, payment_intent_id);
+
+      return ApiResponseUtil.success(res, result, 'Payment verified successfully');
+    } catch (error: any) {
+      logger.error('Verify Stripe payment error', error);
+
+      if (error.message === 'TRANSACTION_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Transaction not found');
+      }
+
+      if (error.message === 'UNAUTHORIZED') {
+        return ApiResponseUtil.unauthorized(res);
+      }
+
+      if (error.message === 'PAYMENT_NOT_COMPLETED') {
+        return ApiResponseUtil.badRequest(res, 'Payment has not been completed yet');
+      }
+
+      if (error.message.includes('STRIPE')) {
+        return ApiResponseUtil.badRequest(res, 'Payment verification error. Please try again.');
+      }
+
+      return ApiResponseUtil.internalError(res);
+    }
+  }
 }

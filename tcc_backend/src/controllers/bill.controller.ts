@@ -83,6 +83,55 @@ export class BillController {
   }
 
   /**
+   * Create Stripe payment intent for bill payment
+   */
+  static async createPaymentIntent(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return ApiResponseUtil.unauthorized(res);
+      }
+
+      const { provider_id, account_number, amount, metadata } = req.body;
+
+      const result = await BillService.createPaymentIntent(
+        userId,
+        provider_id,
+        account_number,
+        amount,
+        metadata
+      );
+
+      return ApiResponseUtil.success(
+        res,
+        result,
+        'Payment intent created successfully'
+      );
+    } catch (error: any) {
+      logger.error('Create bill payment intent error', error);
+
+      if (error.message === 'INVALID_AMOUNT') {
+        return ApiResponseUtil.badRequest(res, 'Invalid amount');
+      }
+
+      if (error.message === 'USER_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'User not found');
+      }
+
+      if (error.message === 'PROVIDER_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Bill provider not found');
+      }
+
+      if (error.message.includes('STRIPE')) {
+        return ApiResponseUtil.badRequest(res, 'Payment processing error. Please try again.');
+      }
+
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
    * Pay bill
    */
   static async payBill(req: AuthRequest, res: Response): Promise<Response> {

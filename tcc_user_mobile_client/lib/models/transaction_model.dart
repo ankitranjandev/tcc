@@ -1,3 +1,5 @@
+import '../utils/date_utils.dart' as date_utils;
+
 class TransactionModel {
   final String id;
   final String type;
@@ -25,9 +27,7 @@ class TransactionModel {
       type: json['type'] ?? '',
       amount: (json['amount'] ?? 0).toDouble(),
       status: json['status'] ?? '',
-      date: json['date'] != null
-          ? DateTime.parse(json['date'])
-          : DateTime.now(),
+      date: date_utils.DateUtils.parseApiDate(json),
       description: json['description'],
       recipient: json['recipient'],
       accountInfo: json['accountInfo'],

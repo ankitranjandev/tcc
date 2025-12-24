@@ -321,4 +321,46 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  // Update profile picture
+  Future<bool> updateProfilePicture(String filePath) async {
+    developer.log('🟢 AuthProvider: Updating profile picture', name: 'AuthProvider');
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.uploadProfilePicture(filePath: filePath);
+
+      if (result['success'] == true) {
+        developer.log('🟢 AuthProvider: Profile picture updated successfully, reloading profile', name: 'AuthProvider');
+
+        // Reload user profile to get the updated picture URL
+        final profileLoaded = await loadUserProfile();
+        _isLoading = false;
+
+        if (profileLoaded) {
+          notifyListeners();
+          return true;
+        } else {
+          _errorMessage = 'Profile picture uploaded but failed to reload profile';
+          developer.log('🔴 AuthProvider: Profile picture uploaded but profile reload failed', name: 'AuthProvider');
+          notifyListeners();
+          return false;
+        }
+      } else {
+        _errorMessage = result['error'] ?? 'Failed to update profile picture';
+        developer.log('🔴 AuthProvider: Profile picture update failed: $_errorMessage', name: 'AuthProvider');
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      developer.log('🔴 AuthProvider: Profile picture update exception: $e', name: 'AuthProvider');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

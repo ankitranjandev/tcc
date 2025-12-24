@@ -21,6 +21,27 @@ const fetchBillDetailsSchema = z.object({
   }),
 });
 
+const createPaymentIntentSchema = z.object({
+  body: z.object({
+    provider_id: z.string().uuid('Invalid provider ID'),
+    account_number: z
+      .string()
+      .min(3, 'Account number must be at least 3 characters')
+      .max(100, 'Account number must not exceed 100 characters'),
+    amount: z
+      .number()
+      .positive('Amount must be positive')
+      .min(100, 'Minimum bill payment amount is 100'),
+    metadata: z
+      .object({
+        customerName: z.string().max(255).optional(),
+        billPeriod: z.string().max(100).optional(),
+        dueDate: z.string().optional(),
+      })
+      .optional(),
+  }),
+});
+
 const payBillSchema = z.object({
   body: z.object({
     provider_id: z.string().uuid('Invalid provider ID'),
@@ -88,6 +109,17 @@ router.get('/providers', validate(getProvidersSchema), BillController.getProvide
  * @body    account_number - Customer account/meter number
  */
 router.post('/fetch-details', validate(fetchBillDetailsSchema), BillController.fetchBillDetails);
+
+/**
+ * @route   POST /bills/create-payment-intent
+ * @desc    Create Stripe payment intent for bill payment
+ * @access  Private
+ * @body    provider_id - UUID of the bill provider
+ * @body    account_number - Customer account/meter number
+ * @body    amount - Amount to pay
+ * @body    metadata - Optional metadata (customerName, billPeriod, dueDate)
+ */
+router.post('/create-payment-intent', validate(createPaymentIntentSchema), BillController.createPaymentIntent);
 
 /**
  * @route   POST /bills/request-otp

@@ -96,6 +96,22 @@ class WalletService {
     }
   }
 
+  // Verify if user exists by phone number
+  Future<Map<String, dynamic>> verifyUserExists({
+    required String phoneNumber,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/user/verify-phone',
+        body: {'phoneNumber': phoneNumber},
+        requiresAuth: true,
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   // Request OTP for transfer
   Future<Map<String, dynamic>> requestTransferOTP({
     required String recipientPhoneNumber,
@@ -150,6 +166,22 @@ class WalletService {
       final response = await _apiService.post(
         '/wallet/create-payment-intent',
         body: {'amount': amount},
+        requiresAuth: true,
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  // Verify Stripe payment with backend
+  Future<Map<String, dynamic>> verifyStripePayment({
+    required String paymentIntentId,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/wallet/verify-stripe-payment',
+        body: {'paymentIntentId': paymentIntentId},
         requiresAuth: true,
       );
       return {'success': true, 'data': response};

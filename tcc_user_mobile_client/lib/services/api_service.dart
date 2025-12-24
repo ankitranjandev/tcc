@@ -24,10 +24,34 @@ class ApiService {
     developer.log('🔧 ApiService: Initializing...', name: 'ApiService');
     developer.log('🔧 ApiService: Base URL: $baseUrl', name: 'ApiService');
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString(AppConstants.cacheKeyToken);
-    _refreshToken = prefs.getString(AppConstants.cacheKeyRefreshToken);
+
+    final storedToken = prefs.getString(AppConstants.cacheKeyToken);
+    final storedRefreshToken = prefs.getString(AppConstants.cacheKeyRefreshToken);
+
+    // Validate and set tokens only if they are not empty
+    if (storedToken != null && storedToken.trim().isNotEmpty) {
+      _token = storedToken;
+    } else {
+      _token = null;
+      if (storedToken != null && storedToken.trim().isEmpty) {
+        developer.log('⚠️ ApiService: Found empty token in storage, ignoring', name: 'ApiService');
+        await prefs.remove(AppConstants.cacheKeyToken);
+      }
+    }
+
+    if (storedRefreshToken != null && storedRefreshToken.trim().isNotEmpty) {
+      _refreshToken = storedRefreshToken;
+    } else {
+      _refreshToken = null;
+      if (storedRefreshToken != null && storedRefreshToken.trim().isEmpty) {
+        developer.log('⚠️ ApiService: Found empty refresh token in storage, ignoring', name: 'ApiService');
+        await prefs.remove(AppConstants.cacheKeyRefreshToken);
+      }
+    }
+
     developer.log('🔧 ApiService: Token exists: ${_token != null}, RefreshToken exists: ${_refreshToken != null}', name: 'ApiService');
     if (_token != null) {
+      developer.log('🔧 ApiService: Token length: ${_token!.length}', name: 'ApiService');
       developer.log('🔧 ApiService: Token preview: ${_token!.substring(0, _token!.length > 20 ? 20 : _token!.length)}...', name: 'ApiService');
     }
   }
@@ -35,6 +59,19 @@ class ApiService {
   // Store tokens
   Future<void> setTokens(String token, String refreshToken) async {
     developer.log('💾 ApiService: Storing tokens', name: 'ApiService');
+    developer.log('💾 ApiService: Token length: ${token.length}, RefreshToken length: ${refreshToken.length}', name: 'ApiService');
+
+    // Validate tokens are not empty
+    if (token.trim().isEmpty) {
+      developer.log('❌ ApiService: Attempted to store empty access token!', name: 'ApiService');
+      throw ApiException('Invalid token: access token cannot be empty');
+    }
+
+    if (refreshToken.trim().isEmpty) {
+      developer.log('❌ ApiService: Attempted to store empty refresh token!', name: 'ApiService');
+      throw ApiException('Invalid token: refresh token cannot be empty');
+    }
+
     _token = token;
     _refreshToken = refreshToken;
     final prefs = await SharedPreferences.getInstance();
@@ -59,8 +96,15 @@ class ApiService {
       'Accept': 'application/json',
     };
 
-    if (includeAuth && _token != null) {
-      headers['Authorization'] = 'Bearer $_token';
+    if (includeAuth) {
+      if (_token != null) {
+        if (_token!.trim().isEmpty) {
+          developer.log('⚠️ ApiService: Token exists but is empty/whitespace!', name: 'ApiService');
+        }
+        headers['Authorization'] = 'Bearer $_token';
+      } else {
+        developer.log('⚠️ ApiService: Auth required but no token available', name: 'ApiService');
+      }
     }
 
     return headers;
