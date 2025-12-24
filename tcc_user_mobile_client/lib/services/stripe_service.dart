@@ -154,12 +154,6 @@ class StripeService {
     // ✅ Stripe webhook handler
 
     // Production mode: Backend verification enabled
-    const bool SKIP_VERIFICATION_FOR_DEVELOPMENT = false;
-
-    if (SKIP_VERIFICATION_FOR_DEVELOPMENT) {
-      return true;
-    }
-
     // Production: Only skip for actual Stripe test payments
     return paymentIntentId.startsWith('pi_test_');
   }

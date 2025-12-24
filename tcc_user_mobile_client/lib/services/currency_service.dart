@@ -2,11 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/currency_rate_model.dart';
 import '../config/app_constants.dart';
-import 'api_service.dart';
 
 class CurrencyService {
-  final ApiService _apiService = ApiService();
-
   // Check if currency is TCC (custom currency not available in CurrencyBeacon)
   bool _isTccCurrency(String currency) {
     return currency.toUpperCase() == 'TCC';
@@ -48,36 +45,46 @@ class CurrencyService {
   }
 
   /// Get currency rates from backend API (for TCC conversions)
+  /// TCC is pegged 1:1 to USD, so we fetch USD rates
   Future<Map<String, dynamic>> _getCurrencyRatesFromBackend({
     required String baseCurrency,
     List<String>? currencies,
   }) async {
     try {
-      String endpoint = '/market/currency-rates?base=$baseCurrency';
+      // TCC is pegged 1:1 to USD, so use USD rates
+      String actualBase = _isTccCurrency(baseCurrency) ? 'USD' : baseCurrency;
 
-      if (currencies != null && currencies.isNotEmpty) {
-        endpoint += '&currencies=${currencies.join(',')}';
+      // If requesting rates for TCC, add USD to the list
+      List<String>? actualCurrencies = currencies;
+      if (actualCurrencies != null) {
+        // Replace TCC with USD in the currency list
+        actualCurrencies = actualCurrencies.map((c) => _isTccCurrency(c) ? 'USD' : c).toList();
       }
 
-      final response = await _apiService.get(
-        endpoint,
-        requiresAuth: false,
+      // Use CurrencyBeacon for USD rates
+      final result = await _getCurrencyRatesFromCurrencyBeacon(
+        baseCurrency: actualBase,
+        currencies: actualCurrencies,
       );
 
-      if (response['success'] == true) {
-        final data = response['data'];
-        final currencyRates = CurrencyRatesResponse.fromJson(data);
+      // If successful, update the base currency to reflect the original request
+      if (result['success'] == true) {
+        final currencyRates = result['data'] as CurrencyRatesResponse;
+
+        // Create a new response with TCC as the base if requested
+        final updatedRates = CurrencyRatesResponse(
+          base: baseCurrency.toUpperCase(),
+          rates: currencyRates.rates,
+          timestamp: currencyRates.timestamp,
+        );
 
         return {
           'success': true,
-          'data': currencyRates,
+          'data': updatedRates,
         };
       }
 
-      return {
-        'success': false,
-        'error': 'Failed to fetch currency rates',
-      };
+      return result;
     } catch (e) {
       return {
         'success': false,
@@ -188,20 +195,29 @@ class CurrencyService {
   }
 
   /// Convert currency using backend API (for TCC conversions)
+  /// TCC is pegged 1:1 to USD, so we convert via USD
   Future<Map<String, dynamic>> _convertCurrencyFromBackend({
     required String from,
     required String to,
     required double amount,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/market/convert?from=$from&to=$to&amount=$amount',
-        requiresAuth: false,
-      );
+      // TCC is pegged 1:1 to USD
+      // When converting FROM TCC, treat it as USD
+      // When converting TO TCC, treat it as USD
 
-      if (response['success'] == true) {
-        final data = response['data']['conversion'];
-        final conversion = CurrencyConversion.fromJson(data);
+      String actualFrom = _isTccCurrency(from) ? 'USD' : from;
+      String actualTo = _isTccCurrency(to) ? 'USD' : to;
+
+      // If both are TCC or same currency, return 1:1
+      if (actualFrom == actualTo) {
+        final conversion = CurrencyConversion(
+          from: from.toUpperCase(),
+          to: to.toUpperCase(),
+          amount: amount,
+          convertedAmount: amount,
+          rate: 1.0,
+        );
 
         return {
           'success': true,
@@ -209,10 +225,31 @@ class CurrencyService {
         };
       }
 
-      return {
-        'success': false,
-        'error': 'Failed to convert currency',
-      };
+      // Use CurrencyBeacon for USD conversions
+      final result = await _convertCurrencyFromCurrencyBeacon(
+        from: actualFrom,
+        to: actualTo,
+        amount: amount,
+      );
+
+      // If successful, update the currency codes to reflect the original request
+      if (result['success'] == true) {
+        final conversion = result['data'] as CurrencyConversion;
+        final updatedConversion = CurrencyConversion(
+          from: from.toUpperCase(),
+          to: to.toUpperCase(),
+          amount: amount,
+          convertedAmount: conversion.convertedAmount,
+          rate: conversion.rate,
+        );
+
+        return {
+          'success': true,
+          'data': updatedConversion,
+        };
+      }
+
+      return result;
     } catch (e) {
       return {
         'success': false,
@@ -316,33 +353,54 @@ class CurrencyService {
   }
 
   /// Convert multiple currencies using backend API
+  /// TCC is pegged 1:1 to USD, so we convert via USD
   Future<Map<String, dynamic>> _convertMultipleFromBackend({
     required String from,
     required List<String> to,
     required double amount,
   }) async {
     try {
-      final response = await _apiService.post(
-        '/market/convert-multiple',
-        body: {
-          'from': from,
-          'to': to,
-          'amount': amount,
-        },
-        requiresAuth: true,
+      // TCC is pegged 1:1 to USD
+      String actualFrom = _isTccCurrency(from) ? 'USD' : from;
+
+      // Replace TCC with USD in target currencies
+      List<String> actualTo = to.map((c) => _isTccCurrency(c) ? 'USD' : c).toList();
+
+      // Use CurrencyBeacon for conversions
+      final result = await _convertMultipleFromCurrencyBeacon(
+        from: actualFrom,
+        to: actualTo,
+        amount: amount,
       );
 
-      if (response['success'] == true) {
+      // If successful, restore original currency codes
+      if (result['success'] == true) {
+        final conversions = result['data'] as List<dynamic>;
+        final updatedConversions = <Map<String, dynamic>>[];
+
+        for (int i = 0; i < conversions.length; i++) {
+          final conversionData = conversions[i] as Map<String, dynamic>;
+          final conversion = CurrencyConversion.fromJson(conversionData);
+
+          // Update to use original currency codes
+          final updatedConversion = CurrencyConversion(
+            from: from.toUpperCase(),
+            to: to[i].toUpperCase(),
+            amount: amount,
+            convertedAmount: conversion.convertedAmount,
+            rate: conversion.rate,
+          );
+
+          updatedConversions.add(updatedConversion.toJson());
+        }
+
         return {
           'success': true,
-          'data': response['data']['conversions'],
+          'data': updatedConversions,
         };
       }
 
-      return {
-        'success': false,
-        'error': 'Failed to convert currencies',
-      };
+      return result;
     } catch (e) {
       return {
         'success': false,

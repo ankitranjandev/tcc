@@ -181,7 +181,7 @@ class WalletService {
     try {
       final response = await _apiService.post(
         '/wallet/verify-stripe-payment',
-        body: {'paymentIntentId': paymentIntentId},
+        body: {'payment_intent_id': paymentIntentId},
         requiresAuth: true,
       );
       return {'success': true, 'data': response};

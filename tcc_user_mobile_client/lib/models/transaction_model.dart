@@ -1,7 +1,8 @@
 import '../utils/date_utils.dart' as date_utils;
 
 class TransactionModel {
-  final String id;
+  final String id; // UUID
+  final String transactionId; // Human-readable transaction ID (TXN20231224123456)
   final String type;
   final double amount;
   final String status;
@@ -12,6 +13,7 @@ class TransactionModel {
 
   TransactionModel({
     required this.id,
+    required this.transactionId,
     required this.type,
     required this.amount,
     required this.status,
@@ -24,6 +26,7 @@ class TransactionModel {
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
       id: json['id'] ?? '',
+      transactionId: json['transaction_id'] ?? json['transactionId'] ?? '',
       type: json['type'] ?? '',
       amount: (json['amount'] ?? 0).toDouble(),
       status: json['status'] ?? '',
@@ -37,6 +40,7 @@ class TransactionModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'transaction_id': transactionId,
       'type': type,
       'amount': amount,
       'status': status,

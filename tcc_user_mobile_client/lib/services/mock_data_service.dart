@@ -279,6 +279,7 @@ class MockDataService {
   List<TransactionModel> get recentTransactions => [
     TransactionModel(
       id: '1',
+      transactionId: 'TXN20241025001',
       type: 'DEPOSIT',
       amount: 10000.00,
       status: 'COMPLETED',
@@ -288,6 +289,7 @@ class MockDataService {
     ),
     TransactionModel(
       id: '2',
+      transactionId: 'TXN20241024001',
       type: 'INVESTMENT',
       amount: -2000.00,
       status: 'COMPLETED',
@@ -297,6 +299,7 @@ class MockDataService {
     ),
     TransactionModel(
       id: '3',
+      transactionId: 'TXN20241023001',
       type: 'BILL_PAYMENT',
       amount: -150.00,
       status: 'COMPLETED',
@@ -306,6 +309,7 @@ class MockDataService {
     ),
     TransactionModel(
       id: '4',
+      transactionId: 'TXN20241022001',
       type: 'TRANSFER',
       amount: -500.00,
       status: 'COMPLETED',
@@ -316,6 +320,7 @@ class MockDataService {
     ),
     TransactionModel(
       id: '5',
+      transactionId: 'TXN20241026001',
       type: 'DEPOSIT',
       amount: 5000.00,
       status: 'PENDING',

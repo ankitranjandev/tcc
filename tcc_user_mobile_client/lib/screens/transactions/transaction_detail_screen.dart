@@ -7,7 +7,6 @@ import '../../models/transaction_model.dart';
 import '../../widgets/payment_bottom_sheet.dart';
 import '../../utils/date_utils.dart' as date_utils;
 import '../../services/transaction_service.dart';
-import '../../services/wallet_service.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   final TransactionModel transaction;
@@ -23,7 +22,6 @@ class TransactionDetailScreen extends StatefulWidget {
 
 class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   final TransactionService _transactionService = TransactionService();
-  final WalletService _walletService = WalletService();
   late TransactionModel _currentTransaction;
   bool _isRefreshing = false;
 
@@ -41,7 +39,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     try {
       // Fetch updated transaction details
       final result = await _transactionService.getTransactionDetails(
-        transactionId: _currentTransaction.id,
+        transactionId: _currentTransaction.transactionId,
       );
 
       if (result['success'] == true && result['data'] != null) {

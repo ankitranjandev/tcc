@@ -142,6 +142,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             SizedBox(height: 24),
 
+            // KYC Verification Banner
+            if (user?.kycStatus != null)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _getKycStatusColor(user!.kycStatus).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _getKycStatusColor(user.kycStatus).withValues(alpha: 0.5),
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _getKycStatusColor(user.kycStatus),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _getKycStatusIcon(user.kycStatus),
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'KYC Verification',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context).textTheme.bodySmall?.color,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              _getKycStatusText(user.kycStatus),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: _getKycStatusColor(user.kycStatus),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (user.kycStatus.toUpperCase() == 'APPROVED' ||
+                          user.kycStatus.toUpperCase() == 'VERIFIED')
+                        Icon(
+                          Icons.verified,
+                          color: _getKycStatusColor(user.kycStatus),
+                          size: 28,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+            SizedBox(height: 32),
+
             // Profile Information
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
@@ -418,5 +484,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
       url = '/$url';
     }
     return '$baseUrl$url';
+  }
+
+  Color _getKycStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+      case 'VERIFIED':
+        return AppColors.success;
+      case 'PENDING':
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
+        return AppColors.warning;
+      case 'REJECTED':
+      case 'FAILED':
+        return AppColors.error;
+      default:
+        return AppColors.primaryBlue;
+    }
+  }
+
+  IconData _getKycStatusIcon(String status) {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+      case 'VERIFIED':
+        return Icons.verified;
+      case 'PENDING':
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
+        return Icons.pending;
+      case 'REJECTED':
+      case 'FAILED':
+        return Icons.error_outline;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  String _getKycStatusText(String status) {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+      case 'VERIFIED':
+        return 'Verified';
+      case 'PENDING':
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
+        return 'In Progress';
+      case 'REJECTED':
+      case 'FAILED':
+        return 'Rejected';
+      default:
+        return 'Not Verified';
+    }
   }
 }

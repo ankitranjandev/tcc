@@ -1,81 +1,146 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/metal_price_model.dart';
-import 'api_service.dart';
+import '../config/app_constants.dart';
 
 class MetalPriceService {
-  final ApiService _apiService = ApiService();
+  // Conversion constants
+  static const double gramsPerTroyOunce = 31.1035;
 
-  /// Get live metal prices (Gold, Silver, Platinum)
+  /// Get live metal prices (Gold, Silver, Platinum) from CurrencyBeacon
   /// Returns formatted prices in the specified base currency
   Future<Map<String, dynamic>> getMetalPrices({
-    String baseCurrency = 'SLL',
+    String baseCurrency = 'USD',
   }) async {
     try {
-      final response = await _apiService.get(
-        '/market/metal-prices?base=$baseCurrency',
-        requiresAuth: false,
-      );
+      // Fetch metal prices from CurrencyBeacon
+      // Metals: XAU (Gold), XAG (Silver), XPT (Platinum)
+      String url = '${AppConstants.currencyBeaconBaseUrl}/latest?api_key=${AppConstants.currencyBeaconApiKey}&base=$baseCurrency&symbols=XAU,XAG,XPT';
 
-      if (response['success'] == true) {
-        final data = response['data'];
-        final metalPricesResponse = MetalPricesResponse.fromJson(data);
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Accept': 'application/json'},
+      ).timeout(Duration(seconds: AppConstants.apiTimeout));
 
-        return {
-          'success': true,
-          'data': metalPricesResponse,
-        };
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['response'] != null && data['response']['rates'] != null) {
+          final rates = data['response']['rates'] as Map<String, dynamic>;
+
+          // CurrencyBeacon returns rates as "1 USD = X troy oz"
+          // We need to invert to get "price per troy oz in USD"
+          final xauRate = (rates['XAU'] as num?)?.toDouble() ?? 0.0;
+          final xagRate = (rates['XAG'] as num?)?.toDouble() ?? 0.0;
+          final xptRate = (rates['XPT'] as num?)?.toDouble() ?? 0.0;
+
+          // Calculate prices per troy ounce
+          final goldPricePerOz = xauRate > 0 ? 1 / xauRate : 0.0;
+          final silverPricePerOz = xagRate > 0 ? 1 / xagRate : 0.0;
+          final platinumPricePerOz = xptRate > 0 ? 1 / xptRate : 0.0;
+
+          // Calculate prices per gram (1 troy oz = 31.1035 grams)
+          final goldPricePerGram = goldPricePerOz / gramsPerTroyOunce;
+          final silverPricePerGram = silverPricePerOz / gramsPerTroyOunce;
+          final platinumPricePerGram = platinumPricePerOz / gramsPerTroyOunce;
+
+          final metalPricesResponse = MetalPricesResponse(
+            base: baseCurrency.toUpperCase(),
+            metals: MetalPrices(
+              gold: MetalPriceDetail(
+                price: goldPricePerOz,
+                pricePerGram: goldPricePerGram,
+              ),
+              silver: MetalPriceDetail(
+                price: silverPricePerOz,
+                pricePerGram: silverPricePerGram,
+              ),
+              platinum: MetalPriceDetail(
+                price: platinumPricePerOz,
+                pricePerGram: platinumPricePerGram,
+              ),
+            ),
+            timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          );
+
+          return {
+            'success': true,
+            'data': metalPricesResponse,
+          };
+        }
       }
 
       return {
         'success': false,
-        'error': 'Failed to fetch metal prices',
+        'error': 'Failed to fetch metal prices from CurrencyBeacon',
       };
     } catch (e) {
       return {
         'success': false,
-        'error': e.toString(),
+        'error': 'Metal prices error: ${e.toString()}',
       };
     }
   }
 
-  /// Get specific metal price
+  /// Get specific metal price from CurrencyBeacon
   /// [metal] - Metal symbol (XAU, XAG, XPT)
-  /// [baseCurrency] - Base currency code (default: SLL)
+  /// [baseCurrency] - Base currency code (default: USD)
   /// [unit] - Unit for price (gram, ounce, kilogram)
   Future<Map<String, dynamic>> getMetalPrice({
     required String metal,
-    String baseCurrency = 'SLL',
-    String unit = 'gram',
+    String baseCurrency = 'USD',
+    String unit = 'ounce',
   }) async {
     try {
-      final response = await _apiService.get(
-        '/market/metal-price/$metal?base=$baseCurrency&unit=$unit',
-        requiresAuth: false,
-      );
+      String url = '${AppConstants.currencyBeaconBaseUrl}/latest?api_key=${AppConstants.currencyBeaconApiKey}&base=$baseCurrency&symbols=${metal.toUpperCase()}';
 
-      if (response['success'] == true) {
-        final data = response['data'];
-        final metalPrice = MetalPrice(
-          metal: data['metal'] ?? '',
-          price: (data['price'] ?? 0).toDouble(),
-          pricePerGram: unit == 'gram' ? (data['price'] ?? 0).toDouble() : 0,
-          currency: data['currency'] ?? baseCurrency,
-          timestamp: data['timestamp'] ?? 0,
-        );
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Accept': 'application/json'},
+      ).timeout(Duration(seconds: AppConstants.apiTimeout));
 
-        return {
-          'success': true,
-          'data': metalPrice,
-        };
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['response'] != null && data['response']['rates'] != null) {
+          final rates = data['response']['rates'] as Map<String, dynamic>;
+          final metalRate = (rates[metal.toUpperCase()] as num?)?.toDouble() ?? 0.0;
+
+          // Calculate price per troy ounce
+          final pricePerOz = metalRate > 0 ? 1 / metalRate : 0.0;
+          final pricePerGram = pricePerOz / gramsPerTroyOunce;
+
+          // Calculate price based on unit
+          double price = pricePerOz;
+          if (unit == 'gram') {
+            price = pricePerGram;
+          } else if (unit == 'kilogram') {
+            price = pricePerGram * 1000;
+          }
+
+          final metalPrice = MetalPrice(
+            metal: metal.toUpperCase(),
+            price: price,
+            pricePerGram: pricePerGram,
+            currency: baseCurrency.toUpperCase(),
+            timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          );
+
+          return {
+            'success': true,
+            'data': metalPrice,
+          };
+        }
       }
 
       return {
         'success': false,
-        'error': 'Failed to fetch metal price',
+        'error': 'Failed to fetch metal price from CurrencyBeacon',
       };
     } catch (e) {
       return {
         'success': false,
-        'error': e.toString(),
+        'error': 'Metal price error: ${e.toString()}',
       };
     }
   }

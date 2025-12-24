@@ -219,7 +219,6 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
     required double rate,
   }) {
     final formatter = NumberFormat('#,##0.0000');
-    final inverseRate = rate > 0 ? 1 / rate : 0.0;
 
     return Container(
       margin: EdgeInsets.only(bottom: 12),
@@ -290,7 +289,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${symbol}${formatter.format(rate)}',
+                '$symbol${formatter.format(rate)}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
