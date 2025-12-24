@@ -80,7 +80,7 @@ class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
       case 'EDUCATION':
         return 'Education';
       default:
-        return category;
+        return widget.category;
     }
   }
 

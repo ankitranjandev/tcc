@@ -512,11 +512,14 @@ export class PollService {
 
       logger.info('Poll created by admin', { adminId, pollId: poll.id });
 
+      // Parse options from JSONB (already parsed by PostgreSQL)
+      const pollOptions = Array.isArray(poll.options) ? poll.options : [];
+
       return {
         id: poll.id,
         title: poll.title,
         question: poll.question,
-        options: JSON.parse(poll.options),
+        options: pollOptions,
         voting_charge: parseFloat(poll.voting_charge),
         start_time: poll.start_time,
         end_time: poll.end_time,
@@ -581,11 +584,14 @@ export class PollService {
 
       logger.info('Poll published by admin', { adminId, pollId });
 
+      // Parse options from JSONB (already parsed by PostgreSQL)
+      const pollOptions = Array.isArray(updatedPoll.options) ? updatedPoll.options : [];
+
       return {
         id: updatedPoll.id,
         title: updatedPoll.title,
         question: updatedPoll.question,
-        options: JSON.parse(updatedPoll.options),
+        options: pollOptions,
         voting_charge: parseFloat(updatedPoll.voting_charge),
         start_time: updatedPoll.start_time,
         end_time: updatedPoll.end_time,
@@ -630,7 +636,8 @@ export class PollService {
       }
 
       const poll = polls[0];
-      const options = JSON.parse(poll.options);
+      // Parse options from JSONB (already parsed by PostgreSQL)
+      const options = Array.isArray(poll.options) ? poll.options : [];
       const results = poll.results || {};
       const voteCharge = parseFloat(poll.voting_charge);
 

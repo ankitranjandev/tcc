@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Poll Model
 /// Represents a poll/voting in the system
 class PollModel {
@@ -32,23 +34,65 @@ class PollModel {
   });
 
   factory PollModel.fromJson(Map<String, dynamic> json) {
-    return PollModel(
-      pollId: json['poll_id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      voteCharge: (json['vote_charge'] as num).toDouble(),
-      options: (json['options'] as List<dynamic>)
-          .map((e) => PollOption.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      startDate: DateTime.parse(json['start_date'] as String),
-      endDate: DateTime.parse(json['end_date'] as String),
-      status: json['status'] as String,
-      totalVotes: json['total_votes'] as int? ?? 0,
-      totalRevenue: (json['total_revenue'] as num?)?.toDouble() ?? 0.0,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      createdBy: json['created_by'] as String?,
-    );
+    try {
+      debugPrint('PollModel.fromJson - Parsing poll data: ${json.keys}');
+
+      // Handle both backend response formats
+      final pollId = json['id'] as String? ?? json['poll_id'] as String;
+      final description = json['question'] as String? ?? json['description'] as String;
+      final voteCharge = json['voting_charge'] as num? ?? json['vote_charge'] as num;
+      final startDate = json['start_time'] as String? ?? json['start_date'] as String;
+      final endDate = json['end_time'] as String? ?? json['end_date'] as String;
+
+      debugPrint('PollModel.fromJson - pollId: $pollId, voteCharge: $voteCharge');
+
+      // Parse options - can be either array of strings or array of objects
+      final optionsList = json['options'] as List<dynamic>;
+      debugPrint('PollModel.fromJson - Options count: ${optionsList.length}, First option type: ${optionsList.isNotEmpty ? optionsList.first.runtimeType : "empty"}');
+
+      final options = optionsList.map((e) {
+        if (e is String) {
+          // Simple string option (from backend create response)
+          debugPrint('PollModel.fromJson - Parsing string option: $e');
+          return PollOption(
+            optionId: e,
+            optionText: e,
+            votes: 0,
+            revenue: 0.0,
+          );
+        } else {
+          // Complex object option
+          debugPrint('PollModel.fromJson - Parsing object option: $e');
+          return PollOption.fromJson(e as Map<String, dynamic>);
+        }
+      }).toList();
+
+      debugPrint('PollModel.fromJson - Successfully parsed ${options.length} options');
+
+      final poll = PollModel(
+        pollId: pollId,
+        title: json['title'] as String,
+        description: description,
+        voteCharge: voteCharge.toDouble(),
+        options: options,
+        startDate: DateTime.parse(startDate),
+        endDate: DateTime.parse(endDate),
+        status: json['status'] as String,
+        totalVotes: json['total_votes'] as int? ?? 0,
+        totalRevenue: (json['total_revenue'] as num?)?.toDouble() ?? 0.0,
+        createdAt: DateTime.parse(json['created_at'] as String),
+        updatedAt: DateTime.parse(json['updated_at'] as String),
+        createdBy: json['created_by'] as String?,
+      );
+
+      debugPrint('PollModel.fromJson - Successfully created poll: ${poll.pollId}');
+      return poll;
+    } catch (e, stackTrace) {
+      debugPrint('PollModel.fromJson - Error parsing poll: $e');
+      debugPrint('PollModel.fromJson - JSON data: $json');
+      debugPrint('PollModel.fromJson - Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -101,12 +145,24 @@ class PollOption {
   });
 
   factory PollOption.fromJson(Map<String, dynamic> json) {
-    return PollOption(
-      optionId: json['option_id'] as String? ?? json['id'] as String? ?? '',
-      optionText: json['option_text'] as String? ?? json['text'] as String? ?? '',
-      votes: json['votes'] as int? ?? 0,
-      revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
-    );
+    try {
+      debugPrint('PollOption.fromJson - Parsing option: ${json.keys}');
+
+      final option = PollOption(
+        optionId: json['option_id'] as String? ?? json['id'] as String? ?? '',
+        optionText: json['option_text'] as String? ?? json['text'] as String? ?? '',
+        votes: json['votes'] as int? ?? 0,
+        revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
+      );
+
+      debugPrint('PollOption.fromJson - Created option: ${option.optionText} (votes: ${option.votes})');
+      return option;
+    } catch (e, stackTrace) {
+      debugPrint('PollOption.fromJson - Error parsing option: $e');
+      debugPrint('PollOption.fromJson - JSON data: $json');
+      debugPrint('PollOption.fromJson - Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -6,7 +6,7 @@ import 'election_details_screen.dart';
 import 'election_results_screen.dart';
 
 class ElectionsScreen extends StatefulWidget {
-  const ElectionsScreen({Key? key}) : super(key: key);
+  const ElectionsScreen({super.key});
 
   @override
   State<ElectionsScreen> createState() => _ElectionsScreenState();
@@ -223,7 +223,7 @@ class _ElectionsScreenState extends State<ElectionsScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.green),
                       ),

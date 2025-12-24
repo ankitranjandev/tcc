@@ -1,4 +1,5 @@
 import db from '../database';
+import logger from '../utils/logger';
 import {
   Election,
   ElectionWithOptions,
@@ -529,11 +530,21 @@ export class ElectionService {
 
   // Auto-end expired elections
   async autoEndElections(): Promise<void> {
-    await db.query(`
-      UPDATE elections
-      SET status = $1, ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE status = $2 AND end_time <= CURRENT_TIMESTAMP
-    `, [ElectionStatus.ENDED, ElectionStatus.ACTIVE]);
+    try {
+      await db.query(`
+        UPDATE elections
+        SET status = $1, ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE status = $2 AND end_time <= CURRENT_TIMESTAMP
+      `, [ElectionStatus.ENDED, ElectionStatus.ACTIVE]);
+    } catch (error: any) {
+      // Silently fail if elections table doesn't exist (migration not run yet)
+      if (error.code === '42P01') {
+        logger.warn('Elections table does not exist. Please run migration 006_add_evoting_system.sql');
+      } else {
+        logger.error(`Error auto-ending elections: ${error.message}`);
+        throw error;
+      }
+    }
   }
 
   // Delete election (admin only, only if no votes)

@@ -2275,4 +2275,173 @@ export class AdminService {
       updatedAt: opp.updated_at,
     };
   }
+
+  /**
+   * Refresh transaction state from Stripe and update wallet if needed
+   */
+  static async refreshTransactionFromStripe(
+    adminId: string,
+    transactionId: string
+  ): Promise<any> {
+    try {
+      // Import Stripe service
+      const { retrievePaymentIntent } = await import('./stripe.service');
+
+      // Get transaction details
+      const transactions = await db.query(
+        `SELECT t.id, t.transaction_id, t.to_user_id, t.amount, t.status,
+                t.stripe_payment_intent_id, t.payment_method, t.deposit_source,
+                u.email, u.first_name, u.last_name
+         FROM transactions t
+         LEFT JOIN users u ON t.to_user_id = u.id
+         WHERE t.id = $1 OR t.transaction_id = $1`,
+        [transactionId]
+      );
+
+      if (transactions.length === 0) {
+        throw new Error('TRANSACTION_NOT_FOUND');
+      }
+
+      const transaction = transactions[0];
+
+      // Check if transaction has a Stripe payment intent ID
+      if (!transaction.stripe_payment_intent_id) {
+        throw new Error('NOT_A_STRIPE_TRANSACTION');
+      }
+
+      // Retrieve payment intent from Stripe
+      const paymentIntent = await retrievePaymentIntent(transaction.stripe_payment_intent_id);
+
+      logger.info('Retrieved payment intent from Stripe', {
+        transactionId: transaction.id,
+        paymentIntentId: paymentIntent.id,
+        status: paymentIntent.status,
+        currentTransactionStatus: transaction.status,
+      });
+
+      // Determine the new status based on Stripe payment intent status
+      let newStatus = transaction.status;
+      let shouldCreditWallet = false;
+
+      switch (paymentIntent.status) {
+        case 'succeeded':
+          newStatus = TransactionStatus.COMPLETED;
+          shouldCreditWallet = transaction.status === TransactionStatus.PENDING;
+          break;
+        case 'processing':
+          newStatus = TransactionStatus.PROCESSING;
+          break;
+        case 'requires_payment_method':
+        case 'requires_confirmation':
+        case 'requires_action':
+          newStatus = TransactionStatus.PENDING;
+          break;
+        case 'canceled':
+          newStatus = TransactionStatus.CANCELLED;
+          break;
+        default:
+          newStatus = TransactionStatus.FAILED;
+      }
+
+      // If status hasn't changed, return current state
+      if (newStatus === transaction.status && !shouldCreditWallet) {
+        return {
+          transaction: {
+            id: transaction.id,
+            transaction_id: transaction.transaction_id,
+            status: transaction.status,
+            amount: parseFloat(transaction.amount),
+          },
+          updated: false,
+          message: 'Transaction status is already up to date',
+        };
+      }
+
+      // Update transaction and wallet in a database transaction
+      const result = await db.transaction(async (client) => {
+        // Update transaction status
+        const updateFields: string[] = ['status = $1', 'updated_at = NOW()'];
+        const updateParams: any[] = [newStatus];
+        let paramCount = 1;
+
+        if (newStatus === TransactionStatus.COMPLETED) {
+          paramCount++;
+          updateFields.push(`processed_at = NOW()`);
+        } else if (newStatus === TransactionStatus.FAILED) {
+          paramCount++;
+          updateFields.push(`failed_at = NOW()`);
+          updateFields.push(`failure_reason = $${paramCount}`);
+          updateParams.push(
+            paymentIntent.last_payment_error?.message || 'Payment failed'
+          );
+        }
+
+        // Add payment gateway response
+        paramCount++;
+        updateFields.push(`payment_gateway_response = $${paramCount}`);
+        updateParams.push(JSON.stringify(paymentIntent));
+
+        paramCount++;
+        updateParams.push(transaction.id);
+
+        await client.query(
+          `UPDATE transactions
+           SET ${updateFields.join(', ')}
+           WHERE id = $${paramCount}`,
+          updateParams
+        );
+
+        // Credit wallet if transaction was completed and was previously pending
+        if (shouldCreditWallet) {
+          await client.query(
+            `UPDATE wallets
+             SET balance = balance + $1,
+                 last_transaction_at = NOW(),
+                 updated_at = NOW()
+             WHERE user_id = $2`,
+            [transaction.amount, transaction.to_user_id]
+          );
+
+          logger.info('Wallet credited during transaction refresh', {
+            transactionId: transaction.id,
+            userId: transaction.to_user_id,
+            amount: transaction.amount,
+            adminId,
+          });
+        }
+
+        return {
+          transaction: {
+            id: transaction.id,
+            transaction_id: transaction.transaction_id,
+            status: newStatus,
+            previousStatus: transaction.status,
+            amount: parseFloat(transaction.amount),
+            user: {
+              email: transaction.email,
+              name: `${transaction.first_name} ${transaction.last_name}`,
+            },
+          },
+          updated: true,
+          walletCredited: shouldCreditWallet,
+          message: shouldCreditWallet
+            ? 'Transaction updated to COMPLETED and wallet credited'
+            : `Transaction status updated from ${transaction.status} to ${newStatus}`,
+        };
+      });
+
+      logger.info('Transaction refreshed from Stripe', {
+        transactionId: transaction.id,
+        adminId,
+        oldStatus: transaction.status,
+        newStatus,
+        walletCredited: shouldCreditWallet,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Error refreshing transaction from Stripe', error);
+      throw error;
+    }
+  }
 }

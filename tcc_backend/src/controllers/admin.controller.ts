@@ -1668,4 +1668,41 @@ export class AdminController {
       return ApiResponseUtil.internalError(res, 'Failed to generate version report');
     }
   }
+
+  /**
+   * Refresh transaction state from Stripe
+   */
+  static async refreshTransactionFromStripe(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const adminId = req.user?.id;
+      if (!adminId) {
+        return ApiResponseUtil.unauthorized(res, 'Admin authentication required');
+      }
+
+      const { transactionId } = req.params;
+
+      if (!transactionId) {
+        return ApiResponseUtil.badRequest(res, 'Transaction ID is required');
+      }
+
+      const result = await AdminService.refreshTransactionFromStripe(adminId, transactionId);
+
+      return ApiResponseUtil.success(res, result, result.message);
+    } catch (error: any) {
+      logger.error('Refresh transaction error', error);
+
+      if (error.message === 'TRANSACTION_NOT_FOUND') {
+        return ApiResponseUtil.notFound(res, 'Transaction not found');
+      }
+
+      if (error.message === 'NOT_A_STRIPE_TRANSACTION') {
+        return ApiResponseUtil.badRequest(
+          res,
+          'This transaction is not a Stripe transaction and cannot be refreshed'
+        );
+      }
+
+      return ApiResponseUtil.internalError(res, 'Failed to refresh transaction from Stripe');
+    }
+  }
 }

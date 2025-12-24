@@ -5,8 +5,7 @@ import '../../models/election_model.dart';
 class ElectionResultsScreen extends StatelessWidget {
   final Election election;
 
-  const ElectionResultsScreen({Key? key, required this.election})
-      : super(key: key);
+  const ElectionResultsScreen({super.key, required this.election});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +22,7 @@ class ElectionResultsScreen extends StatelessWidget {
           children: [
             // Header Card
             Container(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).primaryColor.withValues(alpha:0.1),
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +49,7 @@ class ElectionResultsScreen extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Colors.grey.withValues(alpha:0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Text(
@@ -118,8 +117,8 @@ class ElectionResultsScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.amber.withOpacity(0.3),
-                        Colors.amber.withOpacity(0.1),
+                        Colors.amber.withValues(alpha:0.3),
+                        Colors.amber.withValues(alpha:0.1),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -184,9 +183,9 @@ class ElectionResultsScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: isWinner
-                            ? Colors.amber.withOpacity(0.1)
+                            ? Colors.amber.withValues(alpha:0.1)
                             : isUserVote
-                                ? Colors.green.withOpacity(0.1)
+                                ? Colors.green.withValues(alpha:0.1)
                                 : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
@@ -264,7 +263,7 @@ class ElectionResultsScreen extends StatelessWidget {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -279,7 +278,7 @@ class ElectionResultsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

@@ -199,6 +199,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
           await authProvider.loadUserProfile();
           // Navigate to status screen
+          if (!mounted) return;
           context.go('/kyc-status', extra: widget.extraData);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

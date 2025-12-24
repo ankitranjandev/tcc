@@ -131,6 +131,7 @@ router.post('/agents', AdminController.createAgent);
 // Transaction management
 router.get('/transactions', AdminController.getTransactions);
 router.get('/transactions/export', AdminController.exportTransactions);
+router.post('/transactions/:transactionId/refresh-from-stripe', AdminController.refreshTransactionFromStripe);
 
 // Withdrawal management
 router.get('/withdrawals', validate(getWithdrawalsSchema), AdminController.getWithdrawals);

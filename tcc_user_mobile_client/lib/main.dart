@@ -33,8 +33,12 @@ import 'screens/portfolio/portfolio_investment_detail_screen.dart';
 import 'screens/transactions/transaction_detail_screen.dart';
 import 'screens/gift/send_gift_screen.dart';
 import 'screens/agent/agent_search_screen.dart';
+import 'screens/voting/elections_screen.dart';
+import 'screens/voting/election_details_screen.dart';
+import 'screens/voting/election_results_screen.dart';
 import 'models/investment_model.dart';
 import 'models/transaction_model.dart';
+import 'models/election_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -283,6 +287,24 @@ class _TCCAppState extends State<TCCApp> {
         GoRoute(
           path: '/agent-search',
           builder: (context, state) => AgentSearchScreen(),
+        ),
+        GoRoute(
+          path: '/elections',
+          builder: (context, state) => ElectionsScreen(),
+        ),
+        GoRoute(
+          path: '/elections/:electionId',
+          builder: (context, state) {
+            final election = state.extra as Election;
+            return ElectionDetailsScreen(election: election);
+          },
+        ),
+        GoRoute(
+          path: '/elections/:electionId/results',
+          builder: (context, state) {
+            final election = state.extra as Election;
+            return ElectionResultsScreen(election: election);
+          },
         ),
       ],
     );

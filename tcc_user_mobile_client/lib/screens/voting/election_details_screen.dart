@@ -6,8 +6,7 @@ import '../../services/election_service.dart';
 class ElectionDetailsScreen extends StatefulWidget {
   final Election election;
 
-  const ElectionDetailsScreen({Key? key, required this.election})
-      : super(key: key);
+  const ElectionDetailsScreen({super.key, required this.election});
 
   @override
   State<ElectionDetailsScreen> createState() => _ElectionDetailsScreenState();
@@ -137,7 +136,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
           children: [
             // Header Card
             Container(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,7 +205,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.green),
                       ),
@@ -252,7 +251,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Theme.of(context).primaryColor.withOpacity(0.1)
+                              ? Theme.of(context).primaryColor.withValues(alpha:0.1)
                               : Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
@@ -264,9 +263,12 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                         ),
                         child: Row(
                           children: [
+                            // ignore: deprecated_member_use
                             Radio<int>(
                               value: option.id,
+                              // ignore: deprecated_member_use
                               groupValue: _selectedOptionId,
+                              // ignore: deprecated_member_use
                               onChanged: widget.election.hasVoted
                                   ? null
                                   : (value) {
@@ -292,7 +294,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.1),
+                                  color: Colors.green.withValues(alpha:0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(
@@ -308,7 +310,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                   if (!widget.election.hasVoted) ...[
                     const SizedBox(height: 24),
                     SizedBox(

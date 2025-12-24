@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS elections (
     start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     end_time TIMESTAMP NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, ended, paused
-    created_by INTEGER REFERENCES admins(id),
+    created_by UUID REFERENCES admins(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS election_votes (
     id SERIAL PRIMARY KEY,
     election_id INTEGER NOT NULL REFERENCES elections(id) ON DELETE CASCADE,
     option_id INTEGER NOT NULL REFERENCES election_options(id) ON DELETE CASCADE,
-    user_id INTEGER NOT NULL REFERENCES users(id),
+    user_id UUID NOT NULL REFERENCES users(id),
     vote_charge DECIMAL(10, 2) NOT NULL,
     voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(election_id, user_id) -- One vote per user per election

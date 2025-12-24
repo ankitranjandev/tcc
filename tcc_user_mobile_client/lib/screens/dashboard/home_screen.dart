@@ -9,6 +9,7 @@ import '../../services/wallet_service.dart';
 import '../../services/investment_service.dart';
 import '../../services/metal_price_service.dart';
 import '../../services/currency_service.dart';
+import '../../services/election_service.dart';
 import '../../models/currency_rate_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final InvestmentService _investmentService = InvestmentService();
   final MetalPriceService _metalPriceService = MetalPriceService();
   final CurrencyService _currencyService = CurrencyService();
+  final ElectionService _electionService = ElectionService();
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -36,6 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _metalPrices = [];
   CurrencyRatesResponse? _currencyRates;
   bool _isLoadingMarketData = false;
+
+  // Voting data
+  int _activeElectionsCount = 0;
 
   @override
   void initState() {
@@ -93,6 +98,15 @@ class _HomeScreenState extends State<HomeScreen> {
         baseCurrency: 'SLL',
         currencies: ['USD', 'EUR', 'GBP'],
       );
+
+      // Fetch active elections count
+      try {
+        final elections = await _electionService.getActiveElections();
+        _activeElectionsCount = elections.length;
+      } catch (e) {
+        debugPrint('Failed to load elections: $e');
+        _activeElectionsCount = 0;
+      }
 
       setState(() {
         _metalPrices = metalPricesResult;
@@ -172,6 +186,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Agent Locator Button
               _buildAgentLocatorButton(),
+
+              SizedBox(height: 24),
+
+              // Community Voting Card
+              _buildVotingCard(),
 
               SizedBox(height: 24),
 
@@ -455,6 +474,99 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white,
                 size: 20,
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVotingCard() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      child: InkWell(
+        onTap: () => context.push('/elections'),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF667EEA).withValues(alpha: 0.3),
+                blurRadius: 15,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.how_to_vote,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Community Voting',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      _activeElectionsCount > 0
+                          ? '$_activeElectionsCount active ${_activeElectionsCount == 1 ? 'poll' : 'polls'} • Cast your vote'
+                          : 'Vote on community decisions',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_activeElectionsCount > 0)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$_activeElectionsCount',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 20,
+                ),
             ],
           ),
         ),

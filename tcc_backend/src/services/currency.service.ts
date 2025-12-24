@@ -90,7 +90,7 @@ export class CurrencyService {
       logger.info('Currency rates fetched successfully and cached');
       return response.data;
     } catch (error: any) {
-      logger.error('Error fetching currency rates:', error.message);
+      logger.error(`Error fetching currency rates: ${error.message}`);
 
       // Return cached data if available, even if expired
       if (this.cache) {
@@ -143,7 +143,7 @@ export class CurrencyService {
         rate,
       };
     } catch (error: any) {
-      logger.error(`Error converting ${from} to ${to}:`, error.message);
+      logger.error(`Error converting ${from} to ${to}: ${error.message}`);
       throw error;
     }
   }
@@ -165,7 +165,7 @@ export class CurrencyService {
 
       return rates.data[to].value;
     } catch (error: any) {
-      logger.error(`Error getting exchange rate ${from}/${to}:`, error.message);
+      logger.error(`Error getting exchange rate ${from}/${to}: ${error.message}`);
       throw error;
     }
   }
@@ -212,7 +212,7 @@ export class CurrencyService {
         timestamp: Date.now(),
       };
     } catch (error: any) {
-      logger.error('Error getting formatted currency rates:', error.message);
+      logger.error(`Error getting formatted currency rates: ${error.message}`);
       throw error;
     }
   }
@@ -252,7 +252,7 @@ export class CurrencyService {
         conversions,
       };
     } catch (error: any) {
-      logger.error('Error getting multiple conversions:', error.message);
+      logger.error(`Error getting multiple conversions: ${error.message}`);
       throw error;
     }
   }

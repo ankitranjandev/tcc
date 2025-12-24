@@ -4,24 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="kyc changes">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database_schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database_schema.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/models/transaction_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/models/transaction_model.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/agents/agents_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/agents/agents_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/bill_payments/bill_payments_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/consumers/consumers_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/investments/investments_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/investments/investments_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/layout/topbar.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/transactions/transactions_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_admin_client/lib/screens/users/users_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/controllers/admin.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/routes/admin.routes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/admin.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/admin.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/services/investment.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/services/investment.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tcc_backend/src/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_backend/src/types/index.ts" afterDir="false" />
-    </list>
+    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="kyc changes" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -124,7 +107,39 @@
       <option name="project" value="LOCAL" />
       <updated>1766377172717</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="kyc changes">
+      <option name="closed" value="true" />
+      <created>1766476874838</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1766476874838</updated>
+    </task>
+    <task id="LOCAL-00007" summary="kyc changes">
+      <option name="closed" value="true" />
+      <created>1766479780784</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1766479780784</updated>
+    </task>
+    <task id="LOCAL-00008" summary="kyc changes">
+      <option name="closed" value="true" />
+      <created>1766480414828</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1766480414828</updated>
+    </task>
+    <task id="LOCAL-00009" summary="kyc changes">
+      <option name="closed" value="true" />
+      <created>1766484682439</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1766484682439</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
