@@ -15,6 +15,9 @@ class ApiService {
   String? _token;
   String? _refreshToken;
 
+  // Callback for handling unauthorized (401) responses
+  static Function? onUnauthorized;
+
   // Getters for token access
   String? get token => _token;
   String? get refreshToken => _refreshToken;
@@ -432,6 +435,12 @@ class ApiService {
       // The calling code (AuthProvider) should handle logout/token clearing
       // This prevents cascading auth failures from a single 401.
       developer.log('⚠️ ApiService: 401 received, token status: ${_token != null ? "present" : "absent"}', name: 'ApiService');
+
+      // Trigger automatic logout callback if set
+      if (onUnauthorized != null) {
+        developer.log('⚠️ ApiService: Triggering onUnauthorized callback', name: 'ApiService');
+        onUnauthorized!();
+      }
 
       throw UnauthorizedException(errorMessage);
     } else if (response.statusCode == 403) {

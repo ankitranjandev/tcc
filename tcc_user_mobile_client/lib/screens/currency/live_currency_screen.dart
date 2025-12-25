@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../config/app_colors.dart';
 import '../../services/currency_service.dart';
 import '../../models/currency_rate_model.dart';
+import '../../models/currency_investment_model.dart';
 
 class LiveCurrencyScreen extends StatefulWidget {
   const LiveCurrencyScreen({super.key});
@@ -211,6 +213,29 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
     );
   }
 
+  // Currencies that can be invested in (USD excluded since TCC = USD)
+  static const List<String> _investableCurrencies = ['EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY'];
+
+  bool _canInvest(String code) => _investableCurrencies.contains(code);
+
+  void _navigateToInvest(String code, String name, String flag, double rate) {
+    // Create CurrencyInfo to pass to the purchase screen
+    // Get the country code from flag emoji or use metadata
+    final countryCode = CurrencyMetadata.getFlag(code);
+    final currencyInfo = CurrencyInfo(
+      code: code,
+      name: name,
+      symbol: CurrencyMetadata.getSymbol(code),
+      flag: countryCode,
+      rate: rate,
+      inverseRate: rate > 0 ? 1 / rate : 0,
+      minInvestment: 10,
+      maxInvestment: 100000,
+      isActive: true,
+    );
+    context.push('/investments/currency/buy/$code', extra: currencyInfo);
+  }
+
   Widget _buildCurrencyCard({
     required String flag,
     required String code,
@@ -219,94 +244,137 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
     required double rate,
   }) {
     final formatter = NumberFormat('#,##0.0000');
+    final canInvest = _canInvest(code);
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: canInvest ? () => _navigateToInvest(code, name, flag, rate) : null,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+        child: Container(
+          margin: EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: canInvest ? Border.all(color: AppColors.warning.withValues(alpha: 0.3)) : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Flag and currency info
-          Expanded(
-            child: Row(
-              children: [
-                // Flag
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    flag,
-                    style: TextStyle(fontSize: 24),
-                  ),
-                ),
-                SizedBox(width: 12),
+          child: Row(
+            children: [
+              // Flag and currency info
+              Expanded(
+                child: Row(
+                  children: [
+                    // Flag
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        flag,
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    ),
+                    SizedBox(width: 12),
 
-                // Currency details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    // Currency details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                code,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              if (canInvest) ...[
+                                SizedBox(width: 8),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warning.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Invest',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.warning,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Exchange rate and action
+              Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        code,
+                        '$symbol${formatter.format(rate)}',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
                       ),
                       SizedBox(height: 2),
                       Text(
-                        name,
+                        '1 TCC = ${formatter.format(rate)} $code',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: Colors.grey[600],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // Exchange rate
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '$symbol${formatter.format(rate)}',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                '1 TCC = ${formatter.format(rate)} $code',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                  if (canInvest) ...[
+                    SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right,
+                      color: AppColors.warning,
+                      size: 24,
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

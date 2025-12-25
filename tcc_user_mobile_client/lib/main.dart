@@ -12,6 +12,7 @@ import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/bank_account_provider.dart';
 import 'services/notification_service.dart';
+import 'services/api_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/phone_number_screen.dart';
@@ -101,6 +102,13 @@ class _TCCAppState extends State<TCCApp> {
     super.initState();
     developer.log('🚀 TCCApp: Initializing app...', name: 'TCCApp');
     _authProvider = AuthProvider();
+
+    // Set up automatic logout on token expiration (401 responses)
+    ApiService.onUnauthorized = () {
+      developer.log('🔴 TCCApp: Token expired, triggering automatic logout', name: 'TCCApp');
+      _authProvider.handleUnauthorized();
+    };
+
     _themeProvider = ThemeProvider();
     _bankAccountProvider = BankAccountProvider();
     _router = _createRouter();
