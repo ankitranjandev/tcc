@@ -25,6 +25,8 @@ export enum TransactionType {
   COMMISSION = 'COMMISSION',
   AGENT_CREDIT = 'AGENT_CREDIT',
   REFUND = 'REFUND',
+  CURRENCY_BUY = 'CURRENCY_BUY',
+  CURRENCY_SELL = 'CURRENCY_SELL',
 }
 
 export enum TransactionStatus {
@@ -611,4 +613,87 @@ export interface UpdateElectionDTO {
 export interface CastVoteDTO {
   election_id: string;
   option_id: string;
+}
+
+// Currency Investment Types
+export enum CurrencyInvestmentStatus {
+  ACTIVE = 'ACTIVE',
+  SOLD = 'SOLD',
+}
+
+export type SupportedCurrency = 'EUR' | 'GBP' | 'JPY' | 'AUD' | 'CAD' | 'CHF' | 'CNY';
+
+export interface CurrencyInvestment {
+  id: string;
+  user_id: string;
+  currency_code: SupportedCurrency;
+  amount_invested: number;
+  currency_amount: number;
+  purchase_rate: number;
+  status: CurrencyInvestmentStatus;
+  sold_at?: Date;
+  sold_rate?: number;
+  sold_amount_tcc?: number;
+  profit_loss?: number;
+  transaction_id: string;
+  sell_transaction_id?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface CurrencyInvestmentLimit {
+  id: string;
+  currency_code: SupportedCurrency;
+  min_investment: number;
+  max_investment: number;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface CurrencyInfo {
+  code: SupportedCurrency;
+  name: string;
+  symbol: string;
+  flag: string;
+  rate: number;
+  inverse_rate: number;
+  min_investment: number;
+  max_investment: number;
+  is_active: boolean;
+}
+
+export interface CurrencyHolding extends CurrencyInvestment {
+  current_rate: number;
+  current_value_tcc: number;
+  unrealized_profit_loss: number;
+  profit_loss_percentage: number;
+}
+
+export interface CurrencyHoldingsSummary {
+  total_invested: number;
+  current_value: number;
+  total_profit_loss: number;
+  profit_loss_percentage: number;
+  active_holdings_count: number;
+}
+
+export interface CurrencyHoldingsResponse {
+  holdings: CurrencyHolding[];
+  summary: CurrencyHoldingsSummary;
+}
+
+export interface BuyCurrencyDTO {
+  currency_code: SupportedCurrency;
+  tcc_amount: number;
+}
+
+export interface SellCurrencyResult {
+  transaction_id: string;
+  currency_sold: number;
+  currency_code: SupportedCurrency;
+  sell_rate: number;
+  tcc_received: number;
+  profit_loss: number;
+  profit_loss_percentage: number;
 }

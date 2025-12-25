@@ -674,10 +674,10 @@ export class AdminService {
 
       const user = userResult[0];
 
-      // Create wallet for the user
+      // Create wallet for the user (TCC coins are 1:1 with USD)
       await db.query(
         'INSERT INTO wallets (user_id, balance, currency) VALUES ($1, $2, $3)',
-        [user.id, 0, 'SLL']
+        [user.id, 0, 'USD']
       );
 
       logger.info('User created', { userId: user.id, email: data.email });

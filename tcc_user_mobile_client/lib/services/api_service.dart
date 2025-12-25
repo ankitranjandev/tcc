@@ -358,11 +358,14 @@ class ApiService {
       final response = await http.Response.fromStream(streamedResponse);
 
       developer.log('📤 ApiService: Upload response status: ${response.statusCode}', name: 'ApiService');
+      developer.log('📤 ApiService: Upload response body: ${response.body}', name: 'ApiService');
       if (response.statusCode != 200 && response.statusCode != 201) {
         developer.log('❌ ApiService: Upload failed with body: ${response.body}', name: 'ApiService');
       }
 
-      return _handleResponse(response);
+      final handledResponse = _handleResponse(response);
+      developer.log('📤 ApiService: Handled upload response: $handledResponse', name: 'ApiService');
+      return handledResponse;
     } on SocketException catch (e) {
       developer.log('❌ ApiService: SocketException during upload: $e', name: 'ApiService');
       throw ApiException(AppConstants.errorNetwork);

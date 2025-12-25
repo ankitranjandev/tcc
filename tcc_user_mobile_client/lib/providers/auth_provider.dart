@@ -225,18 +225,40 @@ class AuthProvider with ChangeNotifier {
     developer.log('🟡 AuthProvider: Loading user profile', name: 'AuthProvider');
     try {
       final result = await _authService.getProfile();
-      developer.log('🟡 AuthProvider: Profile result: ${result['success']}', name: 'AuthProvider');
+      developer.log('🟡 AuthProvider: Profile result success: ${result['success']}', name: 'AuthProvider');
+      developer.log('🟡 AuthProvider: Full profile result: $result', name: 'AuthProvider');
 
       if (result['success'] == true && result['data'] != null) {
         // The API response structure is: { success: true, data: { user: {...}, wallet: {...} } }
         // But auth_service wraps it again, so result['data'] contains the full API response
         final apiResponse = result['data'];
+        developer.log('🟡 AuthProvider: API response: $apiResponse', name: 'AuthProvider');
+        developer.log('🟡 AuthProvider: API response keys: ${apiResponse?.keys?.toList()}', name: 'AuthProvider');
+
         final userData = apiResponse['data']?['user'];
-        developer.log('🟡 AuthProvider: User data received: ${userData != null}', name: 'AuthProvider');
+        final walletData = apiResponse['data']?['wallet'];
+        developer.log('🟡 AuthProvider: User data extracted: $userData', name: 'AuthProvider');
+        developer.log('🟡 AuthProvider: User data keys: ${userData?.keys?.toList()}', name: 'AuthProvider');
+        developer.log('🟡 AuthProvider: Wallet data extracted: $walletData', name: 'AuthProvider');
+
+        // Log specific profile picture fields
         if (userData != null) {
-          _user = UserModel.fromJson(userData);
+          developer.log('🟡 AuthProvider: profile_picture_url in response: ${userData['profile_picture_url']}', name: 'AuthProvider');
+          developer.log('🟡 AuthProvider: profilePicture in response: ${userData['profilePicture']}', name: 'AuthProvider');
+          developer.log('🟡 AuthProvider: profile_picture in response: ${userData['profile_picture']}', name: 'AuthProvider');
+        }
+
+        if (userData != null) {
+          // Merge wallet balance from wallet object into user data for UserModel
+          final mergedUserData = Map<String, dynamic>.from(userData);
+          if (walletData != null && walletData['balance'] != null) {
+            mergedUserData['walletBalance'] = walletData['balance'];
+            developer.log('🟡 AuthProvider: Merged wallet balance: ${walletData['balance']}', name: 'AuthProvider');
+          }
+          _user = UserModel.fromJson(mergedUserData);
           _isAuthenticated = true;
           developer.log('🟡 AuthProvider: User profile loaded successfully. User: ${_user?.email}', name: 'AuthProvider');
+          developer.log('🟡 AuthProvider: Parsed profilePicture: ${_user?.profilePicture}', name: 'AuthProvider');
           notifyListeners();
           return true;
         }
@@ -325,21 +347,27 @@ class AuthProvider with ChangeNotifier {
   // Update profile picture
   Future<bool> updateProfilePicture(String filePath) async {
     developer.log('🟢 AuthProvider: Updating profile picture', name: 'AuthProvider');
+    developer.log('🟢 AuthProvider: File path: $filePath', name: 'AuthProvider');
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final result = await _authService.uploadProfilePicture(filePath: filePath);
+      developer.log('🟢 AuthProvider: Upload result: $result', name: 'AuthProvider');
 
       if (result['success'] == true) {
-        developer.log('🟢 AuthProvider: Profile picture updated successfully, reloading profile', name: 'AuthProvider');
+        developer.log('🟢 AuthProvider: Profile picture uploaded successfully', name: 'AuthProvider');
+        developer.log('🟢 AuthProvider: Upload response data: ${result['data']}', name: 'AuthProvider');
 
         // Reload user profile to get the updated picture URL
+        developer.log('🟢 AuthProvider: Reloading user profile to get updated picture URL...', name: 'AuthProvider');
         final profileLoaded = await loadUserProfile();
         _isLoading = false;
 
         if (profileLoaded) {
+          developer.log('🟢 AuthProvider: Profile reloaded successfully', name: 'AuthProvider');
+          developer.log('🟢 AuthProvider: Updated user profilePicture: ${_user?.profilePicture}', name: 'AuthProvider');
           notifyListeners();
           return true;
         } else {
@@ -355,9 +383,10 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return false;
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       _errorMessage = e.toString();
       developer.log('🔴 AuthProvider: Profile picture update exception: $e', name: 'AuthProvider');
+      developer.log('🔴 AuthProvider: Stack trace: $stackTrace', name: 'AuthProvider');
       _isLoading = false;
       notifyListeners();
       return false;

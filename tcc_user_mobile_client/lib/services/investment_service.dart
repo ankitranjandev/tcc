@@ -173,7 +173,7 @@ class InvestmentService {
         queryParams: queryParams,
         requiresAuth: true,
       );
-      return {'success': true, 'data': response};
+      return {'success': true, 'data': response['data']};
     } catch (e) {
       return {'success': false, 'error': e.toString()};
     }

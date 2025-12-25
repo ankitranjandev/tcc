@@ -216,6 +216,11 @@ class App {
     this.app.use(`${apiPrefix}/market`, marketRoutes.default);
     logger.info('Market routes registered');
 
+    // Currency investment routes
+    const currencyInvestmentRoutes = await import('./routes/currency-investment.routes');
+    this.app.use(`${apiPrefix}/currency-investments`, currencyInvestmentRoutes.default);
+    logger.info('Currency investment routes registered');
+
     logger.info('Routes initialized');
 
     // Debug: Log all registered routes

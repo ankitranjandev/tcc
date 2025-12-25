@@ -290,7 +290,7 @@ class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
       margin: EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () {
-          context.push('/investments/${widget.category.toLowerCase()}/${opportunity.id}', extra: opportunity);
+          context.push('/investments/opportunities/${opportunity.id}', extra: opportunity);
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(

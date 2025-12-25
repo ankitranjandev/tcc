@@ -358,10 +358,15 @@ class AuthService {
         requiresAuth: true,
       );
 
-      developer.log('✅ AuthService: Profile picture uploaded successfully', name: 'AuthService');
+      developer.log('✅ AuthService: Profile picture upload response: $response', name: 'AuthService');
+      developer.log('✅ AuthService: Response keys: ${response.keys.toList()}', name: 'AuthService');
+      if (response['data'] != null) {
+        developer.log('✅ AuthService: Response data: ${response['data']}', name: 'AuthService');
+      }
       return {'success': true, 'data': response};
-    } catch (e) {
+    } catch (e, stackTrace) {
       developer.log('❌ AuthService: Upload profile picture error: $e', name: 'AuthService');
+      developer.log('❌ AuthService: Stack trace: $stackTrace', name: 'AuthService');
       return {'success': false, 'error': _extractErrorMessage(e)};
     }
   }

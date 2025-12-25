@@ -1,3 +1,12 @@
+import 'dart:developer' as developer;
+
+double _parseDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
 class UserModel {
   final String id;
   final String firstName;
@@ -35,14 +44,25 @@ class UserModel {
   bool get canMakeTransactions => isKycApproved;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    developer.log('🧑 UserModel.fromJson: Parsing user data', name: 'UserModel');
+    developer.log('🧑 UserModel.fromJson: JSON keys: ${json.keys.toList()}', name: 'UserModel');
+
+    // Log all profile picture related fields
+    developer.log('🧑 UserModel.fromJson: profile_picture_url = ${json['profile_picture_url']}', name: 'UserModel');
+    developer.log('🧑 UserModel.fromJson: profilePicture = ${json['profilePicture']}', name: 'UserModel');
+    developer.log('🧑 UserModel.fromJson: profile_picture = ${json['profile_picture']}', name: 'UserModel');
+
+    final profilePictureValue = json['profile_picture_url'] ?? json['profilePicture'] ?? json['profile_picture'];
+    developer.log('🧑 UserModel.fromJson: Final profilePicture value: $profilePictureValue', name: 'UserModel');
+
     return UserModel(
       id: json['id'] ?? '',
       firstName: json['first_name'] ?? json['firstName'] ?? '',
       lastName: json['last_name'] ?? json['lastName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
-      profilePicture: json['profile_picture_url'] ?? json['profilePicture'],
-      walletBalance: (json['walletBalance'] ?? 0).toDouble(),
+      profilePicture: profilePictureValue,
+      walletBalance: _parseDouble(json['walletBalance'] ?? json['wallet_balance']),
       kycStatus: json['kyc_status'] ?? json['kycStatus'] ?? 'PENDING',
     );
   }

@@ -298,7 +298,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
               ),
               SizedBox(height: 2),
               Text(
-                '1 USD = ${formatter.format(rate)} $code',
+                '1 TCC = ${formatter.format(rate)} $code',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],

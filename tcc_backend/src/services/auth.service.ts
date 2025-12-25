@@ -128,11 +128,11 @@ export class AuthService {
         country_code: user.country_code 
       });
 
-      // Create wallet for user
+      // Create wallet for user (TCC coins are 1:1 with USD)
       logger.info('💰 Creating wallet for user', { userId: user.id });
       await db.query(
         'INSERT INTO wallets (user_id, balance, currency) VALUES ($1, 0, $2)',
-        [user.id, 'SLL']
+        [user.id, 'USD']
       );
       logger.info('✅ Wallet created successfully', { userId: user.id });
 

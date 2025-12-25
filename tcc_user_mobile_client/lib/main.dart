@@ -30,6 +30,11 @@ import 'screens/investments/change_deposit_period_screen.dart';
 import 'screens/investments/withdraw_investment_screen.dart';
 import 'screens/investments/withdraw_agreement_screen.dart';
 import 'screens/investments/withdraw_success_screen.dart';
+import 'screens/investments/currency_investment_screen.dart';
+import 'screens/investments/currency_purchase_screen.dart';
+import 'screens/investments/currency_holdings_screen.dart';
+import 'screens/investments/currency_holding_detail_screen.dart';
+import 'screens/investments/currency_sell_screen.dart';
 import 'screens/portfolio/portfolio_investment_detail_screen.dart';
 import 'screens/transactions/transaction_detail_screen.dart';
 import 'screens/gift/send_gift_screen.dart';
@@ -40,6 +45,7 @@ import 'screens/voting/election_results_screen.dart';
 import 'models/investment_model.dart';
 import 'models/transaction_model.dart';
 import 'models/election_model.dart';
+import 'models/currency_investment_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -242,6 +248,48 @@ class _TCCAppState extends State<TCCApp> {
           builder: (context, state) {
             final opportunityId = state.pathParameters['opportunityId']!;
             return InvestmentOpportunityDetailScreen(opportunityId: opportunityId);
+          },
+        ),
+        // Currency investment routes (must be before generic :category route)
+        GoRoute(
+          path: '/investments/currency',
+          builder: (context, state) => CurrencyInvestmentScreen(),
+        ),
+        GoRoute(
+          path: '/investments/currency/buy/:currencyCode',
+          builder: (context, state) {
+            final currencyCode = state.pathParameters['currencyCode']!;
+            final currencyInfo = state.extra as CurrencyInfo?;
+            return CurrencyPurchaseScreen(
+              currencyCode: currencyCode,
+              currencyInfo: currencyInfo,
+            );
+          },
+        ),
+        GoRoute(
+          path: '/investments/currency/holdings',
+          builder: (context, state) => CurrencyHoldingsScreen(),
+        ),
+        GoRoute(
+          path: '/investments/currency/holdings/:holdingId',
+          builder: (context, state) {
+            final holdingId = state.pathParameters['holdingId']!;
+            final holding = state.extra as CurrencyInvestment?;
+            return CurrencyHoldingDetailScreen(
+              holdingId: holdingId,
+              holding: holding,
+            );
+          },
+        ),
+        GoRoute(
+          path: '/investments/currency/sell/:holdingId',
+          builder: (context, state) {
+            final holdingId = state.pathParameters['holdingId']!;
+            final holding = state.extra as CurrencyInvestment?;
+            return CurrencySellScreen(
+              holdingId: holdingId,
+              holding: holding,
+            );
           },
         ),
         GoRoute(

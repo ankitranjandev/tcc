@@ -31,8 +31,8 @@ class BillService {
       final response = await _apiService.post(
         '/bills/fetch-details',
         body: {
-          'providerId': providerId,
-          'accountNumber': accountNumber,
+          'provider_id': providerId,
+          'account_number': accountNumber,
         },
         requiresAuth: true,
       );
@@ -52,8 +52,8 @@ class BillService {
       final response = await _apiService.post(
         '/bills/request-otp',
         body: {
-          'providerId': providerId,
-          'accountNumber': accountNumber,
+          'provider_id': providerId,
+          'account_number': accountNumber,
           'amount': amount,
         },
         requiresAuth: true,
@@ -74,12 +74,12 @@ class BillService {
   }) async {
     try {
       final body = <String, dynamic>{
-        'providerId': providerId,
-        'accountNumber': accountNumber,
+        'provider_id': providerId,
+        'account_number': accountNumber,
         'amount': amount,
         'otp': otp,
       };
-      if (customerName != null) body['customerName'] = customerName;
+      if (customerName != null) body['customer_name'] = customerName;
 
       final response = await _apiService.post(
         '/bills/pay',
@@ -120,6 +120,7 @@ class BillService {
   }
 
   // Create Stripe payment intent for bill payment
+  // Note: Stripe expects amount in cents, so we convert dollars to cents
   Future<Map<String, dynamic>> createBillPaymentIntent({
     required String providerId,
     required String accountNumber,
@@ -127,12 +128,13 @@ class BillService {
     String? customerName,
   }) async {
     try {
+      final amountInCents = (amount * 100).round();
       final body = <String, dynamic>{
-        'providerId': providerId,
-        'accountNumber': accountNumber,
-        'amount': amount,
+        'provider_id': providerId,
+        'account_number': accountNumber,
+        'amount': amountInCents,
       };
-      if (customerName != null) body['customerName'] = customerName;
+      if (customerName != null) body['customer_name'] = customerName;
 
       final response = await _apiService.post(
         '/bills/create-payment-intent',
@@ -155,9 +157,9 @@ class BillService {
       final response = await _apiService.post(
         '/bills/confirm-stripe-payment',
         body: {
-          'paymentIntentId': paymentIntentId,
-          'providerId': providerId,
-          'accountNumber': accountNumber,
+          'payment_intent_id': paymentIntentId,
+          'provider_id': providerId,
+          'account_number': accountNumber,
         },
         requiresAuth: true,
       );

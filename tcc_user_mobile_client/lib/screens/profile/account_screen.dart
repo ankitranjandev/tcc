@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:developer' as developer;
 import '../../config/app_colors.dart';
+import '../../config/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../widgets/authenticated_image.dart';
 import 'manage_bank_account_screen.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -24,6 +27,10 @@ class _AccountScreenState extends State<AccountScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final selectedTheme = themeProvider.themeDisplayName;
 
+    // Debug logging for profile picture
+    developer.log('🖼️ AccountScreen: Building with user: ${user?.email}', name: 'AccountScreen');
+    developer.log('🖼️ AccountScreen: profilePicture: ${user?.profilePicture}', name: 'AccountScreen');
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Account'),
@@ -37,18 +44,7 @@ class _AccountScreenState extends State<AccountScreen> {
               padding: EdgeInsets.all(16),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
-                    child: Text(
-                      user?.firstName[0].toUpperCase() ?? 'U',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryBlue,
-                      ),
-                    ),
-                  ),
+                  _buildProfileAvatar(user),
                   SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -1029,5 +1025,90 @@ class _AccountScreenState extends State<AccountScreen> {
         ],
       ),
     );
+  }
+
+  // Build profile avatar with authenticated image
+  Widget _buildProfileAvatar(user) {
+    final String initial = user?.firstName?.isNotEmpty == true
+        ? user!.firstName[0].toUpperCase()
+        : 'U';
+
+    developer.log('🖼️ AccountScreen._buildProfileAvatar: user=$user', name: 'AccountScreen');
+    developer.log('🖼️ AccountScreen._buildProfileAvatar: profilePicture=${user?.profilePicture}', name: 'AccountScreen');
+
+    // If no profile picture, show initial
+    if (user?.profilePicture == null) {
+      developer.log('🖼️ AccountScreen: No profile picture, showing initial: $initial', name: 'AccountScreen');
+      return CircleAvatar(
+        radius: 30,
+        backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryBlue,
+          ),
+        ),
+      );
+    }
+
+    // Has profile picture, show authenticated image
+    final imageUrl = _getFixedImageUrl(user!.profilePicture!);
+    developer.log('🖼️ AccountScreen: Loading profile picture from: $imageUrl', name: 'AccountScreen');
+
+    return CircleAvatar(
+      radius: 30,
+      backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
+      child: ClipOval(
+        child: AuthenticatedImage(
+          key: ValueKey(user.profilePicture!),
+          imageUrl: imageUrl,
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            // Show initial while loading
+            return Text(
+              initial,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryBlue,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            developer.log('🖼️ AccountScreen: Image error: $error', name: 'AccountScreen');
+            return Text(
+              initial,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryBlue,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // Fix image URL for Android emulator and ensure it has the correct base URL
+  String _getFixedImageUrl(String url) {
+    // If the URL is already complete, just fix the host
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      // Replace localhost and 127.0.0.1 with 10.0.2.2 for Android emulator
+      return url
+          .replaceAll('localhost', '10.0.2.2')
+          .replaceAll('127.0.0.1', '10.0.2.2');
+    }
+
+    // If it's a relative URL, prepend the base URL
+    String baseUrl = AppConstants.baseUrl.replaceAll('/v1', '');
+    if (!url.startsWith('/')) {
+      url = '/$url';
+    }
+    return '$baseUrl$url';
   }
 }

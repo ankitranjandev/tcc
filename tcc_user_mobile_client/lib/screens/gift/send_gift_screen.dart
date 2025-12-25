@@ -1,8 +1,11 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/wallet_service.dart';
@@ -21,11 +24,28 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
 
+  // Contacts state
+  List<Contact> _contacts = [];
+  List<Contact> _filteredContacts = [];
+  bool _isLoadingContacts = false;
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh user profile to get latest wallet balance
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      authProvider.loadUserProfile();
+    });
+  }
+
   @override
   void dispose() {
     _amountController.dispose();
     _recipientController.dispose();
     _messageController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -65,14 +85,26 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  TextButton.icon(
-                    onPressed: _pickContact,
-                    icon: Icon(Icons.contact_phone, size: 18),
-                    label: Text('From Contacts'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primaryBlue,
-                    ),
-                  ),
+                  _isLoadingContacts
+                      ? Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
+                        )
+                      : TextButton.icon(
+                          onPressed: _fetchContacts,
+                          icon: Icon(Icons.contacts, size: 18),
+                          label: Text('From Contacts'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primaryBlue,
+                          ),
+                        ),
                 ],
               ),
               SizedBox(height: 8),
@@ -256,55 +288,396 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
     );
   }
 
-  Future<void> _pickContact() async {
+  Future<void> _fetchContacts() async {
     try {
-      // Request permission first
-      if (!await FlutterContacts.requestPermission()) {
+      developer.log('=== CONTACT FETCH START ===', name: 'Contacts');
+
+      // Check current permission status using permission_handler
+      final permissionStatus = await Permission.contacts.status;
+      developer.log('Current permission status: $permissionStatus', name: 'Contacts');
+      debugPrint('[Contacts] Current permission status: $permissionStatus');
+
+      if (permissionStatus.isDenied) {
+        developer.log('Permission is denied, requesting...', name: 'Contacts');
+        debugPrint('[Contacts] Permission is denied, requesting...');
+
+        final requestResult = await Permission.contacts.request();
+        developer.log('Permission request result: $requestResult', name: 'Contacts');
+        debugPrint('[Contacts] Permission request result: $requestResult');
+
+        if (!requestResult.isGranted) {
+          developer.log('Permission NOT granted after request', name: 'Contacts');
+          debugPrint('[Contacts] Permission NOT granted after request');
+
+          if (requestResult.isPermanentlyDenied) {
+            debugPrint('[Contacts] Permission is permanently denied');
+            if (mounted) {
+              _showPermissionDeniedDialog();
+            }
+            return;
+          }
+
+          if (mounted) {
+            _showError('Contact permission is required to fetch contacts');
+          }
+          return;
+        }
+      } else if (permissionStatus.isPermanentlyDenied) {
+        developer.log('Permission is permanently denied', name: 'Contacts');
+        debugPrint('[Contacts] Permission is permanently denied');
         if (mounted) {
-          _showError('Contact permission is required to select a contact');
+          _showPermissionDeniedDialog();
+        }
+        return;
+      } else if (permissionStatus.isRestricted) {
+        developer.log('Permission is restricted', name: 'Contacts');
+        debugPrint('[Contacts] Permission is restricted (parental controls)');
+        if (mounted) {
+          _showError('Contact access is restricted on this device');
         }
         return;
       }
 
-      // Pick a contact with properties
-      final contact = await FlutterContacts.openExternalPick();
+      developer.log('Permission granted, fetching contacts...', name: 'Contacts');
+      debugPrint('[Contacts] Permission granted, fetching contacts...');
 
-      if (contact != null) {
-        // Fetch full contact details including phone numbers
-        final fullContact = await FlutterContacts.getContact(
-          contact.id,
-          withProperties: true,
-        );
+      setState(() {
+        _isLoadingContacts = true;
+      });
 
-        if (fullContact != null && fullContact.phones.isNotEmpty) {
-          // Get the first phone number and clean it
-          String phoneNumber = fullContact.phones.first.number;
+      // Fetch all contacts with phone properties
+      developer.log('Calling FlutterContacts.getContacts...', name: 'Contacts');
+      final contacts = await FlutterContacts.getContacts(
+        withProperties: true,
+        withPhoto: true,
+      );
 
-          // Remove all non-digit characters except leading +
-          phoneNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+      developer.log('Fetched ${contacts.length} total contacts', name: 'Contacts');
+      debugPrint('[Contacts] Fetched ${contacts.length} total contacts');
 
-          // Remove country code if present (assuming Sierra Leone +232)
-          if (phoneNumber.startsWith('+232')) {
-            phoneNumber = phoneNumber.substring(4);
-          } else if (phoneNumber.startsWith('232')) {
-            phoneNumber = phoneNumber.substring(3);
-          }
+      // Filter contacts that have at least one phone number
+      final contactsWithPhone = contacts.where((c) => c.phones.isNotEmpty).toList();
+      developer.log('Contacts with phone numbers: ${contactsWithPhone.length}', name: 'Contacts');
+      debugPrint('[Contacts] Contacts with phone numbers: ${contactsWithPhone.length}');
 
-          // Update the recipient controller
-          setState(() {
-            _recipientController.text = phoneNumber;
-          });
-        } else {
-          if (mounted) {
-            _showError('Selected contact has no phone number');
-          }
-        }
-      }
-    } catch (e) {
+      // Sort contacts alphabetically
+      contactsWithPhone.sort((a, b) => a.displayName.compareTo(b.displayName));
+
+      setState(() {
+        _contacts = contactsWithPhone;
+        _filteredContacts = contactsWithPhone;
+        _isLoadingContacts = false;
+      });
+
+      developer.log('=== CONTACT FETCH SUCCESS ===', name: 'Contacts');
+      debugPrint('[Contacts] === CONTACT FETCH SUCCESS ===');
+
+      // Show the contacts bottom sheet
       if (mounted) {
-        _showError('Failed to pick contact: ${e.toString()}');
+        _showContactsBottomSheet();
+      }
+    } catch (e, stackTrace) {
+      developer.log('=== CONTACT FETCH ERROR ===', name: 'Contacts');
+      developer.log('Error: $e', name: 'Contacts');
+      developer.log('Stack trace: $stackTrace', name: 'Contacts');
+      debugPrint('[Contacts] === CONTACT FETCH ERROR ===');
+      debugPrint('[Contacts] Error: $e');
+      debugPrint('[Contacts] Stack trace: $stackTrace');
+
+      setState(() {
+        _isLoadingContacts = false;
+      });
+      if (mounted) {
+        _showError('Failed to fetch contacts: ${e.toString()}');
       }
     }
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.contacts, color: AppColors.primaryBlue),
+            SizedBox(width: 8),
+            Text('Contact Access Required'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Contact permission has been denied. Please enable it in your device settings to select contacts for gift transfers.',
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Go to Settings > Apps > TCC > Permissions > Contacts',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+            ),
+            child: Text('Open Settings', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _filterContacts(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredContacts = _contacts;
+      } else {
+        _filteredContacts = _contacts.where((contact) {
+          final nameLower = contact.displayName.toLowerCase();
+          final queryLower = query.toLowerCase();
+          // Also search by phone number
+          final phoneMatch = contact.phones.any((phone) =>
+              phone.number.replaceAll(RegExp(r'[^\d]'), '').contains(query.replaceAll(RegExp(r'[^\d]'), '')));
+          return nameLower.contains(queryLower) || phoneMatch;
+        }).toList();
+      }
+    });
+  }
+
+  String _cleanPhoneNumber(String phoneNumber) {
+    // Remove all non-digit characters except leading +
+    phoneNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+
+    // Remove country code if present (assuming Sierra Leone +232)
+    if (phoneNumber.startsWith('+232')) {
+      phoneNumber = phoneNumber.substring(4);
+    } else if (phoneNumber.startsWith('232')) {
+      phoneNumber = phoneNumber.substring(3);
+    }
+
+    return phoneNumber;
+  }
+
+  void _showContactsBottomSheet() {
+    _searchController.clear();
+    _filteredContacts = _contacts;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Handle bar
+                Container(
+                  margin: EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Header
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.contacts, color: AppColors.primaryBlue),
+                      SizedBox(width: 12),
+                      Text(
+                        'Select Contact',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Search field
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search by name or number...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear, color: Colors.grey),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _filterContacts('');
+                                  setModalState(() {});
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        _filterContacts(value);
+                        setModalState(() {});
+                      },
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 8),
+
+                // Contact count
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${_filteredContacts.length} contacts with phone numbers',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Contacts list
+                Expanded(
+                  child: _filteredContacts.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.person_off, size: 48, color: Colors.grey[400]),
+                              SizedBox(height: 16),
+                              Text(
+                                'No contacts found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: _filteredContacts.length,
+                          itemBuilder: (context, index) {
+                            final contact = _filteredContacts[index];
+                            final phoneNumber = contact.phones.first.number;
+
+                            return InkWell(
+                              onTap: () {
+                                final cleanedNumber = _cleanPhoneNumber(phoneNumber);
+                                setState(() {
+                                  _recipientController.text = cleanedNumber;
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    // Contact avatar
+                                    CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
+                                      backgroundImage: contact.photo != null
+                                          ? MemoryImage(contact.photo!)
+                                          : null,
+                                      child: contact.photo == null
+                                          ? Text(
+                                              contact.displayName.isNotEmpty
+                                                  ? contact.displayName[0].toUpperCase()
+                                                  : '?',
+                                              style: TextStyle(
+                                                color: AppColors.primaryBlue,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 18,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    SizedBox(width: 12),
+
+                                    // Contact info
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            contact.displayName,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            phoneNumber,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Arrow icon
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildQuickAmountChip(String amount) {

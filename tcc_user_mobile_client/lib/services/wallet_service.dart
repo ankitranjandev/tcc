@@ -159,13 +159,15 @@ class WalletService {
   }
 
   // Create Stripe payment intent
+  // Note: Stripe expects amount in cents, so we convert dollars to cents
   Future<Map<String, dynamic>> createPaymentIntent({
     required double amount,
   }) async {
     try {
+      final amountInCents = (amount * 100).round();
       final response = await _apiService.post(
         '/wallet/create-payment-intent',
-        body: {'amount': amount},
+        body: {'amount': amountInCents},
         requiresAuth: true,
       );
       return {'success': true, 'data': response};

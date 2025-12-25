@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:developer' as developer;
 import '../../config/app_colors.dart';
 import '../../config/app_constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/authenticated_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -42,6 +44,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
 
+    // Debug logging for profile picture
+    developer.log('🖼️ ProfileScreen: Building with user: ${user?.email}', name: 'ProfileScreen');
+    developer.log('🖼️ ProfileScreen: Raw profilePicture value: ${user?.profilePicture}', name: 'ProfileScreen');
+    if (user?.profilePicture != null) {
+      final fixedUrl = _getFixedImageUrl(user!.profilePicture!);
+      developer.log('🖼️ ProfileScreen: Fixed image URL: $fixedUrl', name: 'ProfileScreen');
+    } else {
+      developer.log('🖼️ ProfileScreen: profilePicture is NULL - showing default icon', name: 'ProfileScreen');
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('My Profile'),
@@ -71,12 +83,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
                     child: user?.profilePicture != null
                         ? ClipOval(
-                            child: Image.network(
-                              _getFixedImageUrl(user!.profilePicture!),
+                            child: AuthenticatedImage(
+                              key: ValueKey(user!.profilePicture!),
+                              imageUrl: _getFixedImageUrl(user.profilePicture!),
                               width: 120,
                               height: 120,
                               fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                );
+                              },
                               errorBuilder: (context, error, stackTrace) {
+                                developer.log('🖼️ ProfileScreen: AuthenticatedImage error: $error', name: 'ProfileScreen');
                                 return Icon(
                                   Icons.person,
                                   size: 60,
@@ -394,6 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Pick and upload profile picture
   Future<void> _pickAndUploadImage(ImageSource source) async {
+    developer.log('📸 ProfileScreen: Starting image pick from ${source == ImageSource.camera ? "camera" : "gallery"}', name: 'ProfileScreen');
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
@@ -404,8 +426,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (image == null) {
+        developer.log('📸 ProfileScreen: Image picking cancelled by user', name: 'ProfileScreen');
         return;
       }
+
+      developer.log('📸 ProfileScreen: Image picked successfully', name: 'ProfileScreen');
+      developer.log('📸 ProfileScreen: Image path: ${image.path}', name: 'ProfileScreen');
+      developer.log('📸 ProfileScreen: Image name: ${image.name}', name: 'ProfileScreen');
 
       if (!mounted) return;
 
@@ -430,8 +457,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
 
+      developer.log('📸 ProfileScreen: Calling authProvider.updateProfilePicture...', name: 'ProfileScreen');
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final success = await authProvider.updateProfilePicture(image.path);
+      developer.log('📸 ProfileScreen: updateProfilePicture returned: $success', name: 'ProfileScreen');
 
       if (!mounted) return;
 
@@ -439,6 +468,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.pop(context);
 
       if (success) {
+        // Log the updated user data
+        final updatedUser = authProvider.user;
+        developer.log('📸 ProfileScreen: SUCCESS! Updated user profilePicture: ${updatedUser?.profilePicture}', name: 'ProfileScreen');
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Profile picture updated successfully!'),
@@ -447,6 +480,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       } else {
+        developer.log('📸 ProfileScreen: FAILED! Error: ${authProvider.errorMessage}', name: 'ProfileScreen');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authProvider.errorMessage ?? 'Failed to update profile picture'),
@@ -455,7 +489,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      developer.log('📸 ProfileScreen: EXCEPTION during image upload: $e', name: 'ProfileScreen');
+      developer.log('📸 ProfileScreen: Stack trace: $stackTrace', name: 'ProfileScreen');
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -470,20 +506,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Fix image URL for Android emulator and ensure it has the correct base URL
   String _getFixedImageUrl(String url) {
+    developer.log('🔗 ProfileScreen._getFixedImageUrl: Input URL: $url', name: 'ProfileScreen');
+
     // If the URL is already complete, just fix the host
     if (url.startsWith('http://') || url.startsWith('https://')) {
       // Replace localhost and 127.0.0.1 with 10.0.2.2 for Android emulator
-      return url
+      final fixedUrl = url
           .replaceAll('localhost', '10.0.2.2')
           .replaceAll('127.0.0.1', '10.0.2.2');
+      developer.log('🔗 ProfileScreen._getFixedImageUrl: Full URL fixed to: $fixedUrl', name: 'ProfileScreen');
+      return fixedUrl;
     }
 
     // If it's a relative URL, prepend the base URL
     String baseUrl = AppConstants.baseUrl.replaceAll('/v1', '');
+    developer.log('🔗 ProfileScreen._getFixedImageUrl: Base URL: $baseUrl', name: 'ProfileScreen');
     if (!url.startsWith('/')) {
       url = '/$url';
     }
-    return '$baseUrl$url';
+    final fullUrl = '$baseUrl$url';
+    developer.log('🔗 ProfileScreen._getFixedImageUrl: Built full URL: $fullUrl', name: 'ProfileScreen');
+    return fullUrl;
   }
 
   Color _getKycStatusColor(String status) {

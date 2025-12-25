@@ -67,8 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // Fetch wallet balance
       final walletResponse = await _walletService.getBalance();
       if (walletResponse['success'] == true) {
-        final walletData = walletResponse['data'];
-        _walletBalance = (walletData['balance'] ?? 0).toDouble();
+        final responseData = walletResponse['data'];
+        final wallet = responseData['data']?['wallet'];
+        _walletBalance = (wallet?['balance'] ?? 0).toDouble();
       }
 
       // Fetch investment portfolio
@@ -234,11 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
               // TCC Coin Balance Card
               _buildBalanceCard(currencyFormat, tccFormat),
 
-              SizedBox(height: 16),
-
-              // Stats Cards Row
-              _buildStatsRow(currencyFormat, tccFormat),
-
               SizedBox(height: 20),
 
               // Agent Locator Button
@@ -378,85 +374,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               'Add Money',
               style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsRow(NumberFormat currencyFormat, NumberFormat tccFormat) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFFDC830), Color(0xFFF37335)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total Invested',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    tccFormat.format(_totalInvested),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Expected Return',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    tccFormat.format(_expectedReturns),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ],
@@ -695,19 +612,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '1 Leone',
+                        '1 TCC = 1 USD',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        '\$$displayRate USD',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
                         ),
                       ),
                       SizedBox(height: 4),
@@ -1372,7 +1280,7 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
   String? _errorMessage;
   String? _paymentIntentId;
 
-  final List<int> _quickAmounts = [1000, 5000, 10000, 25000];
+  final List<int> _quickAmounts = [1, 5, 10, 25];
 
   @override
   void dispose() {
@@ -1401,8 +1309,8 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
       return;
     }
 
-    if (amount < 1000) {
-      setState(() => _errorMessage = 'Minimum amount is Le 1,000');
+    if (amount < 1) {
+      setState(() => _errorMessage = 'Minimum amount is \$1 USD');
       return;
     }
 
@@ -1554,9 +1462,9 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
             keyboardType: TextInputType.number,
             style: TextStyle(fontSize: 18),
             decoration: InputDecoration(
-              labelText: 'Amount (Le)',
+              labelText: 'Amount (USD)',
               hintText: 'Enter amount',
-              prefixText: 'TCC',
+              prefixText: '\$ ',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1590,7 +1498,7 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
                     ),
                   ),
                   child: Text(
-                    'TCC${amount.toStringAsFixed(0)}',
+                    '\$${amount.toStringAsFixed(0)}',
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black87,
                       fontWeight: FontWeight.w600,

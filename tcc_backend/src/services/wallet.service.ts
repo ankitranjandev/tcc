@@ -116,7 +116,7 @@ export class WalletService {
             `UPDATE transactions
              SET status = $1, processed_at = NOW()
              WHERE id = $2`,
-            [TransactionStatus.COMPLETED, transactions[0].id]
+            [TransactionStatus.COMPLETED, transactions.rows[0].id]
           );
 
           // Update wallet balance
@@ -155,10 +155,10 @@ export class WalletService {
             ]
           );
 
-          transactions[0].status = TransactionStatus.COMPLETED;
+          transactions.rows[0].status = TransactionStatus.COMPLETED;
         }
 
-        return transactions[0];
+        return transactions.rows[0];
       });
 
       logger.info('Deposit initiated', {
@@ -412,7 +412,7 @@ export class WalletService {
           [totalAmount, userId]
         );
 
-        return transactions[0];
+        return transactions.rows[0];
       });
 
       logger.info('Withdrawal initiated', {
@@ -566,7 +566,7 @@ export class WalletService {
           [amount, recipient.id]
         );
 
-        return transactions[0];
+        return transactions.rows[0];
       });
 
       logger.info('Transfer completed', {
@@ -713,7 +713,7 @@ export class WalletService {
         );
 
         // Get updated wallet balance
-        const wallets = await client.query(
+        const walletResult = await client.query(
           'SELECT balance, currency FROM wallets WHERE user_id = $1',
           [userId]
         );
@@ -722,8 +722,8 @@ export class WalletService {
           success: true,
           transaction_id: transaction.transaction_id,
           amount: parseFloat(transaction.amount),
-          balance: parseFloat(wallets[0].balance),
-          currency: wallets[0].currency,
+          balance: parseFloat(walletResult.rows[0].balance),
+          currency: walletResult.rows[0].currency,
         };
       });
 
