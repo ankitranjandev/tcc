@@ -7,7 +7,13 @@ class AppConstants {
   static const bool isDemoMode = false;
 
   // API Configuration
-  static const String baseUrl = 'http://localhost:3000/v1'; // Change for production
+  // For Android Emulator: Use 10.0.2.2 instead of localhost
+  // For iOS Simulator: Use localhost
+  // For Physical Device: Use your machine's IP address (e.g., 192.168.1.x)
+  static const String baseUrl = 'http://10.0.2.2:3000/v1'; // Android Emulator
+  // static const String baseUrl = 'http://localhost:3000/v1'; // iOS Simulator
+  // static const String baseUrl = 'http://192.168.1.x:3000/v1'; // Physical Device
+  // static const String baseUrl = 'https://api.tcc.com/v1'; // Production
   static const String apiVersion = 'v1';
 
   // API Endpoints - Auth

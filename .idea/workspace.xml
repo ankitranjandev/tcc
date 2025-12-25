@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="kyc changes" />
+    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="agent update">
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/config/app_constants.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/config/app_constants.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_agent_client/lib/services/api_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_agent_client/lib/services/api_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/macos/Podfile.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tcc_user_mobile_client/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/tcc_user_mobile_client/pubspec.lock" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -146,6 +152,7 @@
     <MESSAGE value="updates" />
     <MESSAGE value="updated bank account management and data export features" />
     <MESSAGE value="kyc changes" />
-    <option name="LAST_COMMIT_MESSAGE" value="kyc changes" />
+    <MESSAGE value="agent update" />
+    <option name="LAST_COMMIT_MESSAGE" value="agent update" />
   </component>
 </project>

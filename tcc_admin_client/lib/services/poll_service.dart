@@ -77,7 +77,7 @@ class PollService {
     try {
       final response = await _apiService.get(
         '/polls/$pollId',
-        fromJson: (data) => PollModel.fromJson(data as Map<String, dynamic>),
+        fromJson: (data) => PollModel.fromJson(data['poll'] as Map<String, dynamic>),
       );
 
       return response;
@@ -109,7 +109,7 @@ class PollService {
           'start_date': startDate.toIso8601String(),
           'end_date': endDate.toIso8601String(),
         },
-        fromJson: (data) => PollModel.fromJson(data as Map<String, dynamic>),
+        fromJson: (data) => PollModel.fromJson(data['poll'] as Map<String, dynamic>),
       );
 
       return response;
@@ -126,7 +126,7 @@ class PollService {
     try {
       final response = await _apiService.put(
         '/polls/admin/$pollId/publish',
-        fromJson: (data) => PollModel.fromJson(data as Map<String, dynamic>),
+        fromJson: (data) => PollModel.fromJson(data['poll'] as Map<String, dynamic>),
       );
 
       return response;

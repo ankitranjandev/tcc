@@ -171,7 +171,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   desktop: 5,
                 );
                 final spacing = isMobile ? AppTheme.space16 : AppTheme.space24;
-                final aspectRatio = isMobile ? 1.8 : 1.5;
+                // Lower aspect ratio = taller cards (aspectRatio = width/height)
+                final aspectRatio = isMobile ? 1.6 : 1.2;
 
                 return GridView.count(
                   crossAxisCount: crossAxisCount,

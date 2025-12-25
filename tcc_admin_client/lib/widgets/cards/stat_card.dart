@@ -109,29 +109,25 @@ class StatCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: isMobile ? AppTheme.space8 : AppTheme.space12),
-            Flexible(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: isMobile ? 12 : 13,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              title,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: isMobile ? 12 : 13,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: isMobile ? AppTheme.space4 : AppTheme.space8),
-            Flexible(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: isMobile ? 20 : 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: isMobile ? 20 : 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
