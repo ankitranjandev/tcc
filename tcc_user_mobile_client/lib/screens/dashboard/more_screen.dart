@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
+import '../../config/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bank_account_provider.dart';
 import '../../models/bank_account_model.dart';
+import '../../widgets/authenticated_image.dart';
 import '../profile/profile_screen.dart';
 import '../profile/manage_bank_account_screen.dart';
 
@@ -29,6 +31,19 @@ class _MoreScreenState extends State<MoreScreen> {
   Future<void> _loadBankAccounts() async {
     final provider = Provider.of<BankAccountProvider>(context, listen: false);
     await provider.fetchAccounts();
+  }
+
+  String _getFixedImageUrl(String url) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+          .replaceAll('localhost', '10.0.2.2')
+          .replaceAll('127.0.0.1', '10.0.2.2');
+    }
+    String baseUrl = AppConstants.baseUrl.replaceAll('/v1', '');
+    if (!url.startsWith('/')) {
+      url = '/$url';
+    }
+    return '$baseUrl$url';
   }
 
   @override
@@ -74,11 +89,36 @@ class _MoreScreenState extends State<MoreScreen> {
                         CircleAvatar(
                           radius: 40,
                           backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.2),
-                          child: Icon(
-                            Icons.person,
-                            size: 40,
-                            color: AppColors.primaryBlue,
-                          ),
+                          child: user?.profilePicture != null
+                              ? ClipOval(
+                                  child: AuthenticatedImage(
+                                    key: ValueKey(user!.profilePicture!),
+                                    imageUrl: _getFixedImageUrl(user.profilePicture!),
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.primaryBlue,
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.person,
+                                        size: 40,
+                                        color: AppColors.primaryBlue,
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: AppColors.primaryBlue,
+                                ),
                         ),
                         SizedBox(width: 16),
                         Expanded(

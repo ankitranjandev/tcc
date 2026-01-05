@@ -207,4 +207,23 @@ export class UserController {
       return ApiResponseUtil.internalError(res, 'Failed to upload profile picture');
     }
   }
+
+  static async verifyPhone(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return ApiResponseUtil.unauthorized(res);
+
+      const { phone, country_code } = req.body;
+
+      const result = await UserService.verifyPhone(phone, country_code, userId);
+
+      return ApiResponseUtil.success(res, result);
+    } catch (error: any) {
+      logger.error('Verify phone error', error);
+      if (error.message === 'CANNOT_TRANSFER_TO_SELF') {
+        return ApiResponseUtil.badRequest(res, 'Cannot transfer to yourself');
+      }
+      return ApiResponseUtil.internalError(res);
+    }
+  }
 }

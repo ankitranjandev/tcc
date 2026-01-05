@@ -943,7 +943,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
 
       // Request OTP for transfer
       final otpResult = await walletService.requestTransferOTP(
-        recipientPhoneNumber: _recipientController.text,
+        recipientPhone: _recipientController.text,
         amount: amount,
       );
 
@@ -1039,7 +1039,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
     try {
       final walletService = WalletService();
       final result = await walletService.transfer(
-        recipientPhoneNumber: _recipientController.text,
+        recipientPhone: _recipientController.text,
         amount: amount,
         otp: otp,
         note: _messageController.text.isNotEmpty ? _messageController.text : null,

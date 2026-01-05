@@ -33,11 +33,33 @@ class App {
     // Security middleware
     this.app.use(helmet());
 
-    // CORS - Allow all origins for local testing
+    // CORS configuration
+    const allowedOrigins = [
+      'https://tcc-app-ebb14.web.app',
+      'https://tcc-app-ebb14.firebaseapp.com',
+      'https://dppyssab6rrh5.cloudfront.net',
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://localhost:5000',
+    ];
+
     this.app.use(
       cors({
-        origin: true, // This allows all origins while keeping credentials support
+        origin: (origin, callback) => {
+          // Allow requests with no origin (mobile apps, curl, etc.)
+          if (!origin) return callback(null, true);
+
+          if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+          } else {
+            // Log unauthorized origin attempts but still allow for now
+            logger.warn('CORS request from unauthorized origin', { origin });
+            callback(null, true); // Allow all origins in development; set to false in strict production
+          }
+        },
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
       })
     );
 
@@ -153,6 +175,7 @@ class App {
     // User routes
     const userRoutes = await import('./routes/user.routes');
     this.app.use(`${apiPrefix}/users`, userRoutes.default);
+    this.app.use(`${apiPrefix}/user`, userRoutes.default); // Alias for singular
     logger.info('User routes registered');
 
     // Wallet routes

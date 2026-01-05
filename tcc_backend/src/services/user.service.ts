@@ -359,4 +359,44 @@ export class UserService {
       throw error;
     }
   }
+
+  /**
+   * Verify if a phone number exists and get recipient info for transfers
+   */
+  static async verifyPhone(
+    phone: string,
+    countryCode: string,
+    requestingUserId: string
+  ): Promise<{ exists: boolean; recipient?: { name: string; phone: string } }> {
+    try {
+      const users = await db.query<User>(
+        `SELECT id, first_name, last_name, phone, is_active
+         FROM users
+         WHERE phone = $1 AND country_code = $2 AND is_active = true`,
+        [phone, countryCode]
+      );
+
+      if (users.length === 0) {
+        return { exists: false };
+      }
+
+      const user = users[0];
+
+      // Prevent transferring to self
+      if (user.id === requestingUserId) {
+        throw new Error('CANNOT_TRANSFER_TO_SELF');
+      }
+
+      return {
+        exists: true,
+        recipient: {
+          name: `${user.first_name} ${user.last_name}`,
+          phone: `****${phone.slice(-4)}`,
+        },
+      };
+    } catch (error) {
+      logger.error('Error verifying phone', error);
+      throw error;
+    }
+  }
 }

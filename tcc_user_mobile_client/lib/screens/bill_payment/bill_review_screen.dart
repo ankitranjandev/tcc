@@ -6,7 +6,7 @@ import 'payment_method_screen.dart';
 class BillReviewScreen extends StatefulWidget {
   final String billType;
   final String provider;
-  final String? providerId;
+  final String providerId;
   final String accountNumber;
   final String customerName;
   final double billAmount;
@@ -19,7 +19,7 @@ class BillReviewScreen extends StatefulWidget {
     super.key,
     required this.billType,
     required this.provider,
-    this.providerId,
+    required this.providerId,
     required this.accountNumber,
     required this.customerName,
     required this.billAmount,

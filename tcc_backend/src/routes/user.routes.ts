@@ -53,6 +53,13 @@ const addBankAccountSchema = z.object({
   }),
 });
 
+const verifyPhoneSchema = z.object({
+  body: z.object({
+    phone: z.string().min(10).max(15),
+    country_code: z.string().regex(/^\+\d{1,4}$/),
+  }),
+});
+
 // Routes
 router.get('/profile', UserController.getProfile);
 router.patch('/profile', validate(updateProfileSchema), UserController.updateProfile);
@@ -68,5 +75,6 @@ router.post('/delete-account', UserController.deleteAccount);
 router.post('/cancel-deletion', UserController.cancelDeletion);
 router.post('/bank-accounts', validate(addBankAccountSchema), UserController.addBankAccount);
 router.get('/bank-accounts', UserController.getBankAccounts);
+router.post('/verify-phone', validate(verifyPhoneSchema), UserController.verifyPhone);
 
 export default router;

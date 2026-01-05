@@ -170,20 +170,41 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
   Widget _buildTransactionList(List<TransactionModel> transactions) {
     if (transactions.isEmpty && !_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long, size: 64, color: Theme.of(context).disabledColor),
-            SizedBox(height: 16),
-            Text(
-              'No transactions found',
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).textTheme.bodySmall?.color,
+      return RefreshIndicator(
+        onRefresh: _loadTransactions,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.receipt_long, size: 64, color: Theme.of(context).disabledColor),
+                      SizedBox(height: 16),
+                      Text(
+                        'No transactions found',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Pull down to refresh',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       );
     }

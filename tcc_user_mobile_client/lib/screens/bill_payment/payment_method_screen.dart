@@ -11,7 +11,7 @@ import 'upload_payment_details_screen.dart';
 class PaymentMethodScreen extends StatefulWidget {
   final String billType;
   final String provider;
-  final String? providerId;
+  final String providerId;
   final double amount;
   final String accountNumber;
 
@@ -19,7 +19,7 @@ class PaymentMethodScreen extends StatefulWidget {
     super.key,
     required this.billType,
     required this.provider,
-    this.providerId,
+    required this.providerId,
     required this.amount,
     required this.accountNumber,
   });
@@ -122,7 +122,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     try {
       // Step 1: Create Stripe payment intent for bill
       final result = await _billService.createBillPaymentIntent(
-        providerId: widget.providerId ?? widget.provider,
+        providerId: widget.providerId,
         accountNumber: widget.accountNumber,
         amount: widget.amount,
       );

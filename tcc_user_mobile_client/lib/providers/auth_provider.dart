@@ -4,6 +4,44 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 
+// Helper function to convert backend error codes to user-friendly messages
+String _getUserFriendlyErrorMessage(String? error) {
+  if (error == null) return 'An error occurred. Please try again.';
+
+  // Handle common backend error codes
+  switch (error.toUpperCase()) {
+    case 'PHONE_ALREADY_EXISTS':
+      return 'This phone number is already registered. Please use a different number or try logging in.';
+    case 'EMAIL_ALREADY_EXISTS':
+      return 'This email address is already registered. Please use a different email or try logging in.';
+    case 'USER_NOT_FOUND':
+      return 'No account found with these credentials.';
+    case 'INVALID_CREDENTIALS':
+      return 'Invalid email or password. Please try again.';
+    case 'INVALID_OTP':
+      return 'Invalid verification code. Please check and try again.';
+    case 'OTP_EXPIRED':
+      return 'Verification code has expired. Please request a new one.';
+    case 'ACCOUNT_LOCKED':
+      return 'Your account has been locked. Please contact support.';
+    case 'ACCOUNT_DISABLED':
+      return 'Your account has been disabled. Please contact support.';
+    case 'INVALID_PHONE':
+      return 'Please enter a valid phone number.';
+    case 'INVALID_EMAIL':
+      return 'Please enter a valid email address.';
+    case 'WEAK_PASSWORD':
+      return 'Password is too weak. Please use a stronger password.';
+    default:
+      // If the error is already a readable message (contains spaces), return as-is
+      if (error.contains(' ')) {
+        return error;
+      }
+      // Otherwise, return the error with a generic prefix
+      return error.replaceAll('_', ' ').toLowerCase();
+  }
+}
+
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   final ApiService _apiService = ApiService();
@@ -84,14 +122,14 @@ class AuthProvider with ChangeNotifier {
           return false;
         }
       } else {
-        _errorMessage = result['error'] ?? 'Login failed';
+        _errorMessage = _getUserFriendlyErrorMessage(result['error']);
         developer.log('🔴 AuthProvider: Login failed: $_errorMessage', name: 'AuthProvider');
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _getUserFriendlyErrorMessage(e.toString());
       developer.log('🔴 AuthProvider: Login exception: $e', name: 'AuthProvider');
       _isLoading = false;
       notifyListeners();
@@ -149,13 +187,13 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = result['error'] ?? 'Registration failed';
+        _errorMessage = _getUserFriendlyErrorMessage(result['error']);
         developer.log('🔴 AuthProvider: Registration failed: $_errorMessage', name: 'AuthProvider');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _getUserFriendlyErrorMessage(e.toString());
       _isLoading = false;
       developer.log('🔴 AuthProvider: Registration exception: $e', name: 'AuthProvider');
       notifyListeners();
@@ -205,14 +243,14 @@ class AuthProvider with ChangeNotifier {
           return true;
         }
       } else {
-        _errorMessage = result['error'] ?? 'OTP verification failed';
+        _errorMessage = _getUserFriendlyErrorMessage(result['error']);
         developer.log('🔴 AuthProvider: OTP verification failed: $_errorMessage', name: 'AuthProvider');
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _getUserFriendlyErrorMessage(e.toString());
       developer.log('🔴 AuthProvider: OTP verification exception: $e', name: 'AuthProvider');
       _isLoading = false;
       notifyListeners();
@@ -324,13 +362,13 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = result['error'] ?? 'Failed to resend OTP';
+        _errorMessage = _getUserFriendlyErrorMessage(result['error']);
         developer.log('🔴 AuthProvider: Resend OTP failed: $_errorMessage', name: 'AuthProvider');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _getUserFriendlyErrorMessage(e.toString());
       developer.log('🔴 AuthProvider: Resend OTP exception: $e', name: 'AuthProvider');
       _isLoading = false;
       notifyListeners();

@@ -116,19 +116,9 @@ export class WalletController {
 
       const { amount } = req.body;
 
-      // Validate amount
-      if (!amount || amount < config.limits.minDepositAmount) {
-        return ApiResponseUtil.badRequest(
-          res,
-          `Minimum deposit amount is ${config.limits.minDepositAmount}`
-        );
-      }
-
-      if (amount > config.limits.maxDepositAmount) {
-        return ApiResponseUtil.badRequest(
-          res,
-          `Maximum deposit amount is ${config.limits.maxDepositAmount}`
-        );
+      // Validate amount - must be positive
+      if (!amount || amount <= 0) {
+        return ApiResponseUtil.badRequest(res, 'Amount must be a positive number');
       }
 
       const result = await WalletService.createPaymentIntent(userId, amount, req.ip);

@@ -27,7 +27,7 @@ const depositSchema = z.object({
 
 const paymentIntentSchema = z.object({
   body: z.object({
-    amount: z.number().positive().min(100),
+    amount: z.number().positive(),
   }),
 });
 

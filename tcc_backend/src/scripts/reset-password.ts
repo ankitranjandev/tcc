@@ -1,6 +1,6 @@
-import db from '../config/database';
+import db from '../database';
 import { PasswordUtils } from '../utils/password';
-import logger from '../config/logger';
+import logger from '../utils/logger';
 
 async function resetPassword() {
   try {
@@ -27,7 +27,7 @@ async function resetPassword() {
     );
 
     if (result.length > 0) {
-      const user = result[0];
+      const user = result[0] as { email: string; phone: string; is_active: boolean };
       console.log('\n✅ Password updated successfully!');
       console.log(`📧 Email: ${user.email}`);
       console.log(`📱 Phone: ${user.phone}`);

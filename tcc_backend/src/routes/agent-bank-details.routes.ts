@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AgentBankDetailsController } from '../controllers/agent-bank-details.controller';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
 

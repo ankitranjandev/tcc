@@ -28,10 +28,14 @@ class ApiService {
     _setupInterceptors();
   }
 
-  /// Base URL - For demo purposes
+  /// Base URL configuration
+  /// Set to true for local development, false for AWS production
+  static const bool useLocalServer = false;
+
   static String get baseUrl {
-    // For demo, using localhost. In production, this would be from environment config
-    return 'http://localhost:3000/v1';
+    return useLocalServer
+        ? 'http://localhost:3000/v1'
+        : 'https://dppyssab6rrh5.cloudfront.net/v1';
   }
 
   /// Base options for Dio

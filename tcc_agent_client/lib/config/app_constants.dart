@@ -7,7 +7,11 @@ class AppConstants {
   static const bool isDemoMode = false;
 
   // API Configuration
-  static const String baseUrl = 'http://localhost:3000/v1'; // Change for production
+  // Set to true to use local development server, false for AWS production
+  static const bool useLocalServer = false;
+  static String get baseUrl => useLocalServer
+      ? 'http://localhost:3000/v1'
+      : 'https://dppyssab6rrh5.cloudfront.net/v1';
   static const String apiVersion = 'v1';
 
   // API Endpoints - Auth

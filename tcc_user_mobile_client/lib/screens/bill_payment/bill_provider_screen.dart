@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
+import '../../services/bill_service.dart';
 import 'bill_details_screen.dart';
 
 class BillProviderScreen extends StatefulWidget {
@@ -12,45 +13,83 @@ class BillProviderScreen extends StatefulWidget {
 }
 
 class _BillProviderScreenState extends State<BillProviderScreen> {
+  final BillService _billService = BillService();
   String searchQuery = '';
+  List<Map<String, dynamic>> _providers = [];
+  bool _isLoading = true;
+  String? _error;
 
-  Map<String, List<Map<String, dynamic>>> providers = {
-    'Electricity': [
-      {'name': 'EDSA - Sierra Leone', 'logo': '⚡', 'customers': '1.2M'},
-      {'name': 'Eskom - South Africa', 'logo': '⚡', 'customers': '5.8M'},
-      {'name': 'KPLC - Kenya Power', 'logo': '⚡', 'customers': '3.2M'},
-      {'name': 'ECG - Ghana', 'logo': '⚡', 'customers': '2.9M'},
-      {'name': 'NEPA - Nigeria', 'logo': '⚡', 'customers': '4.5M'},
-      {'name': 'ZESCO - Zambia', 'logo': '⚡', 'customers': '1.7M'},
-    ],
-    'Mobile': [
-      {'name': 'Orange Sierra Leone', 'logo': '📱', 'customers': '3.5M'},
-      {'name': 'Africell', 'logo': '📱', 'customers': '2.8M'},
-      {'name': 'MTN', 'logo': '📱', 'customers': '4.3M'},
-      {'name': 'Airtel Africa', 'logo': '📱', 'customers': '3.2M'},
-      {'name': 'Vodacom', 'logo': '📱', 'customers': '2.1M'},
-    ],
-    'Water': [
-      {'name': 'Guma Valley Water', 'logo': '💧', 'customers': '0.8M'},
-      {'name': 'NWSC - Uganda', 'logo': '💧', 'customers': '2.1M'},
-      {'name': 'Rand Water - South Africa', 'logo': '💧', 'customers': '3.8M'},
-      {'name': 'GWCL - Ghana Water', 'logo': '💧', 'customers': '1.3M'},
-      {'name': 'Lagos Water Corporation', 'logo': '💧', 'customers': '2.6M'},
-    ],
-    'DTH': [
-      {'name': 'DStv', 'logo': '📡', 'customers': '8.3M'},
-      {'name': 'GOtv', 'logo': '📡', 'customers': '5.9M'},
-      {'name': 'StarTimes', 'logo': '📡', 'customers': '4.5M'},
-      {'name': 'Canal+', 'logo': '📡', 'customers': '3.1M'},
-      {'name': 'Zuku', 'logo': '📡', 'customers': '1.9M'},
-    ],
-  };
+  // Map bill types to API category values
+  String get _categoryForBillType {
+    switch (widget.billType) {
+      case 'Electricity':
+        return 'electricity';
+      case 'Mobile':
+        return 'mobile';
+      case 'Water':
+        return 'water';
+      case 'DTH':
+        return 'dth';
+      default:
+        return widget.billType.toLowerCase();
+    }
+  }
+
+  // Icon for each bill type
+  String _getLogoForCategory(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'electricity':
+        return '⚡';
+      case 'mobile':
+        return '📱';
+      case 'water':
+        return '💧';
+      case 'dth':
+        return '📡';
+      default:
+        return '��';
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProviders();
+  }
+
+  Future<void> _fetchProviders() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final result = await _billService.getProviders(category: _categoryForBillType);
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        if (result['success']) {
+          final data = result['data'];
+          final providersList = data['data'] ?? data['providers'] ?? data;
+          if (providersList is List) {
+            _providers = providersList.map((p) => {
+              'id': p['id'] ?? '',
+              'name': p['name'] ?? '',
+              'logo': _getLogoForCategory(p['category']),
+              'category': p['category'] ?? '',
+            }).toList().cast<Map<String, dynamic>>();
+          }
+        } else {
+          _error = result['error'] ?? 'Failed to load providers';
+        }
+      });
+    }
+  }
 
   List<Map<String, dynamic>> get filteredProviders {
-    final list = providers[widget.billType] ?? [];
-    if (searchQuery.isEmpty) return list;
-    return list.where((provider) {
-      return provider['name'].toLowerCase().contains(searchQuery.toLowerCase());
+    if (searchQuery.isEmpty) return _providers;
+    return _providers.where((provider) {
+      return provider['name'].toString().toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
   }
 
@@ -106,14 +145,39 @@ class _BillProviderScreenState extends State<BillProviderScreen> {
 
             // Providers List
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filteredProviders.length,
-                itemBuilder: (context, index) {
-                  final provider = filteredProviders[index];
-                  return _buildProviderCard(provider);
-                },
-              ),
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline, size: 48, color: Colors.red),
+                              SizedBox(height: 16),
+                              Text(_error!, textAlign: TextAlign.center),
+                              SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _fetchProviders,
+                                child: Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : filteredProviders.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No providers found',
+                                style: TextStyle(color: Theme.of(context).hintColor),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: filteredProviders.length,
+                              itemBuilder: (context, index) {
+                                final provider = filteredProviders[index];
+                                return _buildProviderCard(provider);
+                              },
+                            ),
             ),
           ],
         ),
@@ -130,6 +194,7 @@ class _BillProviderScreenState extends State<BillProviderScreen> {
             builder: (context) => BillDetailsScreen(
               billType: widget.billType,
               provider: provider['name'],
+              providerId: provider['id'],
             ),
           ),
         );

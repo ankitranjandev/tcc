@@ -6,11 +6,13 @@ import 'bill_review_screen.dart';
 class BillDetailsScreen extends StatefulWidget {
   final String billType;
   final String provider;
+  final String providerId;
 
   const BillDetailsScreen({
     super.key,
     required this.billType,
     required this.provider,
+    required this.providerId,
   });
 
   @override
@@ -88,9 +90,10 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
           builder: (context) => BillReviewScreen(
             billType: widget.billType,
             provider: widget.provider,
+            providerId: widget.providerId,
             accountNumber: _accountController.text,
             customerName: 'John Doe',
-            billAmount: 245000.00,
+            billAmount: 2.00,
             dueDate: DateTime.now().add(Duration(days: 7)),
             autoPay: _autoPayEnabled,
             mobile: _mobileController.text,

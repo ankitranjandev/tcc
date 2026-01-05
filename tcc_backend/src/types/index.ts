@@ -151,6 +151,7 @@ export interface AuthRequest extends Request {
     id: string;
     role: UserRole;
     email: string;
+    agentId?: string;
   };
 }
 

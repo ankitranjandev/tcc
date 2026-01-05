@@ -61,12 +61,9 @@ export const createPaymentIntent = async (
   stripeCustomerId?: string
 ): Promise<Stripe.PaymentIntent> => {
   try {
-    // Stripe requires amount in smallest currency unit (cents for USD, kobo for SLL)
-    // For SLL, 1 SLL = 100 cents
-    const amountInCents = Math.round(amount * 100);
-
+    // Amount is already in cents from frontend
     const paymentIntentData: Stripe.PaymentIntentCreateParams = {
-      amount: amountInCents,
+      amount: Math.round(amount),
       currency: config.stripe.currency,
       metadata: {
         user_id: userId,

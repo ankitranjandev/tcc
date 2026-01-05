@@ -671,6 +671,10 @@ export class WalletService {
         // Get updated wallet balance
         const wallet = await this.getBalance(userId);
 
+        if (!wallet) {
+          throw new Error('WALLET_NOT_FOUND');
+        }
+
         return {
           success: true,
           transaction_id: transaction.transaction_id,
@@ -715,8 +719,12 @@ export class WalletService {
         // Get updated wallet balance
         const walletResult = await client.query(
           'SELECT balance, currency FROM wallets WHERE user_id = $1',
-          [userId]
+          [transaction.to_user_id]
         );
+
+        if (!walletResult.rows || walletResult.rows.length === 0) {
+          throw new Error('WALLET_NOT_FOUND');
+        }
 
         return {
           success: true,

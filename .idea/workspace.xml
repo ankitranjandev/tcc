@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="kyc changes" />
+    <list default="true" id="6861e8cd-37b4-479e-ae89-2eb231c10d58" name="Changes" comment="==== commit message ====&#10;implemented automatic logout for unauthorized sessions and added investment entry points to the live currency screen&#10;&#10;- **Authentication &amp; API**:&#10;    - Introduced a static `onUnauthorized` callback in `ApiService` to handle 401 response codes globally.&#10;    - Updated `main.dart` to trigger an automatic logout via `AuthProvider` when the API service detects an unauthorized session.&#10;- **Currency &amp; Investment**:&#10;    - Updated `LiveCurrencyScreen` to support investment workflows for specific currencies (EUR, GBP, JPY, etc.).&#10;    - Added a &quot;Invest&quot; tag and chevron navigation to currency cards that are eligible for investment.&#10;    - Integrated navigation logic to the currency purchase screen, passing real-time rate and metadata.&#10;- **UI Enhancements**:&#10;    - Refactored currency cards into interactive `InkWell` widgets with visual indicators for investable assets.&#10;    - Improved currency card styling with conditional borders and refined typography.&#10;====" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -139,13 +139,22 @@
       <option name="project" value="LOCAL" />
       <updated>1766484682439</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="==== commit message ====&#10;implemented automatic logout for unauthorized sessions and added investment entry points to the live currency screen&#10;&#10;- **Authentication &amp; API**:&#10;    - Introduced a static `onUnauthorized` callback in `ApiService` to handle 401 response codes globally.&#10;    - Updated `main.dart` to trigger an automatic logout via `AuthProvider` when the API service detects an unauthorized session.&#10;- **Currency &amp; Investment**:&#10;    - Updated `LiveCurrencyScreen` to support investment workflows for specific currencies (EUR, GBP, JPY, etc.).&#10;    - Added a &quot;Invest&quot; tag and chevron navigation to currency cards that are eligible for investment.&#10;    - Integrated navigation logic to the currency purchase screen, passing real-time rate and metadata.&#10;- **UI Enhancements**:&#10;    - Refactored currency cards into interactive `InkWell` widgets with visual indicators for investable assets.&#10;    - Improved currency card styling with conditional borders and refined typography.&#10;====">
+      <option name="closed" value="true" />
+      <created>1766671309647</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1766671309647</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="updates" />
     <MESSAGE value="updated bank account management and data export features" />
     <MESSAGE value="kyc changes" />
-    <option name="LAST_COMMIT_MESSAGE" value="kyc changes" />
+    <MESSAGE value="==== commit message ====&#10;implemented automatic logout for unauthorized sessions and added investment entry points to the live currency screen&#10;&#10;- **Authentication &amp; API**:&#10;    - Introduced a static `onUnauthorized` callback in `ApiService` to handle 401 response codes globally.&#10;    - Updated `main.dart` to trigger an automatic logout via `AuthProvider` when the API service detects an unauthorized session.&#10;- **Currency &amp; Investment**:&#10;    - Updated `LiveCurrencyScreen` to support investment workflows for specific currencies (EUR, GBP, JPY, etc.).&#10;    - Added a &quot;Invest&quot; tag and chevron navigation to currency cards that are eligible for investment.&#10;    - Integrated navigation logic to the currency purchase screen, passing real-time rate and metadata.&#10;- **UI Enhancements**:&#10;    - Refactored currency cards into interactive `InkWell` widgets with visual indicators for investable assets.&#10;    - Improved currency card styling with conditional borders and refined typography.&#10;====" />
+    <option name="LAST_COMMIT_MESSAGE" value="==== commit message ====&#10;implemented automatic logout for unauthorized sessions and added investment entry points to the live currency screen&#10;&#10;- **Authentication &amp; API**:&#10;    - Introduced a static `onUnauthorized` callback in `ApiService` to handle 401 response codes globally.&#10;    - Updated `main.dart` to trigger an automatic logout via `AuthProvider` when the API service detects an unauthorized session.&#10;- **Currency &amp; Investment**:&#10;    - Updated `LiveCurrencyScreen` to support investment workflows for specific currencies (EUR, GBP, JPY, etc.).&#10;    - Added a &quot;Invest&quot; tag and chevron navigation to currency cards that are eligible for investment.&#10;    - Integrated navigation logic to the currency purchase screen, passing real-time rate and metadata.&#10;- **UI Enhancements**:&#10;    - Refactored currency cards into interactive `InkWell` widgets with visual indicators for investable assets.&#10;    - Improved currency card styling with conditional borders and refined typography.&#10;====" />
   </component>
 </project>

@@ -6,22 +6,24 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // API Configuration
-  // 10.0.2.2 is the special IP for Android emulator to access host machine's localhost
-  // For iOS simulator, use 127.0.0.1 or localhost
-  // For physical devices, replace with your computer's IP address (e.g., 192.168.1.100)
+  // Set to true to use local development server, false for AWS production
+  static const bool useLocalServer = false;
+
   static String get baseUrl {
-    if (kIsWeb) {
-      // Web platforms use localhost
-      return 'http://localhost:3000/v1';
-    } else if (defaultTargetPlatform == TargetPlatform.android) {
-      // Android emulator uses 10.0.2.2 to access host machine's localhost
-      return 'http://10.0.2.2:3000/v1';
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      // iOS simulator can use localhost
-      return 'http://127.0.0.1:3000/v1';
+    if (useLocalServer) {
+      // Local development server
+      if (kIsWeb) {
+        return 'http://localhost:3000/v1';
+      } else if (defaultTargetPlatform == TargetPlatform.android) {
+        return 'http://10.0.2.2:3000/v1';
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        return 'http://127.0.0.1:3000/v1';
+      } else {
+        return 'http://localhost:3000/v1';
+      }
     } else {
-      // Fallback for other platforms (macOS, Windows, Linux)
-      return 'http://localhost:3000/v1';
+      // AWS Production server via CloudFront (HTTPS)
+      return 'https://dppyssab6rrh5.cloudfront.net/v1';
     }
   }
 

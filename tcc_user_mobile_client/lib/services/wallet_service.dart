@@ -99,11 +99,15 @@ class WalletService {
   // Verify if user exists by phone number
   Future<Map<String, dynamic>> verifyUserExists({
     required String phoneNumber,
+    String countryCode = '+232', // Default to Sierra Leone
   }) async {
     try {
       final response = await _apiService.post(
         '/user/verify-phone',
-        body: {'phoneNumber': phoneNumber},
+        body: {
+          'phone': phoneNumber,
+          'country_code': countryCode,
+        },
         requiresAuth: true,
       );
       return {'success': true, 'data': response};
@@ -114,14 +118,16 @@ class WalletService {
 
   // Request OTP for transfer
   Future<Map<String, dynamic>> requestTransferOTP({
-    required String recipientPhoneNumber,
+    required String recipientPhone,
     required double amount,
+    String recipientCountryCode = '+232', // Default to Sierra Leone
   }) async {
     try {
       final response = await _apiService.post(
         '/wallet/transfer/request-otp',
         body: {
-          'recipientPhoneNumber': recipientPhoneNumber,
+          'recipient_phone': recipientPhone,
+          'recipient_country_code': recipientCountryCode,
           'amount': amount,
         },
         requiresAuth: true,
@@ -134,14 +140,16 @@ class WalletService {
 
   // Transfer money to another user
   Future<Map<String, dynamic>> transfer({
-    required String recipientPhoneNumber,
+    required String recipientPhone,
     required double amount,
     required String otp,
+    String recipientCountryCode = '+232', // Default to Sierra Leone
     String? note,
   }) async {
     try {
       final body = <String, dynamic>{
-        'recipientPhoneNumber': recipientPhoneNumber,
+        'recipient_phone': recipientPhone,
+        'recipient_country_code': recipientCountryCode,
         'amount': amount,
         'otp': otp,
       };

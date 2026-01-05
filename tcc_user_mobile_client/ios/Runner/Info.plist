@@ -5,7 +5,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Tcc User Mobile Client</string>
+		<string>TCC</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -53,6 +53,8 @@
 		<string>We need access to your photo library to save payment receipts</string>
 		<key>NSContactsUsageDescription</key>
 		<string>We need access to your contacts to help you easily select a recipient for gift transfers</string>
+		<key>NSCameraUsageDescription</key>
+		<string>We need access to your camera to capture photos for KYC verification and profile pictures</string>
 		<!-- Firebase Cloud Messaging -->
 		<key>FirebaseAppDelegateProxyEnabled</key>
 		<false/>
