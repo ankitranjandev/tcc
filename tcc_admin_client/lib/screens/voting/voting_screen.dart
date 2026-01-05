@@ -100,8 +100,8 @@ class _VotingScreenState extends State<VotingScreen> {
     );
   }
 
-  void _showCreatePollDialog() {
-    showDialog(
+  Future<void> _showCreatePollDialog() async {
+    await showDialog(
       context: context,
       builder: (context) => CreatePollDialog(
         onPollCreated: (poll) {
@@ -174,11 +174,15 @@ class _VotingScreenState extends State<VotingScreen> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: Responsive.padding(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return RefreshIndicator(
+      onRefresh: _loadPolls,
+      color: AppColors.accentPurple,
+      child: SingleChildScrollView(
+        padding: Responsive.padding(context),
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Page Header
           if (isMobile)
             Column(
@@ -354,22 +358,42 @@ class _VotingScreenState extends State<VotingScreen> {
                       ),
                       const SizedBox(height: AppTheme.space12),
 
-                      // Export Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            _showExportDialog();
-                          },
-                          icon: const Icon(Icons.download),
-                          label: const Text('Export'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppTheme.space24,
-                              vertical: AppTheme.space16,
+                      // Action Buttons Row
+                      Row(
+                        children: [
+                          // Refresh Button
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _loadPolls,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Refresh'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppTheme.space24,
+                                  vertical: AppTheme.space16,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: AppTheme.space12),
+
+                          // Export Button
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                _showExportDialog();
+                              },
+                              icon: const Icon(Icons.download),
+                              label: const Text('Export'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppTheme.space24,
+                                  vertical: AppTheme.space16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   )
@@ -435,6 +459,17 @@ class _VotingScreenState extends State<VotingScreen> {
                         ),
                       ),
                       const SizedBox(width: AppTheme.space16),
+
+                      // Refresh Button
+                      IconButton(
+                        onPressed: _loadPolls,
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Refresh polls',
+                        style: IconButton.styleFrom(
+                          padding: const EdgeInsets.all(AppTheme.space20),
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.space8),
 
                       // Export Button
                       OutlinedButton.icon(
@@ -539,6 +574,7 @@ class _VotingScreenState extends State<VotingScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

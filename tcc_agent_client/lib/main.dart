@@ -53,21 +53,41 @@ void main() async {
   developer.log('✅ [MAIN] App widget created', name: 'TCC.Main');
 }
 
-class TCCAgentApp extends StatelessWidget {
+class TCCAgentApp extends StatefulWidget {
   const TCCAgentApp({super.key});
+
+  @override
+  State<TCCAgentApp> createState() => _TCCAgentAppState();
+}
+
+class _TCCAgentAppState extends State<TCCAgentApp> {
+  late final AuthProvider _authProvider;
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    developer.log('🏗️ [MAIN] Initializing TCCAgentApp state', name: 'TCC.Main');
+    _authProvider = AuthProvider();
+    _authProvider.initialize();
+    _router = _buildRouter(_authProvider);
+    developer.log('✅ [MAIN] Router created once', name: 'TCC.Main');
+  }
+
+  @override
+  void dispose() {
+    _router.dispose();
+    _authProvider.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     developer.log('🏗️ [MAIN] Building TCCAgentApp widget', name: 'TCC.Main');
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) {
-            developer.log('📦 [MAIN] Creating AuthProvider', name: 'TCC.Main');
-            final provider = AuthProvider();
-            provider.initialize();
-            return provider;
-          },
+        ChangeNotifierProvider.value(
+          value: _authProvider,
         ),
         ChangeNotifierProvider(
           create: (_) {
@@ -76,18 +96,14 @@ class TCCAgentApp extends StatelessWidget {
           },
         ),
       ],
-      child: Consumer2<AuthProvider, ThemeProvider>(
-        builder: (context, authProvider, themeProvider, _) {
-          developer.log(
-            '🔄 [MAIN] Consumer rebuilding - isAuth: ${authProvider.isAuthenticated}, isPending: ${authProvider.isPendingVerification}',
-            name: 'TCC.Main',
-          );
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
           return MaterialApp.router(
             title: 'TCC Agent',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            routerConfig: _buildRouter(authProvider),
+            routerConfig: _router,
             debugShowCheckedModeBanner: false,
           );
         },

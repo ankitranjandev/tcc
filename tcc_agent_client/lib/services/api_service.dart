@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,9 +21,18 @@ class ApiService {
 
   // Initialize with stored tokens
   Future<void> initialize() async {
+    developer.log(
+      '🌐 [API_SERVICE] Initializing API Service:\n'
+      '  Base URL: $baseUrl',
+      name: 'TCC.ApiService',
+    );
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(AppConstants.cacheKeyToken);
     _refreshToken = prefs.getString(AppConstants.cacheKeyRefreshToken);
+    developer.log(
+      '✅ [API_SERVICE] Initialized - Token exists: ${_token != null}',
+      name: 'TCC.ApiService',
+    );
   }
 
   // Store tokens
@@ -65,6 +75,13 @@ class ApiService {
   }) async {
     try {
       final uri = _buildUri(endpoint, queryParams);
+      developer.log(
+        '📡 [API_SERVICE] GET Request:\n'
+        '  URL: $uri\n'
+        '  Auth: $requiresAuth',
+        name: 'TCC.ApiService',
+      );
+
       final response = await http
           .get(
             uri,
@@ -80,14 +97,22 @@ class ApiService {
             },
           );
 
+      developer.log(
+        '✅ [API_SERVICE] Response received: ${response.statusCode}',
+        name: 'TCC.ApiService',
+      );
       return _handleResponse(response);
     } on TimeoutException {
+      developer.log('❌ [API_SERVICE] Request timeout', name: 'TCC.ApiService');
       throw ApiException(AppConstants.errorTimeout);
-    } on SocketException {
+    } on SocketException catch (e) {
+      developer.log('❌ [API_SERVICE] Network error: ${e.message}', name: 'TCC.ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on HttpException {
+    } on HttpException catch (e) {
+      developer.log('❌ [API_SERVICE] HTTP error: ${e.message}', name: 'TCC.ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on FormatException {
+    } on FormatException catch (e) {
+      developer.log('❌ [API_SERVICE] Format error: ${e.message}', name: 'TCC.ApiService');
       throw ApiException('Invalid response format. Please try again.');
     } on ApiException {
       rethrow;
@@ -96,6 +121,7 @@ class ApiService {
     } on ValidationException {
       rethrow;
     } catch (e) {
+      developer.log('❌ [API_SERVICE] Unknown error: ${e.toString()}', name: 'TCC.ApiService');
       throw ApiException('Network error: ${e.toString()}');
     }
   }
@@ -108,6 +134,14 @@ class ApiService {
   }) async {
     try {
       final uri = _buildUri(endpoint);
+      developer.log(
+        '📡 [API_SERVICE] POST Request:\n'
+        '  URL: $uri\n'
+        '  Auth: $requiresAuth\n'
+        '  Body keys: ${body?.keys.join(", ") ?? "none"}',
+        name: 'TCC.ApiService',
+      );
+
       final response = await http
           .post(
             uri,
@@ -124,14 +158,22 @@ class ApiService {
             },
           );
 
+      developer.log(
+        '✅ [API_SERVICE] Response received: ${response.statusCode}',
+        name: 'TCC.ApiService',
+      );
       return _handleResponse(response);
     } on TimeoutException {
+      developer.log('❌ [API_SERVICE] Request timeout', name: 'TCC.ApiService');
       throw ApiException(AppConstants.errorTimeout);
-    } on SocketException {
+    } on SocketException catch (e) {
+      developer.log('❌ [API_SERVICE] Network error: ${e.message}', name: 'TCC.ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on HttpException {
+    } on HttpException catch (e) {
+      developer.log('❌ [API_SERVICE] HTTP error: ${e.message}', name: 'TCC.ApiService');
       throw ApiException(AppConstants.errorNetwork);
-    } on FormatException {
+    } on FormatException catch (e) {
+      developer.log('❌ [API_SERVICE] Format error: ${e.message}', name: 'TCC.ApiService');
       throw ApiException('Invalid response format. Please try again.');
     } on ApiException {
       rethrow;
@@ -140,6 +182,7 @@ class ApiService {
     } on ValidationException {
       rethrow;
     } catch (e) {
+      developer.log('❌ [API_SERVICE] Unknown error: ${e.toString()}', name: 'TCC.ApiService');
       throw ApiException('Network error: ${e.toString()}');
     }
   }
@@ -345,7 +388,36 @@ class ApiService {
         if (response.body.isEmpty) {
           return {'success': true};
         }
-        return jsonDecode(response.body) as Map<String, dynamic>;
+
+        // Decode the response
+        final decoded = jsonDecode(response.body);
+        developer.log(
+          '📦 [API_SERVICE] Response body type: ${decoded.runtimeType}',
+          name: 'TCC.ApiService',
+        );
+
+        // If it's already a Map, return it
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+
+        // If it's a List, wrap it in a Map
+        if (decoded is List) {
+          developer.log(
+            '⚠️ [API_SERVICE] Response is a List, wrapping in Map',
+            name: 'TCC.ApiService',
+          );
+          return {
+            'success': true,
+            'data': decoded,
+          };
+        }
+
+        // For other types, try to wrap in a Map
+        return {
+          'success': true,
+          'data': decoded,
+        };
       } else if (response.statusCode == 400) {
         // Bad Request
         final body = _parseResponseBody(response.body);
@@ -432,7 +504,24 @@ class ApiService {
       if (body.isEmpty) {
         return {'message': 'Unknown error'};
       }
-      return jsonDecode(body) as Map<String, dynamic>;
+
+      final decoded = jsonDecode(body);
+
+      // If it's already a Map, return it
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      // If it's a List, wrap it in a Map
+      if (decoded is List) {
+        return {
+          'message': 'Validation errors',
+          'errors': decoded,
+        };
+      }
+
+      // For other types
+      return {'message': decoded.toString()};
     } catch (e) {
       return {'message': body.isNotEmpty ? body : 'Unknown error'};
     }
