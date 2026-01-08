@@ -531,9 +531,15 @@ export class BillService {
 
       const user = users[0];
 
-      // Calculate fee (1% for bill payments)
-      const fee = Math.max(20, amount * 0.01);
-      const totalAmount = amount + fee;
+      // Convert cents to TCC (amount comes in cents from frontend)
+      const amountInTCC = amount / 100;
+
+      // Calculate fee (1% for bill payments, minimum 0.20 TCC)
+      const fee = Math.max(0.20, amountInTCC * 0.01);
+      const totalAmountInTCC = amountInTCC + fee;
+
+      // Total amount in cents for Stripe (Stripe expects cents)
+      const totalAmountInCents = Math.round(totalAmountInTCC * 100);
 
       // Create or get Stripe customer
       const { createStripeCustomer, createPaymentIntent: createStripePaymentIntent } = await import('./stripe.service');
@@ -560,15 +566,15 @@ export class BillService {
 
       // Create pending transaction in database
       const result = await db.transaction(async (client: PoolClient) => {
-        // Create Stripe payment intent
+        // Create Stripe payment intent (Stripe expects cents)
         const paymentIntent = await createStripePaymentIntent(
-          totalAmount,
+          totalAmountInCents,
           userId,
           transactionId,
           stripeCustomerId
         );
 
-        // Insert transaction record
+        // Insert transaction record (store in TCC, not cents)
         await client.query(
           `INSERT INTO transactions (
             transaction_id, type, from_user_id, amount, fee, net_amount,
@@ -579,9 +585,9 @@ export class BillService {
             transactionId,
             TransactionType.BILL_PAYMENT,
             userId,
-            amount,
+            amountInTCC,
             fee,
-            amount,
+            amountInTCC,
             TransactionStatus.PENDING,
             `Bill payment to ${provider.name}`,
             JSON.stringify({
@@ -605,9 +611,9 @@ export class BillService {
           clientSecret: paymentIntent.client_secret!,
           paymentIntentId: paymentIntent.id,
           transactionId,
-          amount,
+          amount: amountInTCC,
           fee,
-          total: totalAmount,
+          total: totalAmountInTCC,
           currency: config.stripe.currency,
           publishableKey: config.stripe.publishableKey,
         };
@@ -617,7 +623,8 @@ export class BillService {
         userId,
         transactionId,
         providerId,
-        amount,
+        amountInTCC,
+        amountInCents: amount,
         fee,
         paymentIntentId: result.paymentIntentId,
       });
@@ -643,13 +650,14 @@ export class BillService {
   }
 
   private static generateMockAmount(billType: BillType): number {
+    // Sample amounts in TCC - small test amounts (1-2 TCC range)
     const ranges: Record<BillType, [number, number]> = {
-      [BillType.WATER]: [50000, 200000],
-      [BillType.ELECTRICITY]: [100000, 500000],
-      [BillType.DSTV]: [150000, 350000],
-      [BillType.INTERNET]: [200000, 600000],
-      [BillType.MOBILE]: [50000, 300000],
-      [BillType.OTHER]: [50000, 300000],
+      [BillType.WATER]: [100, 150],
+      [BillType.ELECTRICITY]: [125, 200],
+      [BillType.DSTV]: [150, 200],
+      [BillType.INTERNET]: [100, 175],
+      [BillType.MOBILE]: [100, 150],
+      [BillType.OTHER]: [100, 200],
     };
 
     const [min, max] = ranges[billType];

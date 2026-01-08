@@ -19,19 +19,19 @@ class _BillProviderScreenState extends State<BillProviderScreen> {
   bool _isLoading = true;
   String? _error;
 
-  // Map bill types to API category values
+  // Map bill types to API category values (must match backend BillType enum)
   String get _categoryForBillType {
     switch (widget.billType) {
       case 'Electricity':
-        return 'electricity';
+        return 'ELECTRICITY';
       case 'Mobile':
-        return 'mobile';
+        return 'MOBILE';
       case 'Water':
-        return 'water';
+        return 'WATER';
       case 'DTH':
-        return 'dth';
+        return 'DSTV';
       default:
-        return widget.billType.toLowerCase();
+        return widget.billType.toUpperCase();
     }
   }
 
