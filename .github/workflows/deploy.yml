@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'tcc_backend/**'
+      - '.github/workflows/deploy.yml'
 
 defaults:
   run:
