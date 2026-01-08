@@ -1,0 +1,51 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tcc_backend/**'
+
+defaults:
+  run:
+    working-directory: tcc_backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: tcc_backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test --passWithNoTests
+
+      - name: Build application
+        run: npm run build
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ec2-user/tcc-backend
+            git fetch origin main
+            git reset --hard origin/main
+            cd tcc_backend
+            npm ci --omit=dev
+            npm run build
+            pm2 restart tcc-backend
