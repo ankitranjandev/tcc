@@ -43,10 +43,10 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ec2-user/tcc-backend
+            cd /home/ec2-user/tcc-repo
             git fetch origin main
             git reset --hard origin/main
             cd tcc_backend
-            npm ci --omit=dev
+            npm ci
             npm run build
             pm2 restart tcc-backend
