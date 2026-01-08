@@ -2,6 +2,7 @@ import app, { waitForAppInitialization } from './app';
 import config from './config';
 import logger from './utils/logger';
 import database from './database';
+import { PushNotificationService } from './services/push-notification.service';
 
 const startServer = async () => {
   try {
@@ -16,6 +17,10 @@ const startServer = async () => {
       logger.error('Failed to connect to database');
       process.exit(1);
     }
+
+    // Initialize push notification service (Firebase)
+    PushNotificationService.initialize();
+    logger.info('Push notification service initialized');
 
     // Start HTTP server
     const server = app.listen(config.port, () => {

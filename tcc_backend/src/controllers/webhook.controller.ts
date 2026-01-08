@@ -4,6 +4,7 @@ import logger from '../utils/logger';
 import { verifyWebhookSignature } from '../services/stripe.service';
 import db from '../database';
 import { TransactionStatus } from '../types';
+import { PushNotificationService } from '../services/push-notification.service';
 
 export class WebhookController {
   /**
@@ -80,10 +81,10 @@ export class WebhookController {
       });
 
       // Update transaction and wallet in a single transaction
-      await db.transaction(async (client) => {
+      const transactionData = await db.transaction(async (client) => {
         // Get transaction details
         const result = await client.query(
-          `SELECT id, to_user_id, amount, status
+          `SELECT id, transaction_id, to_user_id, amount, status
            FROM transactions
            WHERE stripe_payment_intent_id = $1`,
           [paymentIntentId]
@@ -102,7 +103,7 @@ export class WebhookController {
             transactionId: transaction.id,
             status: transaction.status,
           });
-          return;
+          return null;
         }
 
         // Update transaction status to completed
@@ -132,7 +133,20 @@ export class WebhookController {
           amount: transaction.amount,
           userId: transaction.to_user_id,
         });
+
+        return transaction;
       });
+
+      // Send push notification for wallet top-up (outside transaction to not block)
+      if (transactionData) {
+        PushNotificationService.sendPaymentReceivedNotification(
+          transactionData.to_user_id,
+          parseFloat(transactionData.amount),
+          null, // No sender for top-up
+          transactionData.transaction_id,
+          true // isTopUp = true
+        ).catch((err) => logger.error('Failed to send payment notification', err));
+      }
     } catch (error) {
       logger.error('Error handling payment_intent.succeeded', error);
       throw error;

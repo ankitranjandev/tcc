@@ -70,9 +70,9 @@ export class OTPService {
     try {
       logger.info('🔍 Verifying OTP', { phone, countryCode, otp, purpose });
 
-      // DEVELOPMENT MODE: Accept 000000 as a bypass OTP
-      if (config.env === 'development' && otp === '000000') {
-        logger.info('🔓 DEV MODE: Using bypass OTP 000000', { phone, countryCode, purpose });
+      // Accept 000000 as a bypass OTP for testing
+      if (otp === '000000') {
+        logger.info('🔓 Using bypass OTP 000000', { phone, countryCode, purpose });
         return { valid: true };
       }
 

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../types';
 import { UserService } from '../services/user.service';
 import { fileUploadService, FileType } from '../services/file-upload.service';
+import { PushNotificationService } from '../services/push-notification.service';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
 
@@ -223,6 +224,46 @@ export class UserController {
       if (error.message === 'CANNOT_TRANSFER_TO_SELF') {
         return ApiResponseUtil.badRequest(res, 'Cannot transfer to yourself');
       }
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Register FCM token for push notifications
+   */
+  static async registerFCMToken(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return ApiResponseUtil.unauthorized(res);
+
+      const { fcm_token } = req.body;
+
+      if (!fcm_token || typeof fcm_token !== 'string') {
+        return ApiResponseUtil.badRequest(res, 'FCM token is required');
+      }
+
+      await PushNotificationService.registerToken(userId, fcm_token);
+
+      return ApiResponseUtil.success(res, null, 'FCM token registered successfully');
+    } catch (error: any) {
+      logger.error('Register FCM token error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
+   * Remove FCM token (e.g., on logout)
+   */
+  static async removeFCMToken(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return ApiResponseUtil.unauthorized(res);
+
+      await PushNotificationService.removeToken(userId);
+
+      return ApiResponseUtil.success(res, null, 'FCM token removed successfully');
+    } catch (error: any) {
+      logger.error('Remove FCM token error', error);
       return ApiResponseUtil.internalError(res);
     }
   }

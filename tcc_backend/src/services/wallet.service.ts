@@ -16,6 +16,7 @@ import {
   createStripeCustomer,
   createPaymentIntent as createStripePaymentIntent,
 } from './stripe.service';
+import { PushNotificationService } from './push-notification.service';
 
 export class WalletService {
   /**
@@ -233,9 +234,12 @@ export class WalletService {
       // Generate transaction ID
       const transactionId = this.generateTransactionId();
 
+      // Convert cents to TCC (amount comes in cents from frontend)
+      const amountInTCC = amount / 100;
+
       // Create pending transaction in database
       const result = await db.transaction(async (client: PoolClient) => {
-        // Create Stripe payment intent
+        // Create Stripe payment intent (Stripe expects cents)
         const paymentIntent = await createStripePaymentIntent(
           amount,
           userId,
@@ -243,7 +247,7 @@ export class WalletService {
           stripeCustomerId
         );
 
-        // Insert transaction record
+        // Insert transaction record (store in TCC, not cents)
         await client.query(
           `INSERT INTO transactions (
             transaction_id, type, to_user_id, amount, fee, net_amount,
@@ -254,9 +258,9 @@ export class WalletService {
             transactionId,
             TransactionType.DEPOSIT,
             userId,
-            amount,
+            amountInTCC,
             0, // No fee for deposits
-            amount,
+            amountInTCC,
             TransactionStatus.PENDING,
             PaymentMethod.MOBILE_MONEY, // Using mobile money as payment method for Stripe
             DepositSource.INTERNET_BANKING,
@@ -273,7 +277,7 @@ export class WalletService {
           clientSecret: paymentIntent.client_secret,
           paymentIntentId: paymentIntent.id,
           transactionId,
-          amount,
+          amount: amountInTCC,
           currency: config.stripe.currency,
         };
       });
@@ -281,7 +285,8 @@ export class WalletService {
       logger.info('Payment intent created', {
         userId,
         transactionId,
-        amount,
+        amountInTCC,
+        amountInCents: amount,
         paymentIntentId: result.paymentIntentId,
       });
 
@@ -472,7 +477,7 @@ export class WalletService {
 
       // Get sender details
       const senders = await db.query(
-        'SELECT phone, country_code, kyc_status FROM users WHERE id = $1',
+        'SELECT first_name, last_name, phone, country_code, kyc_status FROM users WHERE id = $1',
         [userId]
       );
 
@@ -577,6 +582,16 @@ export class WalletService {
         fee,
       });
 
+      // Send push notification to recipient (async, don't block the response)
+      const senderName = `${sender.first_name} ${sender.last_name}`;
+      PushNotificationService.sendPaymentReceivedNotification(
+        recipient.id,
+        amount,
+        senderName,
+        transactionId,
+        false // isTopUp = false (P2P transfer)
+      ).catch((err) => logger.error('Failed to send transfer notification', err));
+
       return {
         ...result,
         recipient: {
@@ -676,15 +691,18 @@ export class WalletService {
         }
 
         return {
-          success: true,
-          transaction_id: transaction.transaction_id,
-          amount: parseFloat(transaction.amount),
+          verified: true,
+          transaction: {
+            id: transaction.transaction_id,
+            amount: parseFloat(transaction.amount),
+            status: transaction.status,
+          },
           balance: parseFloat(wallet.balance.toString()),
           currency: wallet.currency,
         };
       }
 
-      // If transaction is still pending, retrieve payment intent from Stripe
+      // If transaction is still pending, retrieve payment intent from Stripe to check status
       const { retrievePaymentIntent } = await import('./stripe.service');
       const paymentIntent = await retrievePaymentIntent(paymentIntentId);
 
@@ -693,17 +711,27 @@ export class WalletService {
         throw new Error('PAYMENT_NOT_COMPLETED');
       }
 
-      // Update transaction and wallet in a single database transaction
-      const result = await db.transaction(async (client: PoolClient) => {
-        // Update transaction status to completed
+      // Payment succeeded in Stripe but transaction is still pending in our DB
+      // This means the webhook hasn't processed it yet
+      // We'll manually process it here to avoid the indefinite processing state
+      const wallet = await this.getBalance(userId);
+
+      // Update transaction status to completed and credit wallet
+      await db.transaction(async (client: PoolClient) => {
+        // Update transaction status
         await client.query(
           `UPDATE transactions
            SET status = $1,
                processed_at = NOW(),
                payment_gateway_response = $2,
                updated_at = NOW()
-           WHERE id = $3`,
-          [TransactionStatus.COMPLETED, JSON.stringify(paymentIntent), transaction.id]
+           WHERE id = $3 AND status = $4`,
+          [
+            TransactionStatus.COMPLETED,
+            JSON.stringify({ verified_via: 'polling', payment_intent_status: paymentIntent.status }),
+            transaction.id,
+            TransactionStatus.PENDING,
+          ]
         );
 
         // Credit user's wallet
@@ -713,36 +741,30 @@ export class WalletService {
                last_transaction_at = NOW(),
                updated_at = NOW()
            WHERE user_id = $2`,
-          [transaction.amount, transaction.to_user_id]
+          [transaction.amount, userId]
         );
-
-        // Get updated wallet balance
-        const walletResult = await client.query(
-          'SELECT balance, currency FROM wallets WHERE user_id = $1',
-          [transaction.to_user_id]
-        );
-
-        if (!walletResult.rows || walletResult.rows.length === 0) {
-          throw new Error('WALLET_NOT_FOUND');
-        }
-
-        return {
-          success: true,
-          transaction_id: transaction.transaction_id,
-          amount: parseFloat(transaction.amount),
-          balance: parseFloat(walletResult.rows[0].balance),
-          currency: walletResult.rows[0].currency,
-        };
       });
 
-      logger.info('Stripe payment verified and wallet updated', {
+      // Get updated balance after crediting
+      const updatedWallet = await this.getBalance(userId);
+
+      logger.info('Stripe payment verified and credited via polling', {
         userId,
         paymentIntentId,
         transactionId: transaction.transaction_id,
         amount: transaction.amount,
       });
 
-      return result;
+      return {
+        verified: true,
+        transaction: {
+          id: transaction.transaction_id,
+          amount: parseFloat(transaction.amount),
+          status: TransactionStatus.COMPLETED,
+        },
+        balance: parseFloat(updatedWallet.balance.toString()),
+        currency: updatedWallet.currency,
+      };
     } catch (error) {
       logger.error('Error verifying Stripe payment', error);
       throw error;

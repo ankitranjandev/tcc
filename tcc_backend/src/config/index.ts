@@ -88,6 +88,11 @@ interface Config {
     webhookSecret: string;
     currency: string;
   };
+  firebase: {
+    projectId: string;
+    clientEmail: string;
+    privateKey: string;
+  };
 }
 
 const config: Config = {
@@ -192,6 +197,12 @@ const config: Config = {
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     currency: process.env.STRIPE_CURRENCY || 'tcc', // TCC Coin
+  },
+
+  firebase: {
+    projectId: process.env.FIREBASE_PROJECT_ID || '',
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
+    privateKey: process.env.FIREBASE_PRIVATE_KEY || '',
   },
 };
 

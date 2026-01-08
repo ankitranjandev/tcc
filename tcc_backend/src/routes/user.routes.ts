@@ -60,6 +60,12 @@ const verifyPhoneSchema = z.object({
   }),
 });
 
+const fcmTokenSchema = z.object({
+  body: z.object({
+    fcm_token: z.string().min(1),
+  }),
+});
+
 // Routes
 router.get('/profile', UserController.getProfile);
 router.patch('/profile', validate(updateProfileSchema), UserController.updateProfile);
@@ -76,5 +82,9 @@ router.post('/cancel-deletion', UserController.cancelDeletion);
 router.post('/bank-accounts', validate(addBankAccountSchema), UserController.addBankAccount);
 router.get('/bank-accounts', UserController.getBankAccounts);
 router.post('/verify-phone', validate(verifyPhoneSchema), UserController.verifyPhone);
+
+// FCM token management
+router.post('/fcm-token', validate(fcmTokenSchema), UserController.registerFCMToken);
+router.delete('/fcm-token', UserController.removeFCMToken);
 
 export default router;

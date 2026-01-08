@@ -1,8 +1,10 @@
 import { Response } from 'express';
 import { AuthRequest, TransactionType, TransactionStatus } from '../types';
 import { TransactionService } from '../services/transaction.service';
+import { ReceiptService } from '../services/receipt.service';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+import db from '../database';
 
 export class TransactionController {
   /**
@@ -153,9 +155,9 @@ export class TransactionController {
   }
 
   /**
-   * Download transaction receipt
+   * Download transaction receipt as PDF
    */
-  static async downloadReceipt(req: AuthRequest, res: Response): Promise<Response> {
+  static async downloadReceipt(req: AuthRequest, res: Response): Promise<Response | void> {
     try {
       const userId = req.user?.id;
 
@@ -168,13 +170,28 @@ export class TransactionController {
       // Get transaction details
       const transaction = await TransactionService.getTransactionDetails(userId, transaction_id);
 
-      // In a real implementation, this would generate a PDF receipt
-      // For now, we'll return the transaction data that can be used to generate a receipt
-      return ApiResponseUtil.success(res, {
-        transaction,
-        receipt_url: `${process.env.API_URL}/transactions/${transaction_id}/receipt.pdf`,
-        // In production, you would generate and return the actual PDF
-      });
+      // Get user details
+      const userResult = await db.query(
+        'SELECT first_name, last_name, email, phone FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (userResult.length === 0) {
+        return ApiResponseUtil.notFound(res, 'User not found');
+      }
+
+      const user = userResult[0] as { first_name: string; last_name: string; email?: string; phone?: string };
+
+      // Generate PDF receipt
+      const receipt = await ReceiptService.generateTransactionReceipt(transaction, user);
+
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${receipt.filename}"`);
+      res.setHeader('Content-Length', receipt.buffer.length);
+
+      // Send the PDF buffer
+      res.send(receipt.buffer);
     } catch (error: any) {
       logger.error('Download receipt error', error);
 

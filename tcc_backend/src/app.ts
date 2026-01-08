@@ -16,6 +16,8 @@ class App {
 
   constructor() {
     this.app = express();
+    // Trust proxy when behind nginx/load balancer (needed for rate limiting and correct IP detection)
+    this.app.set('trust proxy', 1);
     this.initializeMiddleware();
     this.initialized = this.initialize();
   }
