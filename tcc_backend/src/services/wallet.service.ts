@@ -713,29 +713,30 @@ export class WalletService {
 
       // Payment succeeded in Stripe but transaction is still pending in our DB
       // This means the webhook hasn't processed it yet
-      // We'll manually process it here to avoid the indefinite processing state
-      const wallet = await this.getBalance(userId);
+      // We update the transaction status here but DO NOT credit the wallet
+      // The wallet credit happens ONLY via the webhook to prevent duplicate increments
 
-      // Update transaction status to completed and credit wallet
-      await db.transaction(async (client: PoolClient) => {
-        // Update transaction status
-        await client.query(
-          `UPDATE transactions
-           SET status = $1,
-               processed_at = NOW(),
-               payment_gateway_response = $2,
-               updated_at = NOW()
-           WHERE id = $3 AND status = $4`,
-          [
-            TransactionStatus.COMPLETED,
-            JSON.stringify({ verified_via: 'polling', payment_intent_status: paymentIntent.status }),
-            transaction.id,
-            TransactionStatus.PENDING,
-          ]
-        );
+      // Update transaction status to completed (wallet credit handled by webhook)
+      const updateResult = await db.query(
+        `UPDATE transactions
+         SET status = $1,
+             processed_at = NOW(),
+             payment_gateway_response = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND status = $4
+         RETURNING *`,
+        [
+          TransactionStatus.COMPLETED,
+          JSON.stringify({ verified_via: 'polling', payment_intent_status: paymentIntent.status }),
+          transaction.id,
+          TransactionStatus.PENDING,
+        ]
+      );
 
-        // Credit user's wallet
-        await client.query(
+      // Only credit wallet if we were the ones who updated the transaction
+      // This prevents race condition with webhook
+      if (updateResult.rowCount > 0) {
+        await db.query(
           `UPDATE wallets
            SET balance = balance + $1,
                last_transaction_at = NOW(),
@@ -743,7 +744,7 @@ export class WalletService {
            WHERE user_id = $2`,
           [transaction.amount, userId]
         );
-      });
+      }
 
       // Get updated balance after crediting
       const updatedWallet = await this.getBalance(userId);

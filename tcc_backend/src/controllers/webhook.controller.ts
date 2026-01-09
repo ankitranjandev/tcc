@@ -106,16 +106,27 @@ export class WebhookController {
           return null;
         }
 
-        // Update transaction status to completed
-        await client.query(
+        // Atomically update transaction status to completed (only if still PENDING)
+        // This prevents race condition with polling verification
+        const updateResult = await client.query(
           `UPDATE transactions
            SET status = $1,
                processed_at = NOW(),
                payment_gateway_response = $2,
                updated_at = NOW()
-           WHERE id = $3`,
-          [TransactionStatus.COMPLETED, JSON.stringify(paymentIntent), transaction.id]
+           WHERE id = $3 AND status = $4
+           RETURNING *`,
+          [TransactionStatus.COMPLETED, JSON.stringify(paymentIntent), transaction.id, TransactionStatus.PENDING]
         );
+
+        // Only credit wallet if we successfully updated the transaction
+        // (prevents double-credit if polling already processed it)
+        if (updateResult.rowCount === 0) {
+          logger.warn('Transaction was processed by another handler', {
+            transactionId: transaction.id,
+          });
+          return null;
+        }
 
         // Credit user's wallet
         await client.query(
