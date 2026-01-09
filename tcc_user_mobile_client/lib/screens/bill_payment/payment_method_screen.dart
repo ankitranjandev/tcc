@@ -132,7 +132,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       }
 
       final data = result['data']['data'];
-      final clientSecret = data['client_secret'];
+      final clientSecret = data['clientSecret'] as String;
+      final transactionId = data['transactionId'] as String;
       final paymentIntentId = _stripeService.extractPaymentIntentId(clientSecret);
 
       setState(() => _isProcessing = false);
@@ -161,7 +162,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               amount: widget.amount,
               accountNumber: widget.accountNumber,
               paymentMethod: 'Stripe (Card Payment)',
-              transactionId: paymentIntentId,
+              transactionId: transactionId,
             ),
           ),
         );

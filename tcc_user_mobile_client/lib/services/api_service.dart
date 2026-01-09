@@ -381,6 +381,58 @@ class ApiService {
     }
   }
 
+  // Download binary file (e.g., PDF)
+  Future<List<int>> downloadFile(
+    String endpoint, {
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final uri = _buildUri(endpoint);
+      final headers = <String, String>{
+        'Accept': 'application/pdf,application/octet-stream',
+      };
+
+      if (requiresAuth && _token != null) {
+        headers['Authorization'] = 'Bearer $_token';
+      }
+
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
+      developer.log('📥 DOWNLOAD REQUEST', name: 'ApiService');
+      developer.log('URL: $uri', name: 'ApiService');
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
+
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(Duration(seconds: 60)); // Longer timeout for file downloads
+
+      developer.log('📥 DOWNLOAD RESPONSE', name: 'ApiService');
+      developer.log('Status: ${response.statusCode}', name: 'ApiService');
+      developer.log('Content-Type: ${response.headers['content-type']}', name: 'ApiService');
+      developer.log('Content-Length: ${response.bodyBytes.length} bytes', name: 'ApiService');
+      developer.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'ApiService');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.bodyBytes;
+      } else if (response.statusCode == 401) {
+        if (onUnauthorized != null) {
+          onUnauthorized!();
+        }
+        throw UnauthorizedException(AppConstants.errorUnauthorized);
+      } else if (response.statusCode == 404) {
+        throw ApiException('Receipt not found');
+      } else {
+        throw ApiException('Failed to download file');
+      }
+    } on SocketException {
+      throw ApiException(AppConstants.errorNetwork);
+    } on HttpException {
+      throw ApiException(AppConstants.errorNetwork);
+    } catch (e) {
+      if (e is ApiException || e is UnauthorizedException) rethrow;
+      throw ApiException(e.toString());
+    }
+  }
+
   // Build URI
   Uri _buildUri(String endpoint, [Map<String, dynamic>? queryParams]) {
     final url = '$baseUrl$endpoint';

@@ -194,10 +194,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       await file.writeAsBytes(await pdf.save());
 
       // Share the PDF file
+      final box = context.findRenderObject() as RenderBox?;
       await Share.shareXFiles(
         [XFile(filePath)],
         text: 'TCC Payment Receipt - Transaction ID: ${widget.transactionId}',
         subject: 'Payment Receipt',
+        sharePositionOrigin: box != null
+            ? box.localToGlobal(Offset.zero) & box.size
+            : const Rect.fromLTWH(0, 0, 100, 100),
       );
 
       if (mounted) {
@@ -597,36 +601,45 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
             color: Theme.of(context).textTheme.bodySmall?.color,
           ),
         ),
-        Row(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: statusColor,
-              ),
-            ),
-            if (canCopy) ...[
-              SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: value));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Transaction ID copied'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
-                child: Icon(
-                  Icons.copy,
-                  size: 16,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
+        SizedBox(width: 8),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
+                  ),
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (canCopy) ...[
+                SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: value));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Transaction ID copied'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    Icons.copy,
+                    size: 16,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ],
     );

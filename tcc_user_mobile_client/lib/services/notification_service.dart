@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'api_service.dart';
 
 // Background message handler - must be top-level function
 @pragma('vm:entry-point')
@@ -46,11 +47,12 @@ class NotificationService {
       _fcmToken = await _firebaseMessaging.getToken();
       debugPrint('FCM Token: $_fcmToken');
 
-      // Save token to preferences
+      // Save token to preferences and send to backend
       if (_fcmToken != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('fcm_token', _fcmToken!);
-        // TODO: Send token to backend
+        // Send token to backend if user is authenticated
+        await _sendTokenToBackend(_fcmToken!);
       }
 
       // Listen for token refresh
@@ -335,11 +337,49 @@ class NotificationService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('fcm_token', token);
 
-      // TODO: Send token to backend
-      debugPrint('New FCM token: $token');
-      // await ApiService().updateFCMToken(token);
+      // Send token to backend
+      await _sendTokenToBackend(token);
+      debugPrint('New FCM token saved and sent: $token');
     } catch (e) {
       debugPrint('Error saving/sending FCM token: $e');
+    }
+  }
+
+  /// Send FCM token to backend (only if user is authenticated)
+  Future<void> _sendTokenToBackend(String token) async {
+    try {
+      final apiService = ApiService();
+      // Only send if user is authenticated
+      if (apiService.token != null) {
+        await apiService.post('/users/fcm-token', body: {'fcm_token': token});
+        debugPrint('FCM token sent to backend successfully');
+      } else {
+        debugPrint('User not authenticated, FCM token will be sent after login');
+      }
+    } catch (e) {
+      debugPrint('Error sending FCM token to backend: $e');
+      // Don't throw - token registration failure shouldn't break the app
+    }
+  }
+
+  /// Public method to send token to backend (called after login)
+  Future<void> sendTokenToBackendIfNeeded() async {
+    if (_fcmToken != null) {
+      await _sendTokenToBackend(_fcmToken!);
+    }
+  }
+
+  /// Remove FCM token from backend (called on logout)
+  Future<void> removeTokenFromBackend() async {
+    try {
+      final apiService = ApiService();
+      if (apiService.token != null) {
+        await apiService.delete('/users/fcm-token');
+        debugPrint('FCM token removed from backend');
+      }
+    } catch (e) {
+      debugPrint('Error removing FCM token from backend: $e');
+      // Don't throw - continue with logout even if this fails
     }
   }
 

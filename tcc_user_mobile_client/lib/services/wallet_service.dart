@@ -52,10 +52,10 @@ class WalletService {
     try {
       final body = <String, dynamic>{
         'amount': amount,
-        'withdrawalMethod': withdrawalMethod,
+        'withdrawal_method': withdrawalMethod,
       };
-      if (bankAccountId != null) body['bankAccountId'] = bankAccountId;
-      if (agentId != null) body['agentId'] = agentId;
+      if (bankAccountId != null) body['bank_account_id'] = bankAccountId;
+      if (agentId != null) body['agent_id'] = agentId;
 
       final response = await _apiService.post(
         '/wallet/withdraw/request-otp',
@@ -79,11 +79,11 @@ class WalletService {
     try {
       final body = <String, dynamic>{
         'amount': amount,
-        'withdrawalMethod': withdrawalMethod,
+        'withdrawal_method': withdrawalMethod,
         'otp': otp,
       };
-      if (bankAccountId != null) body['bankAccountId'] = bankAccountId;
-      if (agentId != null) body['agentId'] = agentId;
+      if (bankAccountId != null) body['bank_account_id'] = bankAccountId;
+      if (agentId != null) body['agent_id'] = agentId;
 
       final response = await _apiService.post(
         '/wallet/withdraw',
@@ -106,6 +106,27 @@ class WalletService {
         '/user/verify-phone',
         body: {
           'phone': phoneNumber,
+          'country_code': countryCode,
+        },
+        requiresAuth: true,
+      );
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  // Verify multiple phone numbers at once (batch verification)
+  // Returns a map of phone numbers to their registration status
+  Future<Map<String, dynamic>> verifyMultiplePhones({
+    required List<String> phoneNumbers,
+    String countryCode = '+232', // Default to Sierra Leone
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/user/verify-phones-batch',
+        body: {
+          'phones': phoneNumbers,
           'country_code': countryCode,
         },
         requiresAuth: true,

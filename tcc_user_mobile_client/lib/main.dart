@@ -324,7 +324,15 @@ class _TCCAppState extends State<TCCApp> {
         GoRoute(
           path: '/transactions/:transactionId',
           builder: (context, state) {
-            final transaction = state.extra as TransactionModel;
+            final extra = state.extra;
+            final TransactionModel transaction;
+            if (extra is TransactionModel) {
+              transaction = extra;
+            } else if (extra is Map<String, dynamic>) {
+              transaction = TransactionModel.fromJson(extra);
+            } else {
+              throw ArgumentError('Invalid transaction data type: ${extra.runtimeType}');
+            }
             return TransactionDetailScreen(transaction: transaction);
           },
         ),

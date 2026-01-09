@@ -83,26 +83,30 @@ class _BillReviewScreenState extends State<BillReviewScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.provider,
-                                    style: TextStyle(
-                                      color: AppColors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.provider,
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
                                     ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    widget.billType,
-                                    style: TextStyle(
-                                      color: AppColors.white.withValues(alpha: 0.8),
-                                      fontSize: 13,
+                                    SizedBox(height: 4),
+                                    Text(
+                                      widget.billType,
+                                      style: TextStyle(
+                                        color: AppColors.white.withValues(alpha: 0.8),
+                                        fontSize: 13,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                               if (isOverdue)
                                 Container(

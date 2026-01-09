@@ -70,7 +70,9 @@ class _BillProviderScreenState extends State<BillProviderScreen> {
         _isLoading = false;
         if (result['success']) {
           final data = result['data'];
-          final providersList = data['data'] ?? data['providers'] ?? data;
+          // API response structure: { success, data: { providers: [...], total } }
+          final apiData = data['data'] ?? data;
+          final providersList = apiData['providers'] ?? apiData;
           if (providersList is List) {
             _providers = providersList.map((p) => {
               'id': p['id'] ?? '',
@@ -225,25 +227,12 @@ class _BillProviderScreenState extends State<BillProviderScreen> {
             ),
             SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    provider['name'],
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '${provider['customers']} customers',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                    ),
-                  ),
-                ],
+              child: Text(
+                provider['name'],
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Icon(

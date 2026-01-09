@@ -96,16 +96,21 @@ class StripeService {
           paymentIntentId: paymentIntentId,
         );
 
+        developer.log('Verification response: $result', name: 'StripeService');
+
         if (result['success'] == true) {
-          final verified = result['data']['data']?['verified'] ?? false;
+          // The response structure is: { success: true, data: { data: { verified, transaction, balance } } }
+          final responseData = result['data'];
+          final data = responseData is Map ? (responseData['data'] ?? responseData) : responseData;
+          final verified = data['verified'] ?? false;
 
           if (verified) {
             developer.log('✅ Payment verified successfully', name: 'StripeService');
             return {
               'success': true,
               'verified': true,
-              'transaction': result['data']['data']['transaction'],
-              'balance': result['data']['data']['balance'],
+              'transaction': data['transaction'],
+              'balance': data['balance'],
             };
           }
         }

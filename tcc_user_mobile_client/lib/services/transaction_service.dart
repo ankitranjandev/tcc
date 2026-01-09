@@ -119,17 +119,21 @@ class TransactionService {
     }
   }
 
-  // Download transaction receipt
-  Future<Map<String, dynamic>> downloadReceipt({
+  // Download transaction receipt as PDF bytes
+  Future<Map<String, dynamic>> downloadReceiptPdf({
     required String transactionId,
   }) async {
     try {
-      final response = await _apiService.get(
+      final bytes = await _apiService.downloadFile(
         '/transactions/$transactionId/receipt',
         requiresAuth: true,
       );
-      return {'success': true, 'data': response};
+      return {'success': true, 'data': bytes};
     } catch (e) {
+      developer.log(
+        '❌ Error downloading receipt PDF: $e',
+        name: 'TransactionService',
+      );
       return {'success': false, 'error': e.toString()};
     }
   }

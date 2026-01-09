@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 // Helper function to convert backend error codes to user-friendly messages
 String _getUserFriendlyErrorMessage(String? error) {
@@ -112,6 +113,11 @@ class AuthProvider with ChangeNotifier {
           _isAuthenticated = true;
           _isLoading = false;
           developer.log('🟢 AuthProvider: Login complete. isAuthenticated: $_isAuthenticated', name: 'AuthProvider');
+
+          // Send FCM token to backend for push notifications
+          await NotificationService().sendTokenToBackendIfNeeded();
+          developer.log('🟢 AuthProvider: FCM token registration triggered', name: 'AuthProvider');
+
           notifyListeners();
           return true;
         } else {
@@ -232,6 +238,11 @@ class AuthProvider with ChangeNotifier {
           _isAuthenticated = true;
           _isLoading = false;
           developer.log('🟡 AuthProvider: OTP verification complete. isAuthenticated: $_isAuthenticated', name: 'AuthProvider');
+
+          // Send FCM token to backend for push notifications
+          await NotificationService().sendTokenToBackendIfNeeded();
+          developer.log('🟡 AuthProvider: FCM token registration triggered', name: 'AuthProvider');
+
           notifyListeners();
           return true;
         } else {
@@ -325,6 +336,15 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
+
+    try {
+      // Remove FCM token from backend before logout
+      await NotificationService().removeTokenFromBackend();
+      developer.log('🔴 AuthProvider: FCM token removed from backend', name: 'AuthProvider');
+    } catch (e) {
+      developer.log('🔴 AuthProvider: Error removing FCM token: $e', name: 'AuthProvider');
+      // Continue with logout even if FCM token removal fails
+    }
 
     try {
       await _authService.logout();

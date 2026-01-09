@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/wallet_service.dart';
-import '../../services/stripe_service.dart';
+import '../../services/bank_account_service.dart';
 import '../../services/investment_service.dart';
 import '../../services/metal_price_service.dart';
 import '../../services/currency_service.dart';
 import '../../services/election_service.dart';
 import '../../models/currency_rate_model.dart';
 import '../../models/investment_model.dart';
+import '../../models/bank_account_model.dart';
+import '../../widgets/add_money_bottom_sheet.dart';
 import '../currency/live_currency_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -237,13 +238,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SizedBox(height: 20),
 
-              // Agent Locator Button
-              _buildAgentLocatorButton(),
-
-              SizedBox(height: 24),
-
-              // Community Voting Card
-              _buildVotingCard(),
+              // Agent Locator & Community Voting Cards (Side by Side)
+              _buildAgentAndVotingRow(),
 
               SizedBox(height: 24),
 
@@ -285,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWelcomeSection(user) {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 50, 20, 0),
+      padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -329,220 +325,277 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Text(
+            'TCC Coin',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 14,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            tccFormat.format(_walletBalance),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            '\$1 = 1 Coin',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 12,
+            ),
+          ),
+          SizedBox(height: 16),
+          Row(
             children: [
-              Text(
-                'TCC Coin',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 14,
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _showAddMoneyDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Color(0xFF5B86E5),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: Text(
+                    'Add Money',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
-                tccFormat.format(_walletBalance),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                '\$1 = 1 Coin',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 12,
+              SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _showWithdrawDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                    ),
+                  ),
+                  child: Text(
+                    'Withdraw',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
                 ),
               ),
             ],
-          ),
-          ElevatedButton(
-            onPressed: () => _showAddMoneyDialog(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Color(0xFF5B86E5),
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: Text(
-              'Add Money',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAgentLocatorButton() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      child: InkWell(
-        onTap: () => context.push('/agent-search'),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.success, AppColors.success.withValues(alpha: 0.8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.success.withValues(alpha: 0.3),
-                blurRadius: 15,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
+  Widget _buildAgentAndVotingRow() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Use responsive sizing based on available width
+          final isCompact = constraints.maxWidth < 360;
+          final cardSpacing = 12.0;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.location_on,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Find Nearby Agent',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Locate TCC agents near you',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
+                child: _buildAgentLocatorCard(isCompact: isCompact),
               ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.white,
-                size: 20,
+              SizedBox(width: cardSpacing),
+              Expanded(
+                child: _buildVotingCard(isCompact: isCompact),
               ),
             ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAgentLocatorCard({bool isCompact = false}) {
+    return InkWell(
+      onTap: () => context.push('/agent-search'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(isCompact ? 12 : 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.success, AppColors.success.withValues(alpha: 0.8)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.success.withValues(alpha: 0.3),
+              blurRadius: 15,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: isCompact ? 40 : 48,
+              height: isCompact ? 40 : 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.location_on,
+                color: Colors.white,
+                size: isCompact ? 20 : 24,
+              ),
+            ),
+            SizedBox(height: isCompact ? 10 : 12),
+            Text(
+              'Find Nearby\nAgent',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isCompact ? 14 : 16,
+                fontWeight: FontWeight.bold,
+                height: 1.2,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Locate TCC agents',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontSize: isCompact ? 11 : 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: isCompact ? 8 : 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  size: isCompact ? 14 : 16,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildVotingCard() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      child: InkWell(
-        onTap: () => context.push('/elections'),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFF667EEA).withValues(alpha: 0.3),
-                blurRadius: 15,
-                offset: Offset(0, 8),
-              ),
-            ],
+  Widget _buildVotingCard({bool isCompact = false}) {
+    return InkWell(
+      onTap: () => context.push('/elections'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(isCompact ? 12 : 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0xFF667EEA).withValues(alpha: 0.3),
+              blurRadius: 15,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: isCompact ? 40 : 48,
+                  height: isCompact ? 40 : 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.how_to_vote,
+                    color: Colors.white,
+                    size: isCompact ? 20 : 24,
+                  ),
                 ),
-                child: Icon(
-                  Icons.how_to_vote,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Community Voting',
+                if (_activeElectionsCount > 0)
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isCompact ? 8 : 10,
+                      vertical: isCompact ? 4 : 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$_activeElectionsCount',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: isCompact ? 12 : 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      _activeElectionsCount > 0
-                          ? '$_activeElectionsCount active ${_activeElectionsCount == 1 ? 'poll' : 'polls'} • Cast your vote'
-                          : 'Vote on community decisions',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+              ],
+            ),
+            SizedBox(height: isCompact ? 10 : 12),
+            Text(
+              'Community\nVoting',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isCompact ? 14 : 16,
+                fontWeight: FontWeight.bold,
+                height: 1.2,
               ),
-              if (_activeElectionsCount > 0)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$_activeElectionsCount',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              else
+            ),
+            SizedBox(height: 4),
+            Text(
+              _activeElectionsCount > 0
+                  ? 'Cast your vote'
+                  : 'Vote on decisions',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontSize: isCompact ? 11 : 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: isCompact ? 8 : 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.white,
-                  size: 20,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  size: isCompact ? 14 : 16,
                 ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1220,13 +1273,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddMoneyDialog(BuildContext context) {
+    showAddMoneyBottomSheet(
+      context,
+      onSuccess: () {
+        // Refresh the HomeScreen data to show updated balance
+        _loadData();
+      },
+    );
+  }
+
+  void _showWithdrawDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _AddMoneyBottomSheet(
+      builder: (context) => _WithdrawBottomSheet(
+        walletBalance: _walletBalance,
         onSuccess: () {
           // Refresh the HomeScreen data to show updated balance
           _loadData();
@@ -1262,40 +1326,116 @@ class MiniChartPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Add Money Bottom Sheet with Stripe integration
-class _AddMoneyBottomSheet extends StatefulWidget {
+// Withdraw Bottom Sheet with OTP verification
+class _WithdrawBottomSheet extends StatefulWidget {
+  final double walletBalance;
   final VoidCallback? onSuccess;
 
-  const _AddMoneyBottomSheet({this.onSuccess});
+  const _WithdrawBottomSheet({
+    required this.walletBalance,
+    this.onSuccess,
+  });
 
   @override
-  _AddMoneyBottomSheetState createState() => _AddMoneyBottomSheetState();
+  _WithdrawBottomSheetState createState() => _WithdrawBottomSheetState();
 }
 
-class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
+class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
   final TextEditingController _amountController = TextEditingController();
   final WalletService _walletService = WalletService();
-  final StripeService _stripeService = StripeService();
-  bool _isLoading = false;
-  String? _errorMessage;
-  String? _paymentIntentId;
+  final BankAccountService _bankAccountService = BankAccountService();
 
-  final List<int> _quickAmounts = [1, 5, 10, 25];
+  bool _isLoading = false;
+  bool _isLoadingAccounts = true;
+  String? _errorMessage;
+  List<BankAccountModel> _bankAccounts = [];
+  BankAccountModel? _selectedAccount;
+
+  // Add account form
+  bool _showAddAccountForm = false;
+  final TextEditingController _bankNameController = TextEditingController();
+  final TextEditingController _accountNumberController = TextEditingController();
+  final TextEditingController _accountHolderController = TextEditingController();
+  final TextEditingController _branchAddressController = TextEditingController();
+  final TextEditingController _swiftCodeController = TextEditingController();
+
+  // OTP verification
+  bool _showOtpInput = false;
+  final TextEditingController _otpController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBankAccounts();
+  }
 
   @override
   void dispose() {
     _amountController.dispose();
+    _bankNameController.dispose();
+    _accountNumberController.dispose();
+    _accountHolderController.dispose();
+    _branchAddressController.dispose();
+    _swiftCodeController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
-  void _selectQuickAmount(int amount) {
-    setState(() {
-      _amountController.text = amount.toString();
-      _errorMessage = null;
-    });
+  Future<void> _loadBankAccounts() async {
+    setState(() => _isLoadingAccounts = true);
+
+    try {
+      final result = await _bankAccountService.getBankAccounts();
+      if (result['success'] == true && result['data'] != null) {
+        final dynamic data = result['data'];
+        List<dynamic> accountsJson;
+
+        if (data is List) {
+          accountsJson = data;
+        } else if (data is Map && data['accounts'] != null) {
+          accountsJson = data['accounts'];
+        } else if (data is Map && data['data'] != null) {
+          final innerData = data['data'];
+          if (innerData is List) {
+            accountsJson = innerData;
+          } else if (innerData is Map && innerData['accounts'] != null) {
+            accountsJson = innerData['accounts'];
+          } else {
+            accountsJson = [];
+          }
+        } else {
+          accountsJson = [];
+        }
+
+        _bankAccounts = accountsJson
+            .map((json) => BankAccountModel.fromJson(json))
+            .toList();
+
+        // Select primary account by default
+        if (_bankAccounts.isNotEmpty) {
+          _selectedAccount = _bankAccounts.firstWhere(
+            (acc) => acc.isPrimary,
+            orElse: () => _bankAccounts.first,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to load bank accounts: $e');
+    }
+
+    setState(() => _isLoadingAccounts = false);
   }
 
-  Future<void> _processPayment() async {
+  double _calculateFee(double amount) {
+    // Using non-KYC fee structure (2%, min 100, max 1000) as default
+    // TODO: Check user's KYC status for proper fee calculation
+    final fee = amount * 0.02;
+    if (fee < 100) return 100;
+    if (fee > 1000) return 1000;
+    return fee;
+  }
+
+  Future<void> _requestOtp() async {
     final amountText = _amountController.text.trim();
 
     if (amountText.isEmpty) {
@@ -1310,7 +1450,20 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
     }
 
     if (amount < 1) {
-      setState(() => _errorMessage = 'Minimum amount is \$1 USD');
+      setState(() => _errorMessage = 'Please enter an amount greater than 0');
+      return;
+    }
+
+    final fee = _calculateFee(amount);
+    final totalDeduction = amount + fee;
+
+    if (totalDeduction > widget.walletBalance) {
+      setState(() => _errorMessage = 'Insufficient balance. You need TCC ${totalDeduction.toStringAsFixed(0)} (including fee)');
+      return;
+    }
+
+    if (_selectedAccount == null) {
+      setState(() => _errorMessage = 'Please select a bank account');
       return;
     }
 
@@ -1320,100 +1473,136 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
     });
 
     try {
-      // Step 1: Create payment intent
-      final result = await _walletService.createPaymentIntent(amount: amount);
-
-      if (!result['success']) {
-        throw Exception(result['error'] ?? 'Failed to create payment intent');
-      }
-
-      final data = result['data']['data'];
-      final clientSecret = data['client_secret'];
-
-      // Extract payment intent ID
-      _paymentIntentId = _stripeService.extractPaymentIntentId(clientSecret);
-
-      setState(() => _isLoading = false);
-
-      // Step 2: Process Stripe payment
-      if (!mounted) return;
-      final paymentSuccessful = await _stripeService.processPayment(
-        clientSecret: clientSecret,
-        merchantName: 'TCC Wallet Top-up',
-        context: context,
+      final result = await _walletService.requestWithdrawalOTP(
+        amount: amount,
+        withdrawalMethod: 'BANK_TRANSFER',
+        bankAccountId: _selectedAccount!.id,
       );
 
-      if (!paymentSuccessful) {
-        // User cancelled payment
+      if (result['success'] == true) {
+        setState(() {
+          _isLoading = false;
+          _showOtpInput = true;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = result['error'] ?? 'Failed to request OTP';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      });
+    }
+  }
+
+  Future<void> _processWithdrawal() async {
+    final otp = _otpController.text.trim();
+
+    if (otp.length != 6) {
+      setState(() => _errorMessage = 'Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    final amount = double.parse(_amountController.text.trim());
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final result = await _walletService.withdraw(
+        amount: amount,
+        withdrawalMethod: 'BANK_TRANSFER',
+        otp: otp,
+        bankAccountId: _selectedAccount!.id,
+      );
+
+      if (result['success'] == true) {
         if (mounted) {
-          setState(() {
-            _errorMessage = 'Payment cancelled';
-          });
-        }
-        return;
-      }
-
-      // Step 3: Verify payment with backend
-      if (mounted) {
-        _stripeService.showVerificationDialog(context);
-      }
-
-      final verificationResult = await _stripeService.verifyPaymentWithPolling(
-        paymentIntentId: _paymentIntentId!,
-        maxAttempts: 5,
-        delaySeconds: 2,
-      );
-
-      if (mounted) {
-        // Close verification dialog
-        Navigator.of(context).pop();
-
-        if (verificationResult['verified'] == true) {
-          // Payment verified successfully
-          // Close the bottom sheet
           Navigator.pop(context);
-
-          // Show success message
-          final isTestMode = verificationResult['test_mode'] == true;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                isTestMode
-                    ? 'Payment successful! (Test mode - backend verification skipped)'
-                    : 'Payment successful! Your wallet has been credited.',
-              ),
+              content: Text('Withdrawal request submitted! We will process it within 24-48 hours.'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
+              duration: Duration(seconds: 4),
             ),
           );
-
-          // Refresh parent screen balance
           if (widget.onSuccess != null) {
             widget.onSuccess!();
           }
-        } else if (verificationResult['timeout'] == true) {
-          // Verification timeout - payment is processing
-          // Close the bottom sheet
-          Navigator.pop(context);
-
-          // Show processing dialog
-          _stripeService.showProcessingDialog(context, _paymentIntentId!);
-        } else {
-          // Verification failed
-          setState(() {
-            _errorMessage = verificationResult['error'] ?? 'Payment verification failed';
-          });
         }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = result['error'] ?? 'Withdrawal failed';
+        });
       }
-    } on StripeException catch (e) {
+    } catch (e) {
       setState(() {
         _isLoading = false;
-        if (e.error.code == FailureCode.Canceled) {
-          _errorMessage = 'Payment cancelled';
-        } else {
-          _errorMessage = e.error.message ?? 'Payment failed';
-        }
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
       });
+    }
+  }
+
+  Future<void> _addBankAccount() async {
+    if (_bankNameController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please enter bank name');
+      return;
+    }
+    if (_accountNumberController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please enter account number');
+      return;
+    }
+    if (_accountHolderController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please enter account holder name');
+      return;
+    }
+    if (_branchAddressController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please enter branch address');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final result = await _bankAccountService.createBankAccount(
+        bankName: _bankNameController.text.trim(),
+        accountNumber: _accountNumberController.text.trim(),
+        accountHolderName: _accountHolderController.text.trim(),
+        branchAddress: _branchAddressController.text.trim(),
+        swiftCode: _swiftCodeController.text.trim().isNotEmpty
+            ? _swiftCodeController.text.trim()
+            : null,
+        isPrimary: _bankAccounts.isEmpty,
+      );
+
+      if (result['success'] == true) {
+        // Reload accounts and select the new one
+        await _loadBankAccounts();
+        setState(() {
+          _showAddAccountForm = false;
+          _isLoading = false;
+          // Clear form
+          _bankNameController.clear();
+          _accountNumberController.clear();
+          _accountHolderController.clear();
+          _branchAddressController.clear();
+          _swiftCodeController.clear();
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = result['error'] ?? 'Failed to add bank account';
+        });
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -1424,6 +1613,10 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final tccFormat = NumberFormat.currency(symbol: 'TCC ', decimalDigits: 0);
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    final fee = _calculateFee(amount);
+
     return Container(
       padding: EdgeInsets.only(
         left: 24,
@@ -1431,158 +1624,472 @@ class _AddMoneyBottomSheetState extends State<_AddMoneyBottomSheet> {
         top: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Add Money',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _showOtpInput ? 'Verify OTP' : (_showAddAccountForm ? 'Add Bank Account' : 'Withdraw'),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(),
-              ),
-            ],
-          ),
-          SizedBox(height: 24),
-
-          // Amount input
-          TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            style: TextStyle(fontSize: 18),
-            decoration: InputDecoration(
-              labelText: 'Amount (USD)',
-              hintText: 'Enter amount',
-              prefixText: '\$ ',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Color(0xFF2C3E50), width: 2),
-              ),
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+              ],
             ),
-          ),
-          SizedBox(height: 16),
+            SizedBox(height: 8),
 
-          // Quick amount buttons
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _quickAmounts.map((amount) {
-              final isSelected = _amountController.text == amount.toString();
-              return InkWell(
-                onTap: () => _selectQuickAmount(amount),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade300,
+            // Balance display
+            if (!_showAddAccountForm && !_showOtpInput)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.account_balance_wallet, size: 18, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text(
+                      'Available: ${tccFormat.format(widget.walletBalance)}',
+                      style: TextStyle(
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    '\$${amount.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  ],
+                ),
+              ),
+            SizedBox(height: 20),
+
+            // OTP Input Section
+            if (_showOtpInput) ...[
+              Text(
+                'Enter the 6-digit OTP sent to your phone',
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24, letterSpacing: 8),
+                decoration: InputDecoration(
+                  hintText: '------',
+                  counterText: '',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-
-          if (_errorMessage != null) ...[
-            SizedBox(height: 16),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+                onChanged: (value) {
+                  if (value.length == 6) {
+                    _processWithdrawal();
+                  }
+                },
               ),
-              child: Row(
+              SizedBox(height: 16),
+
+              // Withdrawal summary
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    _buildSummaryRow('Amount', tccFormat.format(amount)),
+                    SizedBox(height: 8),
+                    _buildSummaryRow('Fee (2%)', tccFormat.format(fee)),
+                    Divider(height: 16),
+                    _buildSummaryRow('Total Deduction', tccFormat.format(amount + fee), isBold: true),
+                    SizedBox(height: 8),
+                    _buildSummaryRow('To Account', '${_selectedAccount?.bankName} - ${_selectedAccount?.displayAccountNumber}'),
+                  ],
+                ),
+              ),
+            ]
+
+            // Add Account Form
+            else if (_showAddAccountForm) ...[
+              TextField(
+                controller: _bankNameController,
+                decoration: InputDecoration(
+                  labelText: 'Bank Name',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _accountNumberController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Account Number',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _accountHolderController,
+                decoration: InputDecoration(
+                  labelText: 'Account Holder Name',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _branchAddressController,
+                decoration: InputDecoration(
+                  labelText: 'Branch Address',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _swiftCodeController,
+                decoration: InputDecoration(
+                  labelText: 'SWIFT Code (Optional)',
+                  hintText: 'For international transfers',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              SizedBox(height: 16),
+              Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 20),
-                  SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      _errorMessage!,
-                      style: TextStyle(color: Colors.red.shade700),
+                    child: OutlinedButton(
+                      onPressed: _isLoading ? null : () {
+                        setState(() {
+                          _showAddAccountForm = false;
+                          _errorMessage = null;
+                        });
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text('Cancel'),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _addBankAccount,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF2C3E50),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Text('Add Account', style: TextStyle(color: Colors.white)),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+            ]
 
-          SizedBox(height: 24),
-
-          // Pay button
-          ElevatedButton(
-            onPressed: _isLoading ? null : _processPayment,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF2C3E50),
-              padding: EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            child: _isLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    'Continue to Payment',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+            // Main Withdrawal Form
+            else ...[
+              // Amount input
+              TextField(
+                controller: _amountController,
+                keyboardType: TextInputType.number,
+                style: TextStyle(fontSize: 18),
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  labelText: 'Amount (TCC)',
+                  hintText: 'Enter amount to withdraw',
+                  prefixText: 'TCC ',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-          ),
-          SizedBox(height: 12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Color(0xFF2C3E50), width: 2),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
 
-          // Info text
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 14, color: Colors.grey),
-              SizedBox(width: 4),
+              // Fee display
+              if (amount >= 1) ...[
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSummaryRow('Amount', tccFormat.format(amount)),
+                      SizedBox(height: 4),
+                      _buildSummaryRow('Fee (2%)', tccFormat.format(fee)),
+                      Divider(height: 12),
+                      _buildSummaryRow('Total Deduction', tccFormat.format(amount + fee), isBold: true),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+              ],
+
+              // Bank account selector
               Text(
-                'Secured by Stripe',
+                'Select Bank Account',
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
+              ),
+              SizedBox(height: 8),
+
+              if (_isLoadingAccounts)
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else if (_bankAccounts.isEmpty)
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.account_balance, size: 32, color: Colors.orange),
+                      SizedBox(height: 8),
+                      Text(
+                        'No bank account found',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Add a bank account to withdraw funds',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => setState(() => _showAddAccountForm = true),
+                        icon: Icon(Icons.add, size: 18),
+                        label: Text('Add Bank Account'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Column(
+                  children: [
+                    ..._bankAccounts.map((account) => _buildAccountTile(account)),
+                    SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () => setState(() => _showAddAccountForm = true),
+                      icon: Icon(Icons.add, size: 18),
+                      label: Text('Add New Account'),
+                    ),
+                  ],
+                ),
+            ],
+
+            // Error message
+            if (_errorMessage != null) ...[
+              SizedBox(height: 16),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-        ],
+
+            SizedBox(height: 24),
+
+            // Action button
+            if (!_showAddAccountForm)
+              ElevatedButton(
+                onPressed: _isLoading || (_bankAccounts.isEmpty && !_showOtpInput)
+                    ? null
+                    : (_showOtpInput ? _processWithdrawal : _requestOtp),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF2C3E50),
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        _showOtpInput ? 'Confirm Withdrawal' : 'Request OTP',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+
+            if (!_showAddAccountForm && !_showOtpInput) ...[
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.schedule, size: 14, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    'Processing time: 24-48 hours',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildAccountTile(BankAccountModel account) {
+    final isSelected = _selectedAccount?.id == account.id;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedAccount = account),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? Color(0xFF2C3E50).withValues(alpha: 0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.account_balance, color: Colors.blue, size: 20),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    account.bankName,
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    '${account.displayAccountNumber} - ${account.accountHolderName}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            if (account.isPrimary)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Primary',
+                  style: TextStyle(fontSize: 11, color: Colors.green.shade700),
+                ),
+              ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: Color(0xFF2C3E50)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, {bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

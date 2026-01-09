@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/wallet_service.dart';
+import '../../widgets/add_money_bottom_sheet.dart';
 
 class SendGiftScreen extends StatefulWidget {
   const SendGiftScreen({super.key});
@@ -29,6 +30,9 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
   List<Contact> _filteredContacts = [];
   bool _isLoadingContacts = false;
   final _searchController = TextEditingController();
+
+  // Track which contacts are registered TCC users
+  Set<String> _registeredPhoneNumbers = {};
 
   @override
   void initState() {
@@ -168,15 +172,15 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
 
               SizedBox(height: 16),
 
-              // Quick Amount Selection
+              // Quick Amount Selection (minimum 100 TCC)
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _buildQuickAmountChip('50,000'),
-                  _buildQuickAmountChip('100,000'),
-                  _buildQuickAmountChip('200,000'),
-                  _buildQuickAmountChip('500,000'),
+                  _buildQuickAmountChip('100'),
+                  _buildQuickAmountChip('200'),
+                  _buildQuickAmountChip('500'),
+                  _buildQuickAmountChip('1000'),
                 ],
               ),
 
@@ -360,12 +364,62 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
       developer.log('Contacts with phone numbers: ${contactsWithPhone.length}', name: 'Contacts');
       debugPrint('[Contacts] Contacts with phone numbers: ${contactsWithPhone.length}');
 
-      // Sort contacts alphabetically
-      contactsWithPhone.sort((a, b) => a.displayName.compareTo(b.displayName));
+      // Extract all phone numbers for batch verification
+      final phoneNumbers = <String>[];
+      for (final contact in contactsWithPhone) {
+        for (final phone in contact.phones) {
+          final cleanedNumber = _cleanPhoneNumber(phone.number);
+          if (cleanedNumber.isNotEmpty) {
+            phoneNumbers.add(cleanedNumber);
+          }
+        }
+      }
+
+      developer.log('Checking ${phoneNumbers.length} phone numbers for TCC registration', name: 'Contacts');
+      debugPrint('[Contacts] Checking ${phoneNumbers.length} phone numbers for TCC registration');
+
+      // Query the database to find registered users
+      Set<String> registeredNumbers = {};
+      if (phoneNumbers.isNotEmpty) {
+        try {
+          final walletService = WalletService();
+          final result = await walletService.verifyMultiplePhones(
+            phoneNumbers: phoneNumbers,
+          );
+
+          if (result['success'] == true && result['data'] != null) {
+            final data = result['data'];
+            // Expecting response format: { registered_phones: ["076123456", "077654321", ...] }
+            if (data['registered_phones'] != null) {
+              registeredNumbers = Set<String>.from(
+                (data['registered_phones'] as List).map((e) => e.toString()),
+              );
+            }
+          }
+
+          developer.log('Found ${registeredNumbers.length} registered TCC users', name: 'Contacts');
+          debugPrint('[Contacts] Found ${registeredNumbers.length} registered TCC users');
+        } catch (e) {
+          developer.log('Error checking registered users: $e', name: 'Contacts');
+          debugPrint('[Contacts] Error checking registered users: $e');
+          // Continue without registration info - just show all contacts
+        }
+      }
+
+      // Sort contacts: registered TCC users first, then alphabetically within each group
+      contactsWithPhone.sort((a, b) {
+        final aIsRegistered = _isContactRegistered(a, registeredNumbers);
+        final bIsRegistered = _isContactRegistered(b, registeredNumbers);
+
+        if (aIsRegistered && !bIsRegistered) return -1;
+        if (!aIsRegistered && bIsRegistered) return 1;
+        return a.displayName.compareTo(b.displayName);
+      });
 
       setState(() {
         _contacts = contactsWithPhone;
         _filteredContacts = contactsWithPhone;
+        _registeredPhoneNumbers = registeredNumbers;
         _isLoadingContacts = false;
       });
 
@@ -455,6 +509,16 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
               phone.number.replaceAll(RegExp(r'[^\d]'), '').contains(query.replaceAll(RegExp(r'[^\d]'), '')));
           return nameLower.contains(queryLower) || phoneMatch;
         }).toList();
+
+        // Maintain sorting: registered users first, then alphabetically
+        _filteredContacts.sort((a, b) {
+          final aIsRegistered = _isContactRegistered(a, _registeredPhoneNumbers);
+          final bIsRegistered = _isContactRegistered(b, _registeredPhoneNumbers);
+
+          if (aIsRegistered && !bIsRegistered) return -1;
+          if (!aIsRegistered && bIsRegistered) return 1;
+          return a.displayName.compareTo(b.displayName);
+        });
       }
     });
   }
@@ -471,6 +535,17 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
     }
 
     return phoneNumber;
+  }
+
+  // Check if any of the contact's phone numbers is registered
+  bool _isContactRegistered(Contact contact, Set<String> registeredNumbers) {
+    for (final phone in contact.phones) {
+      final cleanedNumber = _cleanPhoneNumber(phone.number);
+      if (registeredNumbers.contains(cleanedNumber)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _showContactsBottomSheet() {
@@ -562,18 +637,43 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
 
                 SizedBox(height: 8),
 
-                // Contact count
+                // Contact count with registered user info
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '${_filteredContacts.length} contacts with phone numbers',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
+                  child: Row(
+                    children: [
+                      Text(
+                        '${_filteredContacts.length} contacts',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
+                      if (_registeredPhoneNumbers.isNotEmpty) ...[
+                        Text(
+                          ' • ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${_filteredContacts.where((c) => _isContactRegistered(c, _registeredPhoneNumbers)).length} on TCC',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
 
@@ -601,6 +701,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                           itemBuilder: (context, index) {
                             final contact = _filteredContacts[index];
                             final phoneNumber = contact.phones.first.number;
+                            final isRegistered = _isContactRegistered(contact, _registeredPhoneNumbers);
 
                             return InkWell(
                               onTap: () {
@@ -612,27 +713,61 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                               },
                               child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: isRegistered
+                                    ? BoxDecoration(
+                                        color: AppColors.success.withValues(alpha: 0.03),
+                                      )
+                                    : null,
                                 child: Row(
                                   children: [
-                                    // Contact avatar
-                                    CircleAvatar(
-                                      radius: 24,
-                                      backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
-                                      backgroundImage: contact.photo != null
-                                          ? MemoryImage(contact.photo!)
-                                          : null,
-                                      child: contact.photo == null
-                                          ? Text(
-                                              contact.displayName.isNotEmpty
-                                                  ? contact.displayName[0].toUpperCase()
-                                                  : '?',
-                                              style: TextStyle(
-                                                color: AppColors.primaryBlue,
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 18,
+                                    // Contact avatar with TCC indicator
+                                    Stack(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 24,
+                                          backgroundColor: isRegistered
+                                              ? AppColors.success.withValues(alpha: 0.1)
+                                              : AppColors.primaryBlue.withValues(alpha: 0.1),
+                                          backgroundImage: contact.photo != null
+                                              ? MemoryImage(contact.photo!)
+                                              : null,
+                                          child: contact.photo == null
+                                              ? Text(
+                                                  contact.displayName.isNotEmpty
+                                                      ? contact.displayName[0].toUpperCase()
+                                                      : '?',
+                                                  style: TextStyle(
+                                                    color: isRegistered
+                                                        ? AppColors.success
+                                                        : AppColors.primaryBlue,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 18,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                        if (isRegistered)
+                                          Positioned(
+                                            right: 0,
+                                            bottom: 0,
+                                            child: Container(
+                                              padding: EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.success,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: Theme.of(context).scaffoldBackgroundColor,
+                                                  width: 2,
+                                                ),
                                               ),
-                                            )
-                                          : null,
+                                              child: Icon(
+                                                Icons.check,
+                                                size: 10,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     SizedBox(width: 12),
 
@@ -641,12 +776,37 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            contact.displayName,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  contact.displayName,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              if (isRegistered) ...[
+                                                SizedBox(width: 8),
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.success.withValues(alpha: 0.1),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    'TCC',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: AppColors.success,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                           SizedBox(height: 2),
                                           Text(
@@ -751,6 +911,12 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
       return;
     }
 
+    // Validate minimum transfer amount (backend requirement)
+    if (amount < 100) {
+      _showError('Minimum transfer amount is 100 TCC');
+      return;
+    }
+
     // Get user's wallet balance
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final walletBalance = authProvider.user?.walletBalance ?? 0;
@@ -799,7 +965,14 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              context.go('/dashboard'); // Navigate to wallet to add funds
+              showAddMoneyBottomSheet(
+                context,
+                onSuccess: () {
+                  // Refresh user profile to get updated balance
+                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  authProvider.loadUserProfile();
+                },
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
