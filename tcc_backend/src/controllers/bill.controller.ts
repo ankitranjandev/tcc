@@ -6,6 +6,19 @@ import logger from '../utils/logger';
 
 export class BillController {
   /**
+   * Seed bill providers (admin endpoint)
+   */
+  static async seedProviders(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const result = await BillService.seedProviders();
+      return ApiResponseUtil.success(res, result, 'Bill providers seeded successfully');
+    } catch (error: any) {
+      logger.error('Seed bill providers error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
+  /**
    * Get bill providers by category
    */
   static async getProviders(req: AuthRequest, res: Response): Promise<Response> {

@@ -38,6 +38,63 @@ export interface BillPaymentFilters {
 
 export class BillService {
   /**
+   * Seed bill providers (for initial setup)
+   */
+  static async seedProviders(): Promise<{ inserted: number; existing: number }> {
+    const providers = [
+      // ELECTRICITY
+      { name: 'EDSA (Electricity Distribution and Supply Authority)', type: 'ELECTRICITY', logo_url: 'https://example.com/logos/edsa.png', metadata: { fields_required: ['account_number', 'meter_number'], description: 'National electricity provider' } },
+      { name: 'KARPOWERSHIP', type: 'ELECTRICITY', logo_url: 'https://example.com/logos/karpowership.png', metadata: { fields_required: ['account_number'], description: 'Powership electricity provider' } },
+      // WATER
+      { name: 'GUMA Valley Water Company', type: 'WATER', logo_url: 'https://example.com/logos/guma.png', metadata: { fields_required: ['account_number', 'meter_number'], description: 'Freetown water supply' } },
+      { name: 'SALWACO', type: 'WATER', logo_url: 'https://example.com/logos/salwaco.png', metadata: { fields_required: ['account_number'], description: 'Sierra Leone Water Company' } },
+      // DSTV
+      { name: 'DStv', type: 'DSTV', logo_url: 'https://example.com/logos/dstv.png', metadata: { fields_required: ['smartcard_number'], description: 'Digital satellite television' } },
+      { name: 'GOtv', type: 'DSTV', logo_url: 'https://example.com/logos/gotv.png', metadata: { fields_required: ['iuc_number'], description: 'Digital terrestrial television' } },
+      { name: 'StarTimes', type: 'DSTV', logo_url: 'https://example.com/logos/startimes.png', metadata: { fields_required: ['smartcard_number'], description: 'Digital television service' } },
+      // INTERNET
+      { name: 'Africell', type: 'INTERNET', logo_url: 'https://example.com/logos/africell.png', metadata: { fields_required: ['account_number'], description: 'Home broadband internet' } },
+      { name: 'Orange Sierra Leone', type: 'INTERNET', logo_url: 'https://example.com/logos/orange.png', metadata: { fields_required: ['account_number'], description: 'Home internet service' } },
+      { name: 'Sierratel', type: 'INTERNET', logo_url: 'https://example.com/logos/sierratel.png', metadata: { fields_required: ['account_number', 'phone_number'], description: 'National telecom internet' } },
+      // MOBILE
+      { name: 'Africell Mobile', type: 'MOBILE', logo_url: 'https://example.com/logos/africell-mobile.png', metadata: { fields_required: ['phone_number'], description: 'Mobile airtime and data' } },
+      { name: 'Orange Mobile', type: 'MOBILE', logo_url: 'https://example.com/logos/orange-mobile.png', metadata: { fields_required: ['phone_number'], description: 'Mobile airtime and data' } },
+      { name: 'Qcell', type: 'MOBILE', logo_url: 'https://example.com/logos/qcell.png', metadata: { fields_required: ['phone_number'], description: 'Mobile airtime and data' } },
+    ];
+
+    let inserted = 0;
+    let existing = 0;
+
+    for (const provider of providers) {
+      try {
+        // Check if provider already exists
+        const existingProvider = await db.query(
+          'SELECT id FROM bill_providers WHERE name = $1',
+          [provider.name]
+        );
+
+        if (existingProvider.length > 0) {
+          existing++;
+          continue;
+        }
+
+        // Insert new provider
+        await db.query(
+          `INSERT INTO bill_providers (id, name, type, logo_url, is_active, metadata)
+           VALUES (gen_random_uuid(), $1, $2, $3, true, $4)`,
+          [provider.name, provider.type, provider.logo_url, JSON.stringify(provider.metadata)]
+        );
+        inserted++;
+      } catch (error) {
+        logger.error('Error seeding provider', { provider: provider.name, error });
+      }
+    }
+
+    logger.info('Bill providers seeded', { inserted, existing });
+    return { inserted, existing };
+  }
+
+  /**
    * Get bill providers by category
    */
   static async getProviders(category?: BillType): Promise<BillProvider[]> {

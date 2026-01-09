@@ -94,6 +94,13 @@ const getProvidersSchema = z.object({
 
 // Routes
 /**
+ * @route   POST /bills/seed-providers
+ * @desc    Seed bill providers (admin endpoint for initial setup)
+ * @access  Private
+ */
+router.post('/seed-providers', BillController.seedProviders);
+
+/**
  * @route   GET /bills/providers
  * @desc    Get bill providers by category
  * @access  Private
