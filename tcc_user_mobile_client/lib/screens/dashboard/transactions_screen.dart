@@ -10,10 +10,10 @@ class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  State<TransactionsScreen> createState() => _TransactionsScreenState();
+  State<TransactionsScreen> createState() => TransactionsScreenState();
 }
 
-class _TransactionsScreenState extends State<TransactionsScreen>
+class TransactionsScreenState extends State<TransactionsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TransactionService _transactionService = TransactionService();
@@ -33,6 +33,11 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadTransactions();
+  }
+
+  /// Public method to refresh transactions from outside
+  void refresh() {
     _loadTransactions();
   }
 

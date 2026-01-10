@@ -25,6 +25,15 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
 
+  // Country code state
+  String _selectedCountryCode = '+232';
+  final List<Map<String, String>> _countryCodes = [
+    {'code': '+232', 'country': 'SLE', 'flag': '🇸🇱'},
+    {'code': '+1', 'country': 'USA', 'flag': '🇺🇸'},
+    {'code': '+44', 'country': 'UK', 'flag': '🇬🇧'},
+    {'code': '+234', 'country': 'NGA', 'flag': '🇳🇬'},
+  ];
+
   // Contacts state
   List<Contact> _contacts = [];
   List<Contact> _filteredContacts = [];
@@ -112,25 +121,70 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                 ],
               ),
               SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                ),
-                child: TextField(
-                  controller: _recipientController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: 'e.g., 076123456',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    prefixIcon: Icon(
-                      Icons.phone,
-                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.5),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Country Code Dropdown
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCountryCode,
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        borderRadius: BorderRadius.circular(12),
+                        items: _countryCodes.map((item) {
+                          return DropdownMenuItem<String>(
+                            value: item['code'],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(item['flag']!, style: TextStyle(fontSize: 16)),
+                                SizedBox(width: 4),
+                                Text(
+                                  item['code']!,
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCountryCode = value!;
+                          });
+                        },
+                      ),
                     ),
                   ),
-                ),
+                  SizedBox(width: 8),
+                  // Phone Number Input
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Theme.of(context).dividerColor),
+                      ),
+                      child: TextField(
+                        controller: _recipientController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: 'e.g., 076123456',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          prefixIcon: Icon(
+                            Icons.phone,
+                            color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               SizedBox(height: 24),
@@ -455,7 +509,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
           children: [
             Icon(Icons.contacts, color: AppColors.primaryBlue),
             SizedBox(width: 8),
-            Text('Contact Access Required'),
+            Expanded(child: Text('Contact Access Required')),
           ],
         ),
         content: Column(
@@ -927,11 +981,80 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
       return;
     }
 
-    // Show confirmation dialog
-    final confirmed = await _showGiftConfirmationDialog(amount, walletBalance);
+    // Verify recipient exists and get their name
+    final recipientName = await _verifyRecipientAndGetName();
+    if (recipientName == null) {
+      return; // Error already shown
+    }
+
+    // Show confirmation dialog with recipient name
+    final confirmed = await _showGiftConfirmationDialog(amount, walletBalance, recipientName);
 
     if (confirmed == true) {
       await _processGiftTransfer(amount);
+    }
+  }
+
+  Future<String?> _verifyRecipientAndGetName() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Verifying recipient...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final walletService = WalletService();
+      final result = await walletService.verifyUserExists(
+        phoneNumber: _recipientController.text,
+        countryCode: _selectedCountryCode,
+      );
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (result['success'] == true && result['data'] != null) {
+        final data = result['data'];
+        if (data['exists'] == true && data['recipient'] != null) {
+          return data['recipient']['name'] as String;
+        }
+      }
+
+      // User not found
+      if (mounted) {
+        _showErrorDialog(
+          'User not found. The phone number "$_selectedCountryCode ${_recipientController.text}" is not registered with TCC. '
+          'Please make sure the recipient has a TCC account.',
+        );
+      }
+      return null;
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        final errorMessage = e.toString();
+        if (errorMessage.contains('CANNOT_TRANSFER_TO_SELF')) {
+          _showErrorDialog('You cannot send a gift to yourself.');
+        } else {
+          _showErrorDialog('Failed to verify recipient: $errorMessage');
+        }
+      }
+      return null;
     }
   }
 
@@ -984,7 +1107,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
     );
   }
 
-  Future<bool?> _showGiftConfirmationDialog(double amount, double walletBalance) {
+  Future<bool?> _showGiftConfirmationDialog(double amount, double walletBalance, String recipientName) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -994,12 +1117,44 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'You are about to send a gift',
+              'You are about to send a gift to:',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
+            SizedBox(height: 12),
+            // Recipient name highlight
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.primaryBlue.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    recipientName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryBlue,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '$_selectedCountryCode ${_recipientController.text}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             SizedBox(height: 16),
-            _buildSummaryRow('Recipient', _recipientController.text),
-            SizedBox(height: 8),
             _buildSummaryRow('Amount', 'TCC${amount.toStringAsFixed(2)}', highlight: true),
             if (_messageController.text.isNotEmpty) ...[
               SizedBox(height: 8),
@@ -1007,7 +1162,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             ],
             SizedBox(height: 16),
             Text(
-              'New Balance: Le ${(walletBalance - amount).toStringAsFixed(2)}',
+              'New Balance: TCC${(walletBalance - amount).toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 14,
                 color: Theme.of(context).textTheme.bodySmall?.color,
@@ -1061,7 +1216,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Verifying recipient...'),
+                Text('Processing gift...'),
               ],
             ),
           ),
@@ -1072,52 +1227,11 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
     try {
       final walletService = WalletService();
 
-      // First, verify if the recipient user exists
-      final verifyResult = await walletService.verifyUserExists(
-        phoneNumber: _recipientController.text,
-      );
-
-      if (verifyResult['success'] != true) {
-        // Close loading dialog
-        if (mounted) Navigator.pop(context);
-
-        if (mounted) {
-          _showErrorDialog(
-            'The phone number you entered is not registered with TCC. '
-            'Please make sure the recipient has a TCC account.',
-          );
-        }
-        return;
-      }
-
-      // Update loading message
-      if (mounted) {
-        Navigator.pop(context);
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Center(
-            child: Card(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Processing gift...'),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }
-
-      // Request OTP for transfer
+      // Request OTP for transfer (recipient already verified)
       final otpResult = await walletService.requestTransferOTP(
         recipientPhone: _recipientController.text,
         amount: amount,
+        recipientCountryCode: _selectedCountryCode,
       );
 
       // Close loading dialog
@@ -1215,6 +1329,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
         recipientPhone: _recipientController.text,
         amount: amount,
         otp: otp,
+        recipientCountryCode: _selectedCountryCode,
         note: _messageController.text.isNotEmpty ? _messageController.text : null,
       );
 

@@ -27,6 +27,38 @@ class AppConstants {
     }
   }
 
+  // CloudFront base URL for static assets (uploads, images, etc.)
+  static const String cloudFrontBaseUrl = 'https://dppyssab6rrh5.cloudfront.net';
+
+  /// Converts any image URL to use CloudFront endpoint
+  /// Handles: local URLs (10.0.2.2, localhost, 127.0.0.1), relative paths, and existing CloudFront URLs
+  static String getImageUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+
+    // If already using CloudFront, return as-is
+    if (url.startsWith(cloudFrontBaseUrl)) {
+      return url;
+    }
+
+    // Extract the path from various URL formats
+    String path = url;
+
+    // Handle full URLs (http://10.0.2.2:3000/v1/uploads/... or similar)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      final uri = Uri.tryParse(url);
+      if (uri != null) {
+        path = uri.path;
+      }
+    }
+
+    // Ensure path starts with /
+    if (!path.startsWith('/')) {
+      path = '/$path';
+    }
+
+    return '$cloudFrontBaseUrl$path';
+  }
+
   static const String apiVersion = 'v1';
 
   // Stripe Configuration

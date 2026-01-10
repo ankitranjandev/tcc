@@ -110,7 +110,8 @@ class WalletService {
         },
         requiresAuth: true,
       );
-      return {'success': true, 'data': response};
+      // Backend already returns { success: true, data: {...} }
+      return response;
     } catch (e) {
       return {'success': false, 'error': e.toString()};
     }

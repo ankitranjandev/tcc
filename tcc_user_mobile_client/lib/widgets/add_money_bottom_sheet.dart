@@ -38,6 +38,9 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
   }
 
   Future<void> _processPayment() async {
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+
     final amountText = _amountController.text.trim();
 
     if (amountText.isEmpty) {

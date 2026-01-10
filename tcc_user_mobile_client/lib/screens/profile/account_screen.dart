@@ -1094,21 +1094,8 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  // Fix image URL for Android emulator and ensure it has the correct base URL
+  // Fix image URL to use CloudFront endpoint
   String _getFixedImageUrl(String url) {
-    // If the URL is already complete, just fix the host
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      // Replace localhost and 127.0.0.1 with 10.0.2.2 for Android emulator
-      return url
-          .replaceAll('localhost', '10.0.2.2')
-          .replaceAll('127.0.0.1', '10.0.2.2');
-    }
-
-    // If it's a relative URL, prepend the base URL
-    String baseUrl = AppConstants.baseUrl.replaceAll('/v1', '');
-    if (!url.startsWith('/')) {
-      url = '/$url';
-    }
-    return '$baseUrl$url';
+    return AppConstants.getImageUrl(url);
   }
 }

@@ -34,16 +34,7 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   String _getFixedImageUrl(String url) {
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url
-          .replaceAll('localhost', '10.0.2.2')
-          .replaceAll('127.0.0.1', '10.0.2.2');
-    }
-    String baseUrl = AppConstants.baseUrl.replaceAll('/v1', '');
-    if (!url.startsWith('/')) {
-      url = '/$url';
-    }
-    return '$baseUrl$url';
+    return AppConstants.getImageUrl(url);
   }
 
   @override

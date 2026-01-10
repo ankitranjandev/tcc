@@ -28,7 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
-    _phoneController = TextEditingController(text: user?.phone ?? '');
+    _phoneController = TextEditingController(text: user?.phoneWithCountryCode ?? '');
   }
 
   @override
@@ -295,7 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _firstNameController.text = user?.firstName ?? '';
                                 _lastNameController.text = user?.lastName ?? '';
                                 _emailController.text = user?.email ?? '';
-                                _phoneController.text = user?.phone ?? '';
+                                _phoneController.text = user?.phoneWithCountryCode ?? '';
                                 _isEditing = false;
                               });
                             },
@@ -504,29 +504,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Fix image URL for Android emulator and ensure it has the correct base URL
+  // Fix image URL to use CloudFront endpoint
   String _getFixedImageUrl(String url) {
     developer.log('🔗 ProfileScreen._getFixedImageUrl: Input URL: $url', name: 'ProfileScreen');
-
-    // If the URL is already complete, just fix the host
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      // Replace localhost and 127.0.0.1 with 10.0.2.2 for Android emulator
-      final fixedUrl = url
-          .replaceAll('localhost', '10.0.2.2')
-          .replaceAll('127.0.0.1', '10.0.2.2');
-      developer.log('🔗 ProfileScreen._getFixedImageUrl: Full URL fixed to: $fixedUrl', name: 'ProfileScreen');
-      return fixedUrl;
-    }
-
-    // If it's a relative URL, prepend the base URL
-    String baseUrl = AppConstants.baseUrl.replaceAll('/v1', '');
-    developer.log('🔗 ProfileScreen._getFixedImageUrl: Base URL: $baseUrl', name: 'ProfileScreen');
-    if (!url.startsWith('/')) {
-      url = '/$url';
-    }
-    final fullUrl = '$baseUrl$url';
-    developer.log('🔗 ProfileScreen._getFixedImageUrl: Built full URL: $fullUrl', name: 'ProfileScreen');
-    return fullUrl;
+    final fixedUrl = AppConstants.getImageUrl(url);
+    developer.log('🔗 ProfileScreen._getFixedImageUrl: Fixed URL: $fixedUrl', name: 'ProfileScreen');
+    return fixedUrl;
   }
 
   Color _getKycStatusColor(String status) {

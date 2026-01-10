@@ -13,6 +13,7 @@ class UserModel {
   final String lastName;
   final String email;
   final String phone;
+  final String? countryCode;
   final String? profilePicture;
   final double walletBalance;
   final String kycStatus;
@@ -23,10 +24,19 @@ class UserModel {
     required this.lastName,
     required this.email,
     required this.phone,
+    this.countryCode,
     this.profilePicture,
     required this.walletBalance,
     this.kycStatus = 'PENDING',
   });
+
+  /// Returns phone number with country code (e.g., "+232 78123456")
+  String get phoneWithCountryCode {
+    if (countryCode != null && countryCode!.isNotEmpty) {
+      return '$countryCode $phone';
+    }
+    return phone;
+  }
 
   String get fullName => '$firstName $lastName';
   
@@ -61,6 +71,7 @@ class UserModel {
       lastName: json['last_name'] ?? json['lastName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
+      countryCode: json['country_code'] ?? json['countryCode'],
       profilePicture: profilePictureValue,
       walletBalance: _parseDouble(json['walletBalance'] ?? json['wallet_balance']),
       kycStatus: json['kyc_status'] ?? json['kycStatus'] ?? 'PENDING',
@@ -74,6 +85,7 @@ class UserModel {
       'lastName': lastName,
       'email': email,
       'phone': phone,
+      'countryCode': countryCode,
       'profilePicture': profilePicture,
       'walletBalance': walletBalance,
       'kycStatus': kycStatus,
@@ -86,7 +98,8 @@ class UserModel {
       firstName: 'Andrew',
       lastName: 'Johnson',
       email: 'andrew.johnson@example.com',
-      phone: '+232 78 123 4567',
+      phone: '78123456',
+      countryCode: '+232',
       walletBalance: 34000.00,
       kycStatus: 'APPROVED',
     );

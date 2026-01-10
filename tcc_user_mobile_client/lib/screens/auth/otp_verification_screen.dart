@@ -183,7 +183,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               ),
               SizedBox(height: 16),
               GestureDetector(
-                onTap: () => context.go('/phone-number'),
+                onTap: () {
+                  // Pass the registration data back to phone number screen
+                  // The registration data might be nested under 'registrationData' key
+                  final registrationData = widget.extraData?['registrationData'] as Map<String, dynamic>? ?? widget.extraData;
+                  context.go('/phone-number', extra: registrationData);
+                },
                 child: Text(
                   'Change phone number',
                   style: TextStyle(

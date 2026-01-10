@@ -37,7 +37,7 @@ class _BillReviewScreenState extends State<BillReviewScreen> {
   final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
   final bool _applyConvenienceFee = true;
 
-  double get convenienceFee => _applyConvenienceFee ? 1000.0 : 0.0;
+  double get convenienceFee => _applyConvenienceFee ? 1.0 : 0.0;
   double get totalAmount => widget.billAmount + convenienceFee;
 
   @override

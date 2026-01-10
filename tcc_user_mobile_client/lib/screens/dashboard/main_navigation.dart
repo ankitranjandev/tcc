@@ -18,11 +18,14 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
+  // Key for accessing HistoryScreen state to trigger refresh
+  final GlobalKey<HistoryScreenState> _historyScreenKey = GlobalKey();
+
+  late final List<Widget> _screens = [
     VaultScreen(),
     PayScreen(),
     GiftScreen(),
-    HistoryScreen(),
+    HistoryScreen(key: _historyScreenKey),
     MoreScreen(),
   ];
 
@@ -71,6 +74,10 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
           setState(() {
             _currentIndex = index;
           });
+          // Refresh History screen when entering the History tab
+          if (index == 3) {
+            _historyScreenKey.currentState?.refreshTransactions();
+          }
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.primaryBlue,

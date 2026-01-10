@@ -1427,10 +1427,10 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
   }
 
   double _calculateFee(double amount) {
-    // Using non-KYC fee structure (2%, min 100, max 1000) as default
+    // Using non-KYC fee structure (2%, min 1, max 1000) as default
     // TODO: Check user's KYC status for proper fee calculation
     final fee = amount * 0.02;
-    if (fee < 100) return 100;
+    if (fee < 1) return 1;
     if (fee > 1000) return 1000;
     return fee;
   }
@@ -1450,7 +1450,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
     }
 
     if (amount < 1) {
-      setState(() => _errorMessage = 'Please enter an amount greater than 0');
+      setState(() => _errorMessage = 'Minimum withdrawal amount is TCC 1');
       return;
     }
 
@@ -1614,8 +1614,11 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final tccFormat = NumberFormat.currency(symbol: 'TCC ', decimalDigits: 0);
+    final usdFormat = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
     final amount = double.tryParse(_amountController.text) ?? 0;
     final fee = _calculateFee(amount);
+    // TCC to USD is 1:1, so the amount user receives in USD equals the TCC withdrawal amount
+    final usdReceived = amount;
 
     return Container(
       padding: EdgeInsets.only(
@@ -1712,13 +1715,37 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                 ),
                 child: Column(
                   children: [
-                    _buildSummaryRow('Amount', tccFormat.format(amount)),
+                    _buildSummaryRow('Withdrawal Amount', tccFormat.format(amount)),
                     SizedBox(height: 8),
                     _buildSummaryRow('Fee (2%)', tccFormat.format(fee)),
                     Divider(height: 16),
                     _buildSummaryRow('Total Deduction', tccFormat.format(amount + fee), isBold: true),
                     SizedBox(height: 8),
                     _buildSummaryRow('To Account', '${_selectedAccount?.bankName} - ${_selectedAccount?.displayAccountNumber}'),
+                    SizedBox(height: 12),
+                    Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.account_balance, size: 18, color: Colors.green.shade700),
+                          SizedBox(width: 8),
+                          Text(
+                            'You will receive: ${usdFormat.format(usdReceived)}',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1851,11 +1878,35 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                   ),
                   child: Column(
                     children: [
-                      _buildSummaryRow('Amount', tccFormat.format(amount)),
+                      _buildSummaryRow('Withdrawal Amount', tccFormat.format(amount)),
                       SizedBox(height: 4),
                       _buildSummaryRow('Fee (2%)', tccFormat.format(fee)),
                       Divider(height: 12),
                       _buildSummaryRow('Total Deduction', tccFormat.format(amount + fee), isBold: true),
+                      SizedBox(height: 8),
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.account_balance, size: 16, color: Colors.green.shade700),
+                            SizedBox(width: 8),
+                            Text(
+                              'You will receive: ${usdFormat.format(usdReceived)}',
+                              style: TextStyle(
+                                color: Colors.green.shade700,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),

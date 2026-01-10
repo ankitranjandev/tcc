@@ -17,6 +17,7 @@ import {
   createPaymentIntent as createStripePaymentIntent,
 } from './stripe.service';
 import { PushNotificationService } from './push-notification.service';
+import { normalizePhone, normalizeCountryCode } from '../utils/phone';
 
 export class WalletService {
   /**
@@ -499,11 +500,17 @@ export class WalletService {
         throw new Error(otpResult.error || 'INVALID_OTP');
       }
 
-      // Get recipient details
+      // Normalize phone numbers for comparison
+      const normalizedToPhone = normalizePhone(toPhone);
+      const normalizedToCountryCode = normalizeCountryCode(toCountryCode);
+
+      // Get recipient details using normalized phone comparison
       const recipients = await db.query(
         `SELECT id, first_name, last_name FROM users
-         WHERE phone = $1 AND country_code = $2 AND is_active = true`,
-        [toPhone, toCountryCode]
+         WHERE REGEXP_REPLACE(phone, '^0+', '') = $1
+         AND REGEXP_REPLACE(REGEXP_REPLACE(country_code, '^\\+', ''), '^0+', '') = $2
+         AND is_active = true`,
+        [normalizedToPhone, normalizedToCountryCode]
       );
 
       if (recipients.length === 0) {
