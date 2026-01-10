@@ -228,6 +228,22 @@ export class UserController {
     }
   }
 
+  static async verifyPhonesBatch(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return ApiResponseUtil.unauthorized(res);
+
+      const { phones, country_code } = req.body;
+
+      const result = await UserService.verifyPhonesBatch(phones, country_code, userId);
+
+      return ApiResponseUtil.success(res, result);
+    } catch (error: any) {
+      logger.error('Verify phones batch error', error);
+      return ApiResponseUtil.internalError(res);
+    }
+  }
+
   /**
    * Register FCM token for push notifications
    */

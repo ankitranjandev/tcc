@@ -399,4 +399,41 @@ export class UserService {
       throw error;
     }
   }
+
+  /**
+   * Verify multiple phone numbers at once (batch verification)
+   * Returns list of phone numbers that are registered TCC users
+   */
+  static async verifyPhonesBatch(
+    phones: string[],
+    countryCode: string,
+    requestingUserId: string
+  ): Promise<{ registered_phones: string[] }> {
+    try {
+      if (!phones || phones.length === 0) {
+        return { registered_phones: [] };
+      }
+
+      // Limit batch size to prevent abuse
+      const phonesToCheck = phones.slice(0, 500);
+
+      // Query all matching users at once
+      const users = await db.query<{ phone: string; id: string }>(
+        `SELECT phone, id
+         FROM users
+         WHERE phone = ANY($1) AND country_code = $2 AND is_active = true`,
+        [phonesToCheck, countryCode]
+      );
+
+      // Filter out the requesting user and return registered phone numbers
+      const registeredPhones = users
+        .filter(user => user.id !== requestingUserId)
+        .map(user => user.phone);
+
+      return { registered_phones: registeredPhones };
+    } catch (error) {
+      logger.error('Error verifying phones batch', error);
+      throw error;
+    }
+  }
 }

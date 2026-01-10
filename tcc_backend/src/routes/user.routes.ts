@@ -60,6 +60,13 @@ const verifyPhoneSchema = z.object({
   }),
 });
 
+const verifyPhonesBatchSchema = z.object({
+  body: z.object({
+    phones: z.array(z.string()).max(500),
+    country_code: z.string().regex(/^\+\d{1,4}$/),
+  }),
+});
+
 const fcmTokenSchema = z.object({
   body: z.object({
     fcm_token: z.string().min(1),
@@ -82,6 +89,7 @@ router.post('/cancel-deletion', UserController.cancelDeletion);
 router.post('/bank-accounts', validate(addBankAccountSchema), UserController.addBankAccount);
 router.get('/bank-accounts', UserController.getBankAccounts);
 router.post('/verify-phone', validate(verifyPhoneSchema), UserController.verifyPhone);
+router.post('/verify-phones-batch', validate(verifyPhonesBatchSchema), UserController.verifyPhonesBatch);
 
 // FCM token management
 router.post('/fcm-token', validate(fcmTokenSchema), UserController.registerFCMToken);

@@ -39,7 +39,7 @@ const verifyPaymentSchema = z.object({
 
 const withdrawSchema = z.object({
   body: z.object({
-    amount: z.number().positive().min(500),
+    amount: z.number().positive(),
     bank_account_id: z.string().uuid(),
     otp: z.string().length(6),
   }),

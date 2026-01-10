@@ -303,13 +303,13 @@ export class WalletService {
   private static calculateWithdrawalFee(amount: number, kycStatus: KYCStatus): number {
     // Fee structure based on KYC status
     if (kycStatus === KYCStatus.APPROVED) {
-      // 1% fee for KYC approved users, min 50, max 500
+      // 1% fee for KYC approved users, min 1, max 500
       const fee = amount * 0.01;
-      return Math.max(50, Math.min(500, fee));
+      return Math.max(1, Math.min(500, fee));
     } else {
-      // 2% fee for non-KYC users, min 100, max 1000
+      // 2% fee for non-KYC users, min 1, max 1000
       const fee = amount * 0.02;
-      return Math.max(100, Math.min(1000, fee));
+      return Math.max(1, Math.min(1000, fee));
     }
   }
 
