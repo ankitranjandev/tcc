@@ -1027,10 +1027,18 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
       // Close loading dialog
       if (mounted) Navigator.pop(context);
 
+      debugPrint('🔍 verifyUserExists result: $result');
+      debugPrint('🔍 result type: ${result.runtimeType}');
+      debugPrint('🔍 result[success]: ${result['success']}');
+      debugPrint('🔍 result[data]: ${result['data']}');
+
       if (result['success'] == true && result['data'] != null) {
-        final data = result['data'];
+        final data = result['data'] as Map<String, dynamic>;
+        debugPrint('🔍 data[exists]: ${data['exists']}');
+        debugPrint('🔍 data[recipient]: ${data['recipient']}');
         if (data['exists'] == true && data['recipient'] != null) {
-          return data['recipient']['name'] as String;
+          final recipient = data['recipient'] as Map<String, dynamic>;
+          return recipient['name'] as String;
         }
       }
 
