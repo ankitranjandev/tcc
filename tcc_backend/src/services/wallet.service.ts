@@ -38,6 +38,26 @@ export class WalletService {
   }
 
   /**
+   * Create a new Stripe customer and save the ID to the database
+   */
+  private static async createAndSaveStripeCustomer(userId: string, user: any): Promise<string> {
+    const stripeCustomer = await createStripeCustomer(
+      user.id,
+      user.email,
+      `${user.first_name} ${user.last_name}`,
+      user.phone
+    );
+    const stripeCustomerId = stripeCustomer.id;
+
+    await db.query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [
+      stripeCustomerId,
+      userId,
+    ]);
+    logger.info('Stripe customer created and saved', { userId, stripeCustomerId });
+    return stripeCustomerId;
+  }
+
+  /**
    * Get wallet balance for a user
    */
   static async getBalance(userId: string): Promise<Wallet> {
@@ -230,20 +250,7 @@ export class WalletService {
 
       if (!stripeCustomerId) {
         logger.info('Creating new Stripe customer', { userId, email: user.email });
-        const stripeCustomer = await createStripeCustomer(
-          user.id,
-          user.email,
-          `${user.first_name} ${user.last_name}`,
-          user.phone
-        );
-        stripeCustomerId = stripeCustomer.id;
-
-        // Update user with Stripe customer ID
-        await db.query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [
-          stripeCustomerId,
-          userId,
-        ]);
-        logger.info('Stripe customer created and saved', { userId, stripeCustomerId });
+        stripeCustomerId = await this.createAndSaveStripeCustomer(userId, user);
       } else {
         logger.info('Using existing Stripe customer', { userId, stripeCustomerId });
       }
@@ -259,12 +266,29 @@ export class WalletService {
       // Create pending transaction in database
       const result = await db.transaction(async (client: PoolClient) => {
         // Create Stripe payment intent (Stripe expects cents)
-        const paymentIntent = await createStripePaymentIntent(
-          amount,
-          userId,
-          transactionId,
-          stripeCustomerId
-        );
+        let paymentIntent;
+        try {
+          paymentIntent = await createStripePaymentIntent(
+            amount,
+            userId,
+            transactionId,
+            stripeCustomerId
+          );
+        } catch (stripeError: any) {
+          // If customer no longer exists in Stripe, recreate and retry
+          if (stripeError.code === 'resource_missing' && stripeError.param === 'customer') {
+            logger.warn('Stripe customer not found, recreating', { userId, oldCustomerId: stripeCustomerId });
+            stripeCustomerId = await this.createAndSaveStripeCustomer(userId, user);
+            paymentIntent = await createStripePaymentIntent(
+              amount,
+              userId,
+              transactionId,
+              stripeCustomerId
+            );
+          } else {
+            throw stripeError;
+          }
+        }
 
         // Insert transaction record (store in TCC, not cents)
         await client.query(
