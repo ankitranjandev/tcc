@@ -47,10 +47,20 @@ export class WalletController {
       const userId = req.user?.id;
 
       if (!userId) {
+        logger.warn('Deposit request with no authenticated user');
         return ApiResponseUtil.unauthorized(res);
       }
 
       const { amount, payment_method, payment_details, agent_id } = req.body;
+
+      logger.info('Deposit request received', {
+        userId,
+        amount,
+        payment_method,
+        source: payment_details?.source,
+        agentId: agent_id,
+        ip: req.ip,
+      });
 
       // Prepare metadata
       const metadata = {
@@ -89,13 +99,15 @@ export class WalletController {
           : 'Deposit request submitted. Your wallet will be credited after verification.'
       );
     } catch (error: any) {
-      logger.error('Deposit error', error);
+      logger.error('Deposit error', { userId: req.user?.id, error: error.message, stack: error.stack });
 
       if (error.message === 'INVALID_AMOUNT') {
+        logger.warn('Deposit rejected: invalid amount', { userId: req.user?.id, amount: req.body?.amount });
         return ApiResponseUtil.badRequest(res, 'Invalid amount');
       }
 
       if (error.message === 'WALLET_NOT_FOUND') {
+        logger.warn('Deposit rejected: wallet not found', { userId: req.user?.id });
         return ApiResponseUtil.notFound(res, 'Wallet not found');
       }
 
@@ -111,13 +123,17 @@ export class WalletController {
       const userId = req.user?.id;
 
       if (!userId) {
+        logger.warn('Create payment intent request with no authenticated user');
         return ApiResponseUtil.unauthorized(res);
       }
 
       const { amount } = req.body;
 
+      logger.info('Create payment intent request received', { userId, amountInCents: amount, ip: req.ip });
+
       // Validate amount - must be positive
       if (!amount || amount <= 0) {
+        logger.warn('Create payment intent rejected: invalid amount', { userId, amount });
         return ApiResponseUtil.badRequest(res, 'Amount must be a positive number');
       }
 
@@ -131,22 +147,28 @@ export class WalletController {
         currency: result.currency,
         publishable_key: config.stripe.publishableKey,
       }, 'Payment intent created successfully');
+
+      logger.info('Payment intent created successfully', { userId, transactionId: result.transactionId, paymentIntentId: result.paymentIntentId });
     } catch (error: any) {
-      logger.error('Create payment intent error', error);
+      logger.error('Create payment intent error', { userId: req.user?.id, error: error.message, stack: error.stack });
 
       if (error.message === 'INVALID_AMOUNT') {
+        logger.warn('Create payment intent rejected: invalid amount', { userId: req.user?.id, amount: req.body?.amount });
         return ApiResponseUtil.badRequest(res, 'Invalid amount');
       }
 
       if (error.message === 'WALLET_NOT_FOUND') {
+        logger.warn('Create payment intent rejected: wallet not found', { userId: req.user?.id });
         return ApiResponseUtil.notFound(res, 'Wallet not found');
       }
 
       if (error.message === 'USER_NOT_FOUND') {
+        logger.warn('Create payment intent rejected: user not found', { userId: req.user?.id });
         return ApiResponseUtil.notFound(res, 'User not found');
       }
 
       if (error.message.includes('STRIPE')) {
+        logger.error('Stripe error during payment intent creation', { userId: req.user?.id, error: error.message });
         return ApiResponseUtil.badRequest(res, 'Payment processing error. Please try again.');
       }
 
@@ -350,34 +372,43 @@ export class WalletController {
       const userId = req.user?.id;
 
       if (!userId) {
+        logger.warn('Verify Stripe payment request with no authenticated user');
         return ApiResponseUtil.unauthorized(res);
       }
 
       const { payment_intent_id } = req.body;
 
+      logger.info('Verify Stripe payment request received', { userId, paymentIntentId: payment_intent_id });
+
       if (!payment_intent_id) {
+        logger.warn('Verify Stripe payment rejected: missing payment_intent_id', { userId });
         return ApiResponseUtil.badRequest(res, 'Payment intent ID is required');
       }
 
       const result = await WalletService.verifyStripePayment(userId, payment_intent_id);
 
+      logger.info('Stripe payment verification completed', { userId, paymentIntentId: payment_intent_id });
       return ApiResponseUtil.success(res, result, 'Payment verified successfully');
     } catch (error: any) {
-      logger.error('Verify Stripe payment error', error);
+      logger.error('Verify Stripe payment error', { userId: req.user?.id, paymentIntentId: req.body?.payment_intent_id, error: error.message, stack: error.stack });
 
       if (error.message === 'TRANSACTION_NOT_FOUND') {
+        logger.warn('Verify payment rejected: transaction not found', { userId: req.user?.id, paymentIntentId: req.body?.payment_intent_id });
         return ApiResponseUtil.notFound(res, 'Transaction not found');
       }
 
       if (error.message === 'UNAUTHORIZED') {
+        logger.warn('Verify payment rejected: unauthorized access', { userId: req.user?.id, paymentIntentId: req.body?.payment_intent_id });
         return ApiResponseUtil.unauthorized(res);
       }
 
       if (error.message === 'PAYMENT_NOT_COMPLETED') {
+        logger.info('Verify payment: payment not yet completed', { userId: req.user?.id, paymentIntentId: req.body?.payment_intent_id });
         return ApiResponseUtil.badRequest(res, 'Payment has not been completed yet');
       }
 
       if (error.message.includes('STRIPE')) {
+        logger.error('Stripe error during payment verification', { userId: req.user?.id, paymentIntentId: req.body?.payment_intent_id, error: error.message });
         return ApiResponseUtil.badRequest(res, 'Payment verification error. Please try again.');
       }
 

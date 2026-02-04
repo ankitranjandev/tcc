@@ -220,10 +220,20 @@ export class AgentController {
       const userId = req.user?.id;
 
       if (!userId) {
+        logger.warn('Agent deposit request with no authenticated user');
         return ApiResponseUtil.unauthorized(res);
       }
 
       const { agent_id, user_phone, amount, payment_method } = req.body;
+
+      logger.info('Agent deposit for user request received', {
+        authenticatedUserId: userId,
+        agentId: agent_id,
+        userPhone: user_phone ? `****${user_phone.slice(-4)}` : null,
+        amount,
+        paymentMethod: payment_method,
+        ip: req.ip,
+      });
 
       const transaction = await AgentService.depositForUser(
         agent_id,
@@ -231,6 +241,13 @@ export class AgentController {
         amount,
         payment_method
       );
+
+      logger.info('Agent deposit for user completed successfully', {
+        agentId: agent_id,
+        transactionId: transaction.transaction_id,
+        amount: transaction.amount,
+        commission: transaction.commission,
+      });
 
       return ApiResponseUtil.created(
         res,
@@ -252,25 +269,30 @@ export class AgentController {
         'Deposit processed successfully'
       );
     } catch (error: any) {
-      logger.error('Agent deposit error', error);
+      logger.error('Agent deposit error', { agentId: req.body?.agent_id, error: error.message, stack: error.stack });
 
       if (error.message === 'AGENT_NOT_FOUND') {
+        logger.warn('Agent deposit rejected: agent not found', { agentId: req.body?.agent_id });
         return ApiResponseUtil.notFound(res, 'Agent not found');
       }
 
       if (error.message === 'AGENT_NOT_ACTIVE') {
+        logger.warn('Agent deposit rejected: agent not active', { agentId: req.body?.agent_id });
         return ApiResponseUtil.badRequest(res, 'Agent account is not active');
       }
 
       if (error.message === 'USER_NOT_FOUND') {
+        logger.warn('Agent deposit rejected: user not found', { agentId: req.body?.agent_id, userPhone: req.body?.user_phone ? `****${req.body.user_phone.slice(-4)}` : null });
         return ApiResponseUtil.notFound(res, 'User not found');
       }
 
       if (error.message === 'INVALID_AMOUNT') {
+        logger.warn('Agent deposit rejected: invalid amount', { agentId: req.body?.agent_id, amount: req.body?.amount });
         return ApiResponseUtil.badRequest(res, 'Invalid amount');
       }
 
       if (error.message === 'INSUFFICIENT_AGENT_BALANCE') {
+        logger.warn('Agent deposit rejected: insufficient agent balance', { agentId: req.body?.agent_id, amount: req.body?.amount });
         return ApiResponseUtil.badRequest(res, 'Insufficient agent wallet balance');
       }
 

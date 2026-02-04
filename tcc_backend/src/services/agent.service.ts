@@ -417,8 +417,11 @@ export class AgentService {
     method: PaymentMethod
   ): Promise<any> {
     try {
+      logger.info('Processing agent deposit for user', { agentId, userPhone: `****${userPhone.slice(-4)}`, amount, method });
+
       // Validate amount
       if (amount <= 0) {
+        logger.warn('Agent deposit validation failed: invalid amount', { agentId, amount });
         throw new Error('INVALID_AMOUNT');
       }
 
@@ -430,17 +433,22 @@ export class AgentService {
       );
 
       if (agents.length === 0) {
+        logger.warn('Agent deposit failed: agent not found', { agentId });
         throw new Error('AGENT_NOT_FOUND');
       }
 
       const agent = agents[0];
 
       if (!agent.active_status) {
+        logger.warn('Agent deposit failed: agent not active', { agentId });
         throw new Error('AGENT_NOT_ACTIVE');
       }
 
+      logger.info('Agent verified for deposit', { agentId, agentBalance: parseFloat(agent.wallet_balance), commissionRate: parseFloat(agent.commission_rate) });
+
       // Check agent has sufficient balance
       if (parseFloat(agent.wallet_balance) < amount) {
+        logger.warn('Agent deposit failed: insufficient balance', { agentId, agentBalance: parseFloat(agent.wallet_balance), requestedAmount: amount });
         throw new Error('INSUFFICIENT_AGENT_BALANCE');
       }
 
@@ -451,15 +459,20 @@ export class AgentService {
       );
 
       if (users.length === 0) {
+        logger.warn('Agent deposit failed: user not found', { agentId, userPhone: `****${userPhone.slice(-4)}` });
         throw new Error('USER_NOT_FOUND');
       }
 
       const user = users[0];
+      logger.info('User verified for agent deposit', { agentId, userId: user.id });
 
       // Calculate commission
       const commission = this.calculateCommission(amount, parseFloat(agent.commission_rate));
+      logger.info('Commission calculated for agent deposit', { agentId, amount, commissionRate: parseFloat(agent.commission_rate), commission });
 
       const transactionId = this.generateTransactionId();
+
+      logger.info('Starting agent deposit DB transaction', { agentId, userId: user.id, transactionId, amount, commission });
 
       const result = await db.transaction(async (client: PoolClient) => {
         // Create transaction for user deposit

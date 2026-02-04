@@ -75,13 +75,17 @@ export class WalletService {
     }
   ): Promise<any> {
     try {
+      logger.info('Processing deposit', { userId, amount, method, source, agentId: metadata?.agentId });
+
       // Validate amount
       if (amount <= 0) {
+        logger.warn('Deposit validation failed: invalid amount', { userId, amount });
         throw new Error('INVALID_AMOUNT');
       }
 
       // Get user's wallet
       const wallet = await this.getBalance(userId);
+      logger.info('Wallet retrieved for deposit', { userId, walletId: wallet.id, currentBalance: parseFloat(wallet.balance.toString()) });
 
       // Generate transaction ID
       const transactionId = this.generateTransactionId();
@@ -111,8 +115,11 @@ export class WalletService {
           ]
         );
 
+        logger.info('Deposit transaction record created', { userId, transactionId, status: TransactionStatus.PENDING });
+
         // For agent deposits, mark as completed immediately
         if (method === PaymentMethod.AGENT && metadata?.agentId) {
+          logger.info('Processing agent deposit - marking as completed immediately', { userId, transactionId, agentId: metadata.agentId });
           // Update transaction status
           await client.query(
             `UPDATE transactions
@@ -158,6 +165,7 @@ export class WalletService {
           );
 
           transactions.rows[0].status = TransactionStatus.COMPLETED;
+          logger.info('Agent deposit completed - wallets updated', { userId, transactionId, agentId: metadata.agentId, amount });
         }
 
         return transactions.rows[0];
@@ -193,13 +201,17 @@ export class WalletService {
     currency: string;
   }> {
     try {
+      logger.info('Creating Stripe payment intent', { userId, amountInCents: amount, ipAddress });
+
       // Validate amount
       if (amount <= 0) {
+        logger.warn('Payment intent validation failed: invalid amount', { userId, amount });
         throw new Error('INVALID_AMOUNT');
       }
 
       // Get wallet to ensure it exists
       const wallet = await this.getBalance(userId);
+      logger.info('Wallet verified for payment intent', { userId, walletId: wallet.id });
 
       // Get user details
       const users = await db.query(
@@ -217,6 +229,7 @@ export class WalletService {
       let stripeCustomerId = user.stripe_customer_id;
 
       if (!stripeCustomerId) {
+        logger.info('Creating new Stripe customer', { userId, email: user.email });
         const stripeCustomer = await createStripeCustomer(
           user.id,
           user.email,
@@ -230,13 +243,18 @@ export class WalletService {
           stripeCustomerId,
           userId,
         ]);
+        logger.info('Stripe customer created and saved', { userId, stripeCustomerId });
+      } else {
+        logger.info('Using existing Stripe customer', { userId, stripeCustomerId });
       }
 
       // Generate transaction ID
       const transactionId = this.generateTransactionId();
+      logger.info('Transaction ID generated for payment intent', { userId, transactionId });
 
       // Convert cents to TCC (amount comes in cents from frontend)
       const amountInTCC = amount / 100;
+      logger.info('Amount conversion for deposit', { userId, amountInCents: amount, amountInTCC });
 
       // Create pending transaction in database
       const result = await db.transaction(async (client: PoolClient) => {
@@ -669,6 +687,8 @@ export class WalletService {
     currency: string;
   }> {
     try {
+      logger.info('Verifying Stripe payment', { userId, paymentIntentId });
+
       // Get transaction details from database
       const transactions = await db.query(
         `SELECT id, transaction_id, to_user_id, amount, status, stripe_payment_intent_id
@@ -678,18 +698,22 @@ export class WalletService {
       );
 
       if (transactions.length === 0) {
+        logger.warn('Payment verification failed: transaction not found', { userId, paymentIntentId });
         throw new Error('TRANSACTION_NOT_FOUND');
       }
 
       const transaction = transactions[0];
+      logger.info('Transaction found for verification', { userId, paymentIntentId, transactionId: transaction.transaction_id, currentStatus: transaction.status });
 
       // Verify the transaction belongs to the user
       if (transaction.to_user_id !== userId) {
+        logger.warn('Payment verification failed: unauthorized user', { userId, transactionOwner: transaction.to_user_id, paymentIntentId });
         throw new Error('UNAUTHORIZED');
       }
 
       // Check if transaction is already completed
       if (transaction.status === TransactionStatus.COMPLETED) {
+        logger.info('Transaction already completed, returning current balance', { userId, paymentIntentId, transactionId: transaction.transaction_id });
         // Get updated wallet balance
         const wallet = await this.getBalance(userId);
 
@@ -710,11 +734,15 @@ export class WalletService {
       }
 
       // If transaction is still pending, retrieve payment intent from Stripe to check status
+      logger.info('Transaction still pending, checking Stripe status', { userId, paymentIntentId, transactionId: transaction.transaction_id });
       const { retrievePaymentIntent } = await import('./stripe.service');
       const paymentIntent = await retrievePaymentIntent(paymentIntentId);
 
+      logger.info('Stripe payment intent status retrieved', { userId, paymentIntentId, stripeStatus: paymentIntent.status });
+
       // Check payment intent status
       if (paymentIntent.status !== 'succeeded') {
+        logger.info('Payment not yet completed in Stripe', { userId, paymentIntentId, stripeStatus: paymentIntent.status });
         throw new Error('PAYMENT_NOT_COMPLETED');
       }
 
@@ -743,6 +771,7 @@ export class WalletService {
       // Only credit wallet if we were the ones who updated the transaction
       // This prevents race condition with webhook
       if (updateResult.rowCount > 0) {
+        logger.info('Transaction updated via polling, crediting wallet', { userId, paymentIntentId, transactionId: transaction.transaction_id, amount: transaction.amount });
         await db.query(
           `UPDATE wallets
            SET balance = balance + $1,
@@ -751,6 +780,8 @@ export class WalletService {
            WHERE user_id = $2`,
           [transaction.amount, userId]
         );
+      } else {
+        logger.info('Transaction already processed by webhook, skipping wallet credit', { userId, paymentIntentId, transactionId: transaction.transaction_id });
       }
 
       // Get updated balance after crediting
