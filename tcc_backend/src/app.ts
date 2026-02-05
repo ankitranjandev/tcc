@@ -67,18 +67,17 @@ class App {
 
     // Stripe webhook route (must be before body parsing middleware)
     // Webhook route needs raw body for signature verification
-    this.app.post(
-      '/webhooks/stripe',
-      express.raw({ type: 'application/json' }),
-      async (req, res, next) => {
-        try {
-          const { WebhookController } = await import('./controllers/webhook.controller');
-          return WebhookController.handleStripeWebhook(req, res);
-        } catch (error) {
-          next(error);
-        }
+    const stripeWebhookHandler = async (req: any, res: any, next: any) => {
+      try {
+        const { WebhookController } = await import('./controllers/webhook.controller');
+        return WebhookController.handleStripeWebhook(req, res);
+      } catch (error) {
+        next(error);
       }
-    );
+    };
+    const rawBodyParser = express.raw({ type: 'application/json' });
+    this.app.post('/webhooks/stripe', rawBodyParser, stripeWebhookHandler);
+    this.app.post('/v1/webhooks/stripe', rawBodyParser, stripeWebhookHandler);
 
     // Body parsing middleware (applied after webhook route)
     this.app.use(express.json({ limit: '10mb' }));
