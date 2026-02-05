@@ -71,9 +71,7 @@ export const createPaymentIntent = async (
         type: 'wallet_deposit',
       },
       description: `Wallet deposit for transaction ${transactionId}`,
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
     };
 
     // Add customer if available
