@@ -20,6 +20,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _agreeToPrivacyPolicy = false;
+  bool _agreeToTerms = false;
 
   @override
   void dispose() {
@@ -31,6 +33,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    if (!_agreeToPrivacyPolicy || !_agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please agree to the Privacy Policy and Terms of Service'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       // Store registration data temporarily for phone number screen
       final nameParts = _nameController.text.trim().split(' ');
@@ -211,11 +223,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 32),
+                SizedBox(height: 24),
+                // Privacy Policy Checkbox
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _agreeToPrivacyPolicy,
+                        onChanged: (value) => setState(() => _agreeToPrivacyPolicy = value ?? false),
+                        activeColor: AppColors.primaryBlue,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _agreeToPrivacyPolicy = !_agreeToPrivacyPolicy),
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'I agree to the ',
+                            style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
+                            children: [
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                // Terms of Service Checkbox
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _agreeToTerms,
+                        onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
+                        activeColor: AppColors.primaryBlue,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _agreeToTerms = !_agreeToTerms),
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'I agree to the ',
+                            style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
+                            children: [
+                              TextSpan(
+                                text: 'Terms of Service',
+                                style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _handleRegister,
+                  onPressed: (_agreeToPrivacyPolicy && _agreeToTerms) ? _handleRegister : null,
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
+                    disabledBackgroundColor: Colors.grey[300],
                   ),
                   child: Text(
                     'Continue',

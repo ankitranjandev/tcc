@@ -352,7 +352,31 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
                   ],
                 ),
               ),
-            SizedBox(height: 24),
+            SizedBox(height: 16),
+
+            // Risk Disclaimer
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Currency investments carry risk. Exchange rates fluctuate and you may lose value.',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[700], height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
 
             // Purchase button
             SizedBox(

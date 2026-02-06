@@ -448,7 +448,35 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
                   ],
                 ),
               ),
-              SizedBox(height: 32),
+              SizedBox(height: 24),
+
+              // Risk Disclaimer
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 24),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Investments carry risk. Past performance does not guarantee future results. You may lose some or all of your invested capital.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 24),
 
               // Invest Button
               SizedBox(

@@ -170,15 +170,21 @@ class _AccountScreenState extends State<AccountScreen> {
           _buildSectionTitle('Support'),
           _buildSettingsTile(
             icon: Icons.help_outline,
-            title: 'Help & Support',
+            title: 'Help & FAQ',
+            subtitle: 'Frequently asked questions',
+            onTap: () => context.push('/help/faq'),
+          ),
+          _buildSettingsTile(
+            icon: Icons.support_agent,
+            title: 'Contact Support',
             subtitle: 'Get help with your account',
             onTap: () => _showSupportDialog(context),
           ),
           _buildSettingsTile(
             icon: Icons.description_outlined,
-            title: 'Terms & Conditions',
+            title: 'Terms of Service',
             subtitle: 'Read our terms of service',
-            onTap: () => _showTermsDialog(context),
+            onTap: () => _openTermsOfService(context),
           ),
           _buildSettingsTile(
             icon: Icons.privacy_tip_outlined,
@@ -820,97 +826,33 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  void _showTermsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Terms & Conditions'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'TCC Terms of Service',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Last updated: October 26, 2025',
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                  fontSize: 12,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '1. Acceptance of Terms',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'By accessing and using TCC (The Community Coin) platform, you accept and agree to be bound by the terms and provision of this agreement.',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '2. Use of Service',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'You agree to use the service only for lawful purposes and in accordance with these Terms. You are responsible for maintaining the confidentiality of your account.',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '3. Investment Risks',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'All investments carry risk. Past performance does not guarantee future results. Please invest responsibly.',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '4. Privacy',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Your privacy is important to us. Please review our Privacy Policy to understand our practices.',
-                style: TextStyle(fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('You can download the full terms from our website'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+  Future<void> _openTermsOfService(BuildContext context) async {
+    const termsUrl = 'https://dppyssab6rrh5.cloudfront.net/terms-of-service.html';
+    final Uri uri = Uri.parse(termsUrl);
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not open terms of service'),
+              behavior: SnackBarBehavior.floating,
             ),
-            child: Text('Download PDF'),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening terms of service'),
+            behavior: SnackBarBehavior.floating,
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   Future<void> _showPrivacyDialog(BuildContext context) async {

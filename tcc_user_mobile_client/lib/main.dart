@@ -43,6 +43,7 @@ import 'screens/agent/agent_search_screen.dart';
 import 'screens/voting/elections_screen.dart';
 import 'screens/voting/election_details_screen.dart';
 import 'screens/voting/election_results_screen.dart';
+import 'screens/help/faq_screen.dart';
 import 'models/investment_model.dart';
 import 'models/transaction_model.dart';
 import 'models/election_model.dart';
@@ -377,6 +378,10 @@ class _TCCAppState extends State<TCCApp> {
             final election = state.extra as Election;
             return ElectionResultsScreen(election: election);
           },
+        ),
+        GoRoute(
+          path: '/help/faq',
+          builder: (context, state) => FaqScreen(),
         ),
       ],
     );
