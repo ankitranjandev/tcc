@@ -269,6 +269,11 @@ class ApiService {
     }
   }
 
+  // Delete user account
+  Future<Map<String, dynamic>> deleteAccount() async {
+    return await delete('/users/delete-account');
+  }
+
   // DELETE request
   Future<Map<String, dynamic>> delete(
     String endpoint, {

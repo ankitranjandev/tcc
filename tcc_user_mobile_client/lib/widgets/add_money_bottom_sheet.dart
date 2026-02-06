@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import '../services/wallet_service.dart';
@@ -31,6 +32,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
   }
 
   void _selectQuickAmount(int amount) {
+    debugPrint('Quick amount selected: \$$amount');
     setState(() {
       _amountController.text = amount.toString();
       _errorMessage = null;
@@ -38,26 +40,34 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
   }
 
   Future<void> _processPayment() async {
+    debugPrint('=== Add Money: _processPayment started ===');
+
     // Dismiss keyboard
     FocusScope.of(context).unfocus();
 
     final amountText = _amountController.text.trim();
+    debugPrint('Amount entered: "$amountText"');
 
     if (amountText.isEmpty) {
+      debugPrint('Validation failed: empty amount');
       setState(() => _errorMessage = 'Please enter an amount');
       return;
     }
 
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
+      debugPrint('Validation failed: invalid amount ($amountText)');
       setState(() => _errorMessage = 'Please enter a valid amount');
       return;
     }
 
     if (amount < 1) {
+      debugPrint('Validation failed: amount below minimum (\$$amount < \$1)');
       setState(() => _errorMessage = 'Minimum amount is \$1 USD');
       return;
     }
+
+    debugPrint('Validation passed. Amount: \$$amount');
 
     setState(() {
       _isLoading = true;
@@ -66,30 +76,38 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
 
     try {
       // Step 1: Create payment intent
+      debugPrint('Step 1: Creating payment intent for \$$amount...');
       final result = await _walletService.createPaymentIntent(amount: amount);
+      debugPrint('Payment intent result: success=${result['success']}');
 
       if (!result['success']) {
+        debugPrint('Payment intent creation failed: ${result['error']}');
         throw Exception(result['error'] ?? 'Failed to create payment intent');
       }
 
       final data = result['data']['data'];
       final clientSecret = data['client_secret'];
+      debugPrint('Payment intent created. Client secret received (length: ${clientSecret?.toString().length})');
 
       // Extract payment intent ID
       _paymentIntentId = _stripeService.extractPaymentIntentId(clientSecret);
+      debugPrint('Extracted payment intent ID: $_paymentIntentId');
 
       setState(() => _isLoading = false);
 
       // Step 2: Process Stripe payment
       if (!mounted) return;
+      debugPrint('Step 2: Presenting Stripe payment sheet...');
       final paymentSuccessful = await _stripeService.processPayment(
         clientSecret: clientSecret,
         merchantName: 'TCC Wallet Top-up',
         context: context,
       );
+      debugPrint('Stripe payment sheet result: successful=$paymentSuccessful');
 
       if (!paymentSuccessful) {
         // User cancelled payment
+        debugPrint('User cancelled payment');
         if (mounted) {
           setState(() {
             _errorMessage = 'Payment cancelled';
@@ -99,6 +117,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
       }
 
       // Step 3: Verify payment with backend
+      debugPrint('Step 3: Verifying payment with backend (paymentIntentId: $_paymentIntentId)...');
       if (mounted) {
         _stripeService.showVerificationDialog(context);
       }
@@ -108,6 +127,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
         maxAttempts: 5,
         delaySeconds: 2,
       );
+      debugPrint('Verification result: $verificationResult');
 
       if (mounted) {
         // Close verification dialog
@@ -115,11 +135,13 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
 
         if (verificationResult['verified'] == true) {
           // Payment verified successfully
+          debugPrint('Payment verified successfully. Closing bottom sheet.');
           // Close the bottom sheet
           Navigator.pop(context);
 
           // Show success message
           final isTestMode = verificationResult['test_mode'] == true;
+          debugPrint('Test mode: $isTestMode');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -134,10 +156,12 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
 
           // Refresh parent screen balance
           if (widget.onSuccess != null) {
+            debugPrint('Calling onSuccess callback to refresh balance');
             widget.onSuccess!();
           }
         } else if (verificationResult['timeout'] == true) {
           // Verification timeout - payment is processing
+          debugPrint('Verification timed out. Payment is still processing.');
           // Close the bottom sheet
           Navigator.pop(context);
 
@@ -145,12 +169,20 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
           _stripeService.showProcessingDialog(context, _paymentIntentId!);
         } else {
           // Verification failed
+          debugPrint('Verification failed: ${verificationResult['error']}');
           setState(() {
             _errorMessage = verificationResult['error'] ?? 'Payment verification failed';
           });
         }
       }
     } on StripeException catch (e) {
+      debugPrint('[AddMoney] StripeException caught:');
+      debugPrint('[AddMoney]   code: ${e.error.code}');
+      debugPrint('[AddMoney]   message: ${e.error.message}');
+      debugPrint('[AddMoney]   localizedMessage: ${e.error.localizedMessage}');
+      debugPrint('[AddMoney]   stripeErrorCode: ${e.error.stripeErrorCode}');
+      debugPrint('[AddMoney]   declineCode: ${e.error.declineCode}');
+      debugPrint('[AddMoney]   type: ${e.error.type}');
       setState(() {
         _isLoading = false;
         if (e.error.code == FailureCode.Canceled) {
@@ -159,12 +191,15 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
           _errorMessage = e.error.message ?? 'Payment failed';
         }
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[AddMoney] Unexpected error in _processPayment: $e');
+      debugPrint('[AddMoney] Stack trace: $stackTrace');
       setState(() {
         _isLoading = false;
         _errorMessage = e.toString().replaceAll('Exception: ', '');
       });
     }
+    debugPrint('=== Add Money: _processPayment ended ===');
   }
 
   @override
@@ -184,7 +219,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Add Money',
+                'Add Coin',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -334,6 +369,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
 
 /// Helper function to show the Add Money bottom sheet from any screen.
 void showAddMoneyBottomSheet(BuildContext context, {VoidCallback? onSuccess}) {
+  debugPrint('showAddMoneyBottomSheet called');
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 
 class WalletService {
@@ -195,13 +196,16 @@ class WalletService {
   }) async {
     try {
       final amountInCents = (amount * 100).round();
+      debugPrint('[WalletService] createPaymentIntent: amount=\$$amount, amountInCents=$amountInCents');
       final response = await _apiService.post(
         '/wallet/create-payment-intent',
         body: {'amount': amountInCents},
         requiresAuth: true,
       );
+      debugPrint('[WalletService] createPaymentIntent: success, response=$response');
       return {'success': true, 'data': response};
     } catch (e) {
+      debugPrint('[WalletService] createPaymentIntent: failed, error=$e');
       return {'success': false, 'error': e.toString()};
     }
   }
@@ -211,13 +215,16 @@ class WalletService {
     required String paymentIntentId,
   }) async {
     try {
+      debugPrint('[WalletService] verifyStripePayment: paymentIntentId=$paymentIntentId');
       final response = await _apiService.post(
         '/wallet/verify-stripe-payment',
         body: {'payment_intent_id': paymentIntentId},
         requiresAuth: true,
       );
+      debugPrint('[WalletService] verifyStripePayment: success, response=$response');
       return {'success': true, 'data': response};
     } catch (e) {
+      debugPrint('[WalletService] verifyStripePayment: failed, error=$e');
       return {'success': false, 'error': e.toString()};
     }
   }

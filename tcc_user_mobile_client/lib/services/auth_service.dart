@@ -343,6 +343,17 @@ class AuthService {
     }
   }
 
+  // Delete account
+  Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      final response = await _apiService.deleteAccount();
+      await _apiService.clearTokens();
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'error': _extractErrorMessage(e)};
+    }
+  }
+
   // Upload profile picture
   Future<Map<String, dynamic>> uploadProfilePicture({
     required String filePath,

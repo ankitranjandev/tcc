@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import '../config/app_colors.dart';
@@ -19,13 +19,23 @@ class StripeService {
     required BuildContext context,
   }) async {
     try {
+      debugPrint('[StripeService] initPaymentSheet: returnURL=tccapp://stripe-redirect, urlScheme=${Stripe.urlScheme}');
       // Initialize Stripe payment sheet
+      // Billing details (name + address) are required for Indian card regulations
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           merchantDisplayName: merchantName,
           paymentIntentClientSecret: clientSecret,
           returnURL: 'tccapp://stripe-redirect',
           style: ThemeMode.light,
+          applePay: const PaymentSheetApplePay(
+            merchantCountryCode: 'IN',
+          ),
+          billingDetailsCollectionConfiguration:
+              BillingDetailsCollectionConfiguration(
+            name: CollectionMode.always,
+            address: AddressCollectionMode.full,
+          ),
           appearance: PaymentSheetAppearance(
             colors: PaymentSheetAppearanceColors(
               primary: AppColors.primaryBlue,
@@ -33,22 +43,25 @@ class StripeService {
           ),
         ),
       );
+      debugPrint('[StripeService] initPaymentSheet completed successfully');
 
-      // Present payment sheet
+      // Present payment sheet (handles 3DS authentication internally)
+      debugPrint('[StripeService] presentPaymentSheet: presenting...');
       await Stripe.instance.presentPaymentSheet();
+      debugPrint('[StripeService] presentPaymentSheet: returned successfully (payment confirmed + 3DS passed)');
 
-      developer.log('✅ Stripe payment sheet completed successfully', name: 'StripeService');
       return true;
     } on StripeException catch (e) {
       if (e.error.code == FailureCode.Canceled) {
-        developer.log('ℹ️ User cancelled Stripe payment', name: 'StripeService');
+        debugPrint('[StripeService] Payment cancelled by user');
         return false;
       } else {
-        developer.log('❌ Stripe payment failed: ${e.error.message}', name: 'StripeService');
+        debugPrint('[StripeService] StripeException: code=${e.error.code}, message=${e.error.message}, '
+            'stripeErrorCode=${e.error.stripeErrorCode}, declineCode=${e.error.declineCode}');
         rethrow;
       }
     } catch (e) {
-      developer.log('❌ Unexpected error in Stripe payment: $e', name: 'StripeService');
+      debugPrint('[StripeService] Unexpected error in processPayment: $e');
       rethrow;
     }
   }
@@ -67,10 +80,7 @@ class StripeService {
   }) async {
     // Skip verification for local testing (when backend is not ready)
     if (skipVerification || _isTestPayment(paymentIntentId)) {
-      developer.log(
-        '⚠️ BYPASSING verification for test payment $paymentIntentId',
-        name: 'StripeService',
-      );
+      debugPrint('[StripeService] ⚠️ BYPASSING verification for test payment $paymentIntentId');
 
       // Simulate verification success for test payments
       await Future.delayed(Duration(milliseconds: 500));
@@ -83,20 +93,17 @@ class StripeService {
       };
     }
 
-    developer.log(
-      'Starting payment verification for $paymentIntentId (max $maxAttempts attempts)',
-      name: 'StripeService',
-    );
+    debugPrint('[StripeService] Starting payment verification for $paymentIntentId (max $maxAttempts attempts)');
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        developer.log('Verification attempt $attempt/$maxAttempts', name: 'StripeService');
+        debugPrint('Verification attempt $attempt/$maxAttempts');
 
         final result = await _walletService.verifyStripePayment(
           paymentIntentId: paymentIntentId,
         );
 
-        developer.log('Verification response: $result', name: 'StripeService');
+        debugPrint('Verification response: $result');
 
         if (result['success'] == true) {
           // The response structure is: { success: true, data: { data: { verified, transaction, balance } } }
@@ -105,7 +112,7 @@ class StripeService {
           final verified = data['verified'] ?? false;
 
           if (verified) {
-            developer.log('✅ Payment verified successfully', name: 'StripeService');
+            debugPrint('✅ Payment verified successfully');
             return {
               'success': true,
               'verified': true,
@@ -117,11 +124,11 @@ class StripeService {
 
         // If not verified yet and we have more attempts, wait before retrying
         if (attempt < maxAttempts) {
-          developer.log('Payment not verified yet, waiting ${delaySeconds}s...', name: 'StripeService');
+          debugPrint('Payment not verified yet, waiting ${delaySeconds}s...');
           await Future.delayed(Duration(seconds: delaySeconds));
         }
       } catch (e) {
-        developer.log('❌ Verification attempt $attempt failed: $e', name: 'StripeService');
+        debugPrint('❌ Verification attempt $attempt failed: $e');
 
         // If this was the last attempt, return error
         if (attempt == maxAttempts) {
@@ -138,10 +145,7 @@ class StripeService {
     }
 
     // Timeout - payment not verified within max attempts
-    developer.log(
-      '⚠️ Payment verification timeout after $maxAttempts attempts',
-      name: 'StripeService',
-    );
+    debugPrint('[StripeService] ⚠️ Payment verification timeout after $maxAttempts attempts');
 
     return {
       'success': false,

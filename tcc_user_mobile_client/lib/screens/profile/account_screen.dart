@@ -208,6 +208,19 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
 
+          SizedBox(height: 32),
+
+          // Delete Account Button
+          _buildSettingsTile(
+            icon: Icons.delete_forever,
+            title: 'Delete Account',
+            subtitle: 'Permanently delete your account and data',
+            onTap: () => _showDeleteAccountDialog(context),
+            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.error),
+            iconColor: AppColors.error,
+            titleColor: AppColors.error,
+          ),
+
           SizedBox(height: 16),
         ],
       ),
@@ -234,16 +247,19 @@ class _AccountScreenState extends State<AccountScreen> {
     required String subtitle,
     required VoidCallback onTap,
     Widget? trailing,
+    Color? iconColor,
+    Color? titleColor,
   }) {
     return Card(
       margin: EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Icon(icon, color: Theme.of(context).textTheme.bodyMedium?.color),
+        leading: Icon(icon, color: iconColor ?? Theme.of(context).textTheme.bodyMedium?.color),
         title: Text(
           title,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
+            color: titleColor,
           ),
         ),
         subtitle: Text(
@@ -897,107 +913,34 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  void _showPrivacyDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Privacy Policy'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'TCC Privacy Policy',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Last updated: October 26, 2025',
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                  fontSize: 12,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '1. Information We Collect',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'We collect information you provide directly to us, including your name, email address, phone number, and financial information necessary to provide our services.',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '2. How We Use Your Information',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'We use the information we collect to provide, maintain, and improve our services, process transactions, send you technical notices and support messages.',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '3. Information Sharing',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'We do not share your personal information with third parties except as described in this policy or with your consent.',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '4. Security',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'We take reasonable measures to help protect your personal information from loss, theft, misuse, and unauthorized access.',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '5. Your Rights',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'You have the right to access, update, or delete your personal information at any time through your account settings or by contacting us.',
-                style: TextStyle(fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('You can download the full privacy policy from our website'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+  Future<void> _showPrivacyDialog(BuildContext context) async {
+    const privacyPolicyUrl = 'https://dppyssab6rrh5.cloudfront.net/privacy-policy.html';
+    final Uri uri = Uri.parse(privacyPolicyUrl);
+
+    try {
+      final bool canLaunch = await canLaunchUrl(uri);
+      if (canLaunch) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not open privacy policy. Visit: $privacyPolicyUrl'),
+              behavior: SnackBarBehavior.floating,
             ),
-            child: Text('Download PDF'),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening privacy policy'),
+            behavior: SnackBarBehavior.floating,
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -1025,6 +968,85 @@ class _AccountScreenState extends State<AccountScreen> {
         ],
       ),
     );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.error),
+            SizedBox(width: 8),
+            Text('Delete Account'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete your account?\n\n'
+          'This action is permanent and cannot be undone. '
+          'All your data, including transaction history, investments, and wallet balance will be permanently deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              _performAccountDeletion(context);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performAccountDeletion(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: AppColors.error),
+            SizedBox(width: 16),
+            Text('Deleting account...'),
+          ],
+        ),
+      ),
+    );
+
+    final success = await authProvider.deleteAccount();
+
+    if (context.mounted) {
+      Navigator.pop(context); // Close loading dialog
+
+      if (success) {
+        context.go('/login');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Your account has been deleted'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Failed to delete account'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   // Build profile avatar with authenticated image

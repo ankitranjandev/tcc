@@ -402,6 +402,39 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Delete account
+  Future<bool> deleteAccount() async {
+    developer.log('🔴 AuthProvider: Delete account requested', name: 'AuthProvider');
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.deleteAccount();
+
+      if (result['success'] == true) {
+        developer.log('🔴 AuthProvider: Account deleted successfully', name: 'AuthProvider');
+        _user = null;
+        _isAuthenticated = false;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = _getUserFriendlyErrorMessage(result['error']);
+        developer.log('🔴 AuthProvider: Delete account failed: $_errorMessage', name: 'AuthProvider');
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = _getUserFriendlyErrorMessage(e.toString());
+      developer.log('🔴 AuthProvider: Delete account exception: $e', name: 'AuthProvider');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Update profile picture
   Future<bool> updateProfilePicture(String filePath) async {
     developer.log('🟢 AuthProvider: Updating profile picture', name: 'AuthProvider');

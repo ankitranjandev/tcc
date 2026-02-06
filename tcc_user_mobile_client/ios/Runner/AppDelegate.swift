@@ -17,18 +17,19 @@ import UIKit
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  // Handle deep link (URL scheme) - for Stripe redirects
+  // Handle deep link (URL scheme) - for Stripe 3DS redirects
   override func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey : Any] = [:]
   ) -> Bool {
-    if url.scheme == "tccapp" {
-      // Stripe will automatically handle the redirect
-      // The Flutter Stripe plugin listens for this URL
-      return true
-    }
-    return super.application(app, open: url, options: options)
+    NSLog("[AppDelegate] URL callback received: scheme=%@, host=%@, url=%@",
+          url.scheme ?? "nil", url.host ?? "nil", url.absoluteString)
+    // Forward ALL URLs to super so Flutter plugins (including flutter_stripe)
+    // receive the callback via StripeAPI.handleURLCallback(with:)
+    let handled = super.application(app, open: url, options: options)
+    NSLog("[AppDelegate] URL handled by Flutter plugins: %@", handled ? "true" : "false")
+    return handled
   }
 
   // Handle notification presentation when app is in foreground

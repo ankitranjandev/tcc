@@ -183,7 +183,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
             children: [
               _buildActionButton(
                 icon: Icons.add,
-                label: 'Add Money',
+                label: 'Add Coin',
                 color: AppColors.success,
                 onTap: () => checkKycAndProceed(() => _showAddMoneyDialog()),
               ),
@@ -518,7 +518,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Add Money to Wallet',
+                'Add Coin to Wallet',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

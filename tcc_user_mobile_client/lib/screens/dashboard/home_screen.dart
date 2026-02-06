@@ -367,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   child: Text(
-                    'Add Money',
+                    'Add Coin',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                 ),

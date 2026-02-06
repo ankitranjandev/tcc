@@ -62,7 +62,7 @@ class AppConstants {
   static const String apiVersion = 'v1';
 
   // Stripe Configuration
-  static const String stripePublishableKey = 'pk_test_51Sf11DFU6W2alheKWH7Dt3Zb2jE1iMxBSJXCtknmsYZXEKtBMjFumnhEx48i66Pdqp6ttNRtcy3vO6hGbpU1NEOG00QrGPsDjF';
+  static const String stripePublishableKey = 'pk_live_51KEwk3SIhEB0f1FNOAz9V8i4KTV0zJhXPtVE4JKhRs7oPBFXr79p0ijZOVqZELBsYAUQ8X93BiLZwpmXkBVLilaN00VCLlh6H1';
 
   // CurrencyBeacon API Configuration
   // Get your free API key from: https://currencybeacon.com/
