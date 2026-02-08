@@ -28,9 +28,6 @@ class StripeService {
           paymentIntentClientSecret: clientSecret,
           returnURL: 'tccapp://stripe-redirect',
           style: ThemeMode.light,
-          applePay: const PaymentSheetApplePay(
-            merchantCountryCode: 'IN',
-          ),
           billingDetailsCollectionConfiguration:
               BillingDetailsCollectionConfiguration(
             name: CollectionMode.always,

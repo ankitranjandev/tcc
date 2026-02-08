@@ -15,8 +15,11 @@
     <!-- Contacts permission -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
 
+    <!-- Camera permission for KYC verification and profile pictures -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+
     <application
-        android:label="tcc_user_mobile_client"
+        android:label="TCC"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
