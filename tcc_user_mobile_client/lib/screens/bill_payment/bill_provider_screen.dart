@@ -154,7 +154,7 @@ class _BillProviderScreenState extends State<BillProviderScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.error_outline, size: 48, color: Colors.red),
+                              Icon(Icons.error_outline, size: 48, color: AppColors.error),
                               SizedBox(height: 16),
                               Text(_error!, textAlign: TextAlign.center),
                               SizedBox(height: 16),

@@ -159,7 +159,7 @@ class FaqScreen extends StatelessWidget {
             label: Text('Contact Support'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
               padding: EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),

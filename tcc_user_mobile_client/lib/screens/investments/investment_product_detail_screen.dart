@@ -72,9 +72,9 @@ class _InvestmentProductDetailScreenState extends State<InvestmentProductDetailS
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),

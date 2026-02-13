@@ -19,7 +19,7 @@ class WithdrawSuccessScreen extends StatelessWidget {
               Icon(
                 Icons.check_circle_outline,
                 size: 120,
-                color: AppColors.white,
+                color: Colors.white,
               ),
 
               SizedBox(height: 48),
@@ -30,7 +30,7 @@ class WithdrawSuccessScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.white,
+                  color: Colors.white,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -42,7 +42,7 @@ class WithdrawSuccessScreen extends StatelessWidget {
                 'We will update the status in the next 24-48 hours. You can view the status in transaction history.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.white,
+                  color: Colors.white,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -59,7 +59,7 @@ class WithdrawSuccessScreen extends StatelessWidget {
                     context.go('/dashboard');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.white,
+                    backgroundColor: Colors.white,
                     foregroundColor: AppColors.success,
                     padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

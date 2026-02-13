@@ -151,7 +151,7 @@ class PayScreen extends StatelessWidget {
               _buildBillCategory(
                 context,
                 icon: Icons.satellite_alt,
-                color: Colors.grey,
+                color: Theme.of(context).disabledColor,
                 title: 'DTH',
                 subtitle: 'Recharge your DTH connection for uninterrupted entertainment.',
                 onTap: () => _navigateToBillPayment(context, 'DTH'),
