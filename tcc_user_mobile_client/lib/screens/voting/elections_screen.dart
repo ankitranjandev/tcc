@@ -243,7 +243,7 @@ class _ElectionsScreenState extends State<ElectionsScreen>
                 election.question,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -251,14 +251,14 @@ class _ElectionsScreenState extends State<ElectionsScreen>
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(Icons.payment, size: 16, color: Colors.grey[600]),
+                  Icon(Icons.payment, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                   const SizedBox(width: 4),
                   Text(
                     'Le ${election.votingCharge.toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(width: 16),
-                  Icon(Icons.how_to_vote, size: 16, color: Colors.grey[600]),
+                  Icon(Icons.how_to_vote, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                   const SizedBox(width: 4),
                   Text('${election.totalVotes} votes'),
                 ],
@@ -267,7 +267,7 @@ class _ElectionsScreenState extends State<ElectionsScreen>
               if (isActive) ...[
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     const SizedBox(width: 4),
                     Text(
                       election.timeRemainingText,
@@ -276,7 +276,7 @@ class _ElectionsScreenState extends State<ElectionsScreen>
                     const Spacer(),
                     Text(
                       'Ends: ${dateFormat.format(election.endTime)}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     ),
                   ],
                 ),
@@ -295,7 +295,7 @@ class _ElectionsScreenState extends State<ElectionsScreen>
                   const SizedBox(height: 4),
                   Text(
                     'Cost: Le ${election.userVote!.voteCharge!.toStringAsFixed(2)}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
                 ],
               ],
@@ -336,11 +336,11 @@ class _ElectionsScreenState extends State<ElectionsScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: Colors.grey[400]),
+          Icon(icon, size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           Text(
             message,
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             textAlign: TextAlign.center,
           ),
         ],

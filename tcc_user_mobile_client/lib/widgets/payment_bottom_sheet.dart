@@ -39,12 +39,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     final screenWidth = ResponsiveHelper.getScreenWidth(context);
     final isTabletOrDesktop = screenWidth > ResponsiveHelper.mobileBreakpoint;
 
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
@@ -64,7 +66,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -80,7 +82,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     widget.title,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
@@ -90,7 +92,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     ResponsiveText.body(
                       widget.description!,
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
 
@@ -139,7 +141,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -185,7 +187,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        disabledBackgroundColor: Colors.grey[300],
+                        disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
                       ),
                       child: _isProcessing
                           ? SizedBox(
@@ -224,6 +226,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     Color color,
   ) {
     final isSelected = _selectedMethod == method;
+    final theme = Theme.of(context);
 
     return InkWell(
       onTap: _isProcessing
@@ -237,10 +240,10 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.1) : Colors.grey[50],
+          color: isSelected ? color.withValues(alpha: 0.1) : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : Colors.grey[200]!,
+            color: isSelected ? color : theme.colorScheme.surfaceContainerHighest,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -250,12 +253,12 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: isSelected ? color.withValues(alpha: 0.2) : Colors.grey[200],
+                color: isSelected ? color.withValues(alpha: 0.2) : theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: isSelected ? color : Colors.grey[600],
+                color: isSelected ? color : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 size: 24,
               ),
             ),
@@ -269,7 +272,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 2),
@@ -277,7 +280,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     _paymentService.getPaymentMethodDescription(method),
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[600],
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -366,17 +369,20 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
     String? selectedBank;
 
+    final dialogTheme = Theme.of(context);
+
     final result = await showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: dialogTheme.cardColor,
           title: Text(
             'Select Your Bank',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: dialogTheme.colorScheme.onSurface,
             ),
           ),
           content: SizedBox(
@@ -400,12 +406,12 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.primaryBlue.withValues(alpha: 0.1)
-                          : Colors.grey[50],
+                          : dialogTheme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primaryBlue
-                            : Colors.grey[200]!,
+                            : dialogTheme.colorScheme.surfaceContainerHighest,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -417,14 +423,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primaryBlue.withValues(alpha: 0.2)
-                                : Colors.grey[200],
+                                : dialogTheme.colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
                             bank['icon'] as IconData,
                             color: isSelected
                                 ? AppColors.primaryBlue
-                                : Colors.grey[600],
+                                : dialogTheme.colorScheme.onSurface.withValues(alpha: 0.7),
                             size: 20,
                           ),
                         ),
@@ -437,7 +443,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.normal,
-                              color: Colors.black,
+                              color: dialogTheme.colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -466,7 +472,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey[300],
+                disabledBackgroundColor: dialogTheme.colorScheme.surfaceContainerHighest,
               ),
               child: Text('Continue'),
             ),
@@ -509,7 +515,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppColors.primaryBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -551,6 +557,8 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   Widget _buildInstructionItem(String text) {
+    final theme = Theme.of(context);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -569,7 +577,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             text,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[700],
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.5,
             ),
           ),
@@ -580,6 +588,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
   Future<void> _showPaymentResultDialog(PaymentResult result) async {
     bool shouldNavigateToHome = false;
+    final dialogTheme = Theme.of(context);
 
     await showDialog(
       context: context,
@@ -595,6 +604,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         },
         child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: dialogTheme.cardColor,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -625,7 +635,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: dialogTheme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -634,7 +644,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               result.message,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: dialogTheme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -642,7 +652,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: dialogTheme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -654,7 +664,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                         'Transaction ID',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: dialogTheme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       Flexible(
@@ -663,7 +673,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: dialogTheme.colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.right,
@@ -679,7 +689,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                         'Date & Time',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: dialogTheme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       Flexible(
@@ -688,7 +698,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: dialogTheme.colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.right,

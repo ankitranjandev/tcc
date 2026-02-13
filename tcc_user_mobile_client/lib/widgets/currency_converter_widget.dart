@@ -108,14 +108,16 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -133,7 +135,7 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               if (_isLoading)
@@ -268,12 +270,14 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
     required TextEditingController controller,
     required ValueChanged<String> onAmountChanged,
   }) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: theme.colorScheme.surfaceContainerHighest),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,7 +286,7 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -296,13 +300,13 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: theme.colorScheme.onSurface,
                   ),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: '0.00',
                     hintStyle: TextStyle(
-                      color: Colors.grey[400],
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
                   onChanged: onAmountChanged,
@@ -323,12 +327,14 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
     required ValueChanged<String?> onCurrencyChanged,
     required double? amount,
   }) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: theme.colorScheme.surfaceContainerHighest),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,7 +343,7 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -350,7 +356,7 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -364,22 +370,25 @@ class _CurrencyConverterWidgetState extends State<CurrencyConverterWidget> {
   }
 
   Widget _buildCurrencyDropdown(String selectedCurrency, ValueChanged<String?> onChanged) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: theme.colorScheme.surfaceContainerHighest),
       ),
       child: DropdownButton<String>(
         value: selectedCurrency,
         underline: SizedBox(),
         isDense: true,
         icon: Icon(Icons.arrow_drop_down, size: 20),
+        dropdownColor: theme.cardColor,
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.black87,
+          color: theme.colorScheme.onSurface,
         ),
         items: _currencies.map((currency) {
           return DropdownMenuItem<String>(

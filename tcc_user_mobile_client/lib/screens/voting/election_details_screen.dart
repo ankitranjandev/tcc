@@ -153,13 +153,13 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                     widget.election.question,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey[700],
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Icon(Icons.payment, size: 18, color: Colors.grey[700]),
+                      Icon(Icons.payment, size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                       const SizedBox(width: 6),
                       Text(
                         'Voting charge: Le ${widget.election.votingCharge.toStringAsFixed(2)}',
@@ -170,7 +170,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.how_to_vote, size: 18, color: Colors.grey[700]),
+                      Icon(Icons.how_to_vote, size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                       const SizedBox(width: 6),
                       Text('${widget.election.totalVotes} total votes'),
                     ],
@@ -178,7 +178,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.access_time, size: 18, color: Colors.grey[700]),
+                      Icon(Icons.access_time, size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                       const SizedBox(width: 6),
                       Text(widget.election.timeRemainingText),
                     ],
@@ -186,7 +186,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.event, size: 18, color: Colors.grey[700]),
+                      Icon(Icons.event, size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                       const SizedBox(width: 6),
                       Text('Ends: ${dateFormat.format(widget.election.endTime)}'),
                     ],
@@ -252,12 +252,12 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? Theme.of(context).primaryColor.withValues(alpha:0.1)
-                              : Colors.grey[100],
+                              : Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
                                 ? Theme.of(context).primaryColor
-                                : Colors.grey[300]!,
+                                : Theme.of(context).dividerColor,
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -331,7 +331,7 @@ class _ElectionDetailsScreenState extends State<ElectionDetailsScreen> {
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: Colors.white, // Intentional: On primary color button
                                 ),
                               )
                             : const Text(

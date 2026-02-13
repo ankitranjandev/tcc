@@ -69,7 +69,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please select a payment method'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -189,12 +189,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -202,7 +202,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -213,7 +213,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             // Total Amount Section
             Container(
               padding: EdgeInsets.all(24),
-              color: Colors.grey[50],
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: Column(
                 children: [
                   Row(
@@ -223,7 +223,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         'Total amount',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       Text(
@@ -231,7 +231,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -250,12 +250,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                           'Show price breakup',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                         Icon(
                           _showPriceBreakup ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           size: 20,
                         ),
                       ],
@@ -266,8 +266,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     Container(
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Theme.of(context).dividerColor),
                       ),
                       child: Column(
                         children: [
@@ -295,7 +296,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -314,7 +315,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -330,7 +331,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -345,7 +346,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -359,14 +360,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, -2),
-                  ),
-                ],
+                color: Theme.of(context).scaffoldBackgroundColor,
+                border: Border(
+                  top: BorderSide(color: Theme.of(context).dividerColor),
+                ),
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -414,7 +411,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
           ),
         ),
         Text(
@@ -422,7 +419,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
           ),
         ),
       ],
@@ -442,10 +439,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         margin: EdgeInsets.only(bottom: 12),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey[300]!,
+            color: Theme.of(context).dividerColor,
             width: 1,
           ),
         ),
@@ -454,7 +451,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppColors.primaryBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -462,7 +459,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue[900],
+                  color: AppColors.primaryBlue,
                 ),
               ),
             ),
@@ -476,7 +473,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 2),
@@ -484,7 +481,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     bank['number'],
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -496,7 +493,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primaryBlue : Colors.grey[400]!,
+                  color: isSelected ? AppColors.primaryBlue : Theme.of(context).dividerColor,
                   width: 2,
                 ),
               ),
@@ -538,10 +535,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         margin: EdgeInsets.only(bottom: 12),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.success : Colors.grey[300]!,
+            color: isSelected ? AppColors.success : Theme.of(context).dividerColor,
             width: 1,
           ),
         ),
@@ -578,7 +575,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     'Save and pay via your bank account',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -603,10 +600,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         margin: EdgeInsets.only(bottom: 12),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey[300]!,
+            color: Theme.of(context).dividerColor,
             width: 1,
           ),
         ),
@@ -632,7 +629,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -642,7 +639,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primaryBlue : Colors.grey[400]!,
+                  color: isSelected ? AppColors.primaryBlue : Theme.of(context).dividerColor,
                   width: 2,
                 ),
               ),
@@ -678,10 +675,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         margin: EdgeInsets.only(bottom: 12),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primaryBlue : Colors.grey[300]!,
+            color: isSelected ? AppColors.primaryBlue : Theme.of(context).dividerColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -710,19 +707,19 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 2),
                   Row(
                     children: [
-                      Icon(Icons.lock_outline, size: 12, color: Colors.grey),
+                      Icon(Icons.lock_outline, size: 12, color: Theme.of(context).hintColor),
                       SizedBox(width: 4),
                       Text(
                         'Secured by Stripe',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: Theme.of(context).hintColor,
                         ),
                       ),
                     ],
@@ -736,7 +733,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primaryBlue : Colors.grey[400]!,
+                  color: isSelected ? AppColors.primaryBlue : Theme.of(context).dividerColor,
                   width: 2,
                 ),
               ),
@@ -777,10 +774,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey[300]!,
+            color: Theme.of(context).dividerColor,
             width: 1,
           ),
         ),
@@ -790,7 +787,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppColors.primaryBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -806,14 +803,14 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.grey[400],
+              color: Theme.of(context).hintColor,
             ),
           ],
         ),

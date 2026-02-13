@@ -35,9 +35,9 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
     final profitPercentage = (profit / investment.amount) * 100;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -375,7 +375,7 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: AppColors.primaryBlue,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -595,7 +595,7 @@ class PortfolioInvestmentDetailScreen extends StatelessWidget {
             label: Text('Download'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
             ),
           ),
         ],

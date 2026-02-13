@@ -361,7 +361,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
         subtitle,
         style: TextStyle(
           fontSize: 14,
-          color: Colors.grey[600],
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
         ),
       ),
       trailing: Text(
@@ -471,7 +471,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
                   accountNumber,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -544,7 +544,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
               SizedBox(height: 16),
               Text(
                 'Quick amounts',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               ),
               SizedBox(height: 8),
               Wrap(
@@ -612,7 +612,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
                   ),
                   child: Text(
                     'Continue',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                    style: TextStyle(fontSize: 16, color: AppColors.white),
                   ),
                 ),
               ),
@@ -685,7 +685,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
                 ),
                 child: Text(
                   'Withdraw',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                  style: TextStyle(fontSize: 16, color: AppColors.white),
                 ),
               ),
             ),
@@ -768,7 +768,7 @@ class _WalletScreenState extends State<WalletScreen> with RequiresKyc {
                 ),
                 child: Text(
                   'Add Account',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                  style: TextStyle(fontSize: 16, color: AppColors.white),
                 ),
               ),
             ),

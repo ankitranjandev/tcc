@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../config/app_colors.dart';
 
 class WithdrawInvestmentScreen extends StatefulWidget {
   const WithdrawInvestmentScreen({super.key});
@@ -15,12 +16,21 @@ class _WithdrawInvestmentScreenState extends State<WithdrawInvestmentScreen> {
     final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
           onPressed: () => context.pop(),
         ),
-        title: Text('Withdraw'),
+        title: Text(
+          'Withdraw',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge?.color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -31,16 +41,16 @@ class _WithdrawInvestmentScreenState extends State<WithdrawInvestmentScreen> {
               // Investment Header
               Row(
                 children: [
-                  Icon(Icons.wallet, size: 48, color: Colors.yellow.shade700),
+                  Icon(Icons.wallet, size: 48, color: AppColors.secondaryYellow),
                   SizedBox(width: 16),
                   Text(
                     'Gold',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color),
                   ),
                   Spacer(),
                   Chip(
                     label: Text('Minerals'),
-                    backgroundColor: Colors.yellow.shade100,
+                    backgroundColor: AppColors.secondaryYellow.withValues(alpha: 0.2),
                   ),
                 ],
               ),
@@ -77,6 +87,7 @@ class _WithdrawInvestmentScreenState extends State<WithdrawInvestmentScreen> {
               // Bank Selection
               Container(
                 decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
                   border: Border.all(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -85,14 +96,14 @@ class _WithdrawInvestmentScreenState extends State<WithdrawInvestmentScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
+                      color: AppColors.primaryBlue.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
                       child: Text(
                         'VISA',
                         style: TextStyle(
-                          color: Colors.blue.shade900,
+                          color: AppColors.primaryBlue,
                           fontWeight: FontWeight.bold,
                           fontSize: 10,
                         ),

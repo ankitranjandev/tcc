@@ -204,12 +204,19 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
     return Container(
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
         top: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -223,7 +230,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               IconButton(
@@ -250,11 +257,11 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: theme.colorScheme.surfaceContainerHighest),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Color(0xFF2C3E50), width: 2),
+                borderSide: BorderSide(color: primaryColor, width: 2),
               ),
             ),
           ),
@@ -271,16 +278,16 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade100,
+                    color: isSelected ? primaryColor : theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade300,
+                      color: isSelected ? primaryColor : theme.colorScheme.surfaceContainerHighest,
                     ),
                   ),
                   child: Text(
                     '\$${amount.toStringAsFixed(0)}',
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
+                      color: isSelected ? Colors.white : theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -294,9 +301,9 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -305,7 +312,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      style: TextStyle(color: Colors.red.shade700),
+                      style: TextStyle(color: Colors.red),
                     ),
                   ),
                 ],
@@ -319,7 +326,7 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
           ElevatedButton(
             onPressed: _isLoading ? null : _processPayment,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF2C3E50),
+              backgroundColor: primaryColor,
               padding: EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -350,13 +357,13 @@ class AddMoneyBottomSheetState extends State<AddMoneyBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+              Icon(Icons.lock_outline, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
               SizedBox(width: 4),
               Text(
                 'Secured by Stripe',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -373,6 +380,7 @@ void showAddMoneyBottomSheet(BuildContext context, {VoidCallback? onSuccess}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    backgroundColor: Colors.transparent,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),

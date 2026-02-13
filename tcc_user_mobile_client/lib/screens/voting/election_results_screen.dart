@@ -39,7 +39,7 @@ class ElectionResultsScreen extends StatelessWidget {
                     election.question,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey[700],
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -49,13 +49,13 @@ class ElectionResultsScreen extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha:0.2),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text(
+                    child: Text(
                       'ENDED',
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -95,13 +95,13 @@ class ElectionResultsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     'Ended: ${dateFormat.format(election.endTime)}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
                   if (election.userVote != null) ...[
                     const SizedBox(height: 8),
                     Text(
                       'You voted: ${dateFormat.format(election.userVote!.votedAt)}',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     ),
                   ],
                 ],
@@ -151,7 +151,7 @@ class ElectionResultsScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '${winningOption.voteCount} votes (${winningOption.getPercentage(election.totalVotes).toStringAsFixed(1)}%)',
-                        style: TextStyle(color: Colors.grey[700]),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                       ),
                     ],
                   ),
@@ -186,14 +186,14 @@ class ElectionResultsScreen extends StatelessWidget {
                             ? Colors.amber.withValues(alpha:0.1)
                             : isUserVote
                                 ? Colors.green.withValues(alpha:0.1)
-                                : Colors.grey[100],
+                                : Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isWinner
                               ? Colors.amber
                               : isUserVote
                                   ? Colors.green
-                                  : Colors.grey[300]!,
+                                  : Theme.of(context).dividerColor,
                           width: isWinner || isUserVote ? 2 : 1,
                         ),
                       ),
@@ -225,12 +225,12 @@ class ElectionResultsScreen extends StatelessWidget {
                             children: [
                               Text(
                                 '${option.voteCount} votes',
-                                style: TextStyle(color: Colors.grey[600]),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                               ),
                               Text(
                                 '${percentage.toStringAsFixed(1)}%',
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -240,7 +240,7 @@ class ElectionResultsScreen extends StatelessWidget {
                           LinearProgressIndicator(
                             value: percentage / 100,
                             minHeight: 8,
-                            backgroundColor: Colors.grey[300],
+                            backgroundColor: Theme.of(context).dividerColor,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               isWinner
                                   ? Colors.amber

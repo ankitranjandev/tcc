@@ -59,12 +59,12 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -72,7 +72,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -91,10 +91,10 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: AppColors.primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.blue[200]!,
+                            color: AppColors.primaryBlue.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -109,7 +109,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                                 'Your bank details are securely encrypted and stored',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.blue[900],
+                                  color: AppColors.primaryBlue,
                                 ),
                               ),
                             ),
@@ -124,7 +124,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -133,14 +133,14 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         decoration: InputDecoration(
                           hintText: 'Enter bank name',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -162,7 +162,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -171,14 +171,14 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         decoration: InputDecoration(
                           hintText: 'Enter account holder name',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -200,7 +200,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -210,14 +210,14 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         decoration: InputDecoration(
                           hintText: 'Enter account number',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -242,7 +242,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -252,14 +252,14 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                         decoration: InputDecoration(
                           hintText: 'Enter IFSC code',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -282,8 +282,9 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Theme.of(context).dividerColor),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +292,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                             Icon(
                               Icons.lock_outline,
                               size: 20,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                             SizedBox(width: 12),
                             Expanded(
@@ -299,7 +300,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
                                 'By adding this account, you agree to our Terms & Conditions and authorize TCC to debit this account for payments.',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[700],
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                   height: 1.4,
                                 ),
                               ),
@@ -317,14 +318,10 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, -2),
-                  ),
-                ],
+                color: Theme.of(context).scaffoldBackgroundColor,
+                border: Border(
+                  top: BorderSide(color: Theme.of(context).dividerColor),
+                ),
               ),
               child: SizedBox(
                 width: double.infinity,

@@ -163,9 +163,9 @@ class _InvestmentOpportunityDetailScreenState
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
@@ -297,7 +297,7 @@ class _InvestmentOpportunityDetailScreenState
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -326,7 +326,7 @@ class _InvestmentOpportunityDetailScreenState
                     SizedBox(height: 8),
                     LinearProgressIndicator(
                       value: _opportunity!.soldPercentage / 100,
-                      backgroundColor: Colors.grey.shade200,
+                      backgroundColor: Theme.of(context).dividerColor,
                       valueColor: AlwaysStoppedAnimation(_categoryColor),
                     ),
                   ],

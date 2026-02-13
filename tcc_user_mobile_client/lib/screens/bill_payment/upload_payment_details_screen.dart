@@ -83,12 +83,12 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -96,7 +96,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -115,10 +115,10 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: AppColors.primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.blue[200]!,
+                            color: AppColors.primaryBlue.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Column(
@@ -136,7 +136,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.blue[900],
+                                    color: AppColors.primaryBlue,
                                   ),
                                 ),
                               ],
@@ -149,7 +149,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                               '4. We will verify and confirm your payment',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.blue[900],
+                                color: AppColors.primaryBlue,
                                 height: 1.5,
                               ),
                             ),
@@ -162,9 +162,9 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: Theme.of(context).dividerColor),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +174,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             SizedBox(height: 16),
@@ -197,7 +197,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -206,14 +206,14 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                         decoration: InputDecoration(
                           hintText: 'Enter transaction ID',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -235,7 +235,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -244,14 +244,14 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                         decoration: InputDecoration(
                           hintText: 'Enter reference number',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -267,7 +267,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -277,10 +277,10 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                           width: double.infinity,
                           padding: EdgeInsets.all(32),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.grey[300]!,
+                              color: Theme.of(context).dividerColor,
                               style: BorderStyle.solid,
                               width: 2,
                             ),
@@ -308,7 +308,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                                 ),
                               ),
                               SizedBox(height: 4),
@@ -316,7 +316,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                                 'PNG, JPG or PDF (Max 5MB)',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                               ),
                             ],
@@ -329,10 +329,10 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.orange[50],
+                          color: AppColors.warning.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.orange[200]!,
+                            color: AppColors.warning.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -340,7 +340,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                           children: [
                             Icon(
                               Icons.warning_amber_rounded,
-                              color: Colors.orange[700],
+                              color: AppColors.warning,
                               size: 20,
                             ),
                             SizedBox(width: 12),
@@ -349,7 +349,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
                                 'Your payment will be verified within 24 hours. You will receive a confirmation once verified.',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.orange[900],
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                                   height: 1.4,
                                 ),
                               ),
@@ -367,14 +367,10 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, -2),
-                  ),
-                ],
+                color: Theme.of(context).scaffoldBackgroundColor,
+                border: Border(
+                  top: BorderSide(color: Theme.of(context).dividerColor),
+                ),
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -423,7 +419,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
             label,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey[700],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           Text(
@@ -431,7 +427,7 @@ class _UploadPaymentDetailsScreenState extends State<UploadPaymentDetailsScreen>
             style: TextStyle(
               fontSize: 13,
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: isBold ? AppColors.primaryBlue : Colors.black87,
+              color: isBold ? AppColors.primaryBlue : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
             ),
           ),
         ],

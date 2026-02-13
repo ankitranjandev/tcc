@@ -323,7 +323,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -331,7 +331,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
                   'Please upload your document',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 SizedBox(height: 32),
@@ -369,7 +369,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 8),
@@ -377,7 +377,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
                         userName,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       SizedBox(height: 16),
@@ -538,7 +538,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           SizedBox(height: 8),
@@ -568,7 +568,7 @@ class _KYCVerificationScreenState extends State<KYCVerificationScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                           ),
                         )
                       : Text(

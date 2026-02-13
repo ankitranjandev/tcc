@@ -166,7 +166,7 @@ class _CurrencySellScreenState extends State<CurrencySellScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 14)),
           Text(
             value,
             style: TextStyle(
@@ -241,9 +241,9 @@ class _CurrencySellScreenState extends State<CurrencySellScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -330,9 +330,9 @@ class _CurrencySellScreenState extends State<CurrencySellScreen> {
           Container(
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[200]!),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             child: Column(
               children: [
@@ -366,7 +366,7 @@ class _CurrencySellScreenState extends State<CurrencySellScreen> {
                             holding.currencyCode,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -412,7 +412,7 @@ class _CurrencySellScreenState extends State<CurrencySellScreen> {
                   children: [
                     Text(
                       'You will receive',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     ),
                     Text(
                       'TCC ${holding.calculatedCurrentValue.toStringAsFixed(2)}',
@@ -532,7 +532,7 @@ class _CurrencySellScreenState extends State<CurrencySellScreen> {
               onPressed: () => context.pop(),
               child: Text(
                 'Cancel',
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               ),
             ),
           ),
@@ -545,7 +545,7 @@ class _CurrencySellScreenState extends State<CurrencySellScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+        Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
         Text(
           value,
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),

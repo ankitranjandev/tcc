@@ -108,7 +108,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -119,7 +119,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
             'Your KYC documents are being reviewed by our team. This usually takes 24-48 hours. We\'ll notify you once the review is complete.',
             style: TextStyle(
               fontSize: 16,
-              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -161,7 +161,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -172,7 +172,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
             'Congratulations! Your KYC verification has been approved. You now have full access to all features.',
             style: TextStyle(
               fontSize: 16,
-              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -225,7 +225,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -236,7 +236,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
             'Your KYC documents were rejected. Please review the reasons below and resubmit with corrections.',
             style: TextStyle(
               fontSize: 16,
-              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -297,7 +297,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
                                 doc['rejection_reason'] ?? 'No reason provided',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                 ),
                               ),
                             ],
@@ -349,7 +349,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
                       'Loading KYC status...',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -379,7 +379,7 @@ class _KYCStatusScreenState extends State<KYCStatusScreen> {
                           Text(
                             _errorMessage!,
                             style: TextStyle(
-                              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                             textAlign: TextAlign.center,
                           ),

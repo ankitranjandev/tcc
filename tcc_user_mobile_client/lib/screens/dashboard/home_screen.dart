@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: SingleChildScrollView(
@@ -290,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 4),
@@ -298,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
             'Explore and grow your wealth',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -621,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               if (_isLoadingMarketData && _currencyRates == null)
@@ -648,11 +648,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: Offset(0, 4),
                   ),
@@ -668,7 +668,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         '1 TCC = 1 USD',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       SizedBox(height: 4),
@@ -731,7 +731,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 4),
@@ -739,7 +739,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Invest in rare minerals (e.g. Gold, Silver, Platinum)',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -794,11 +794,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         width: 140,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: Offset(0, 4),
             ),
@@ -829,7 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -840,7 +840,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -927,7 +927,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -935,7 +935,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Invest in farming activity and all of the produce',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -1006,11 +1006,11 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: Offset(0, 4),
             ),
@@ -1040,7 +1040,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1051,7 +1051,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 4),
@@ -1088,7 +1088,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -1096,7 +1096,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Invest in people\'s education and get huge profit',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -1167,11 +1167,11 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: Offset(0, 4),
             ),
@@ -1201,7 +1201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1212,7 +1212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 4),
@@ -1238,11 +1238,11 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: EdgeInsets.symmetric(horizontal: 20),
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -1256,7 +1256,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
               height: 1.3,
             ),
           ),
@@ -1641,7 +1641,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 IconButton(
@@ -1682,7 +1682,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
             if (_showOtpInput) ...[
               Text(
                 'Enter the 6-digit OTP sent to your phone',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 14),
               ),
               SizedBox(height: 16),
               TextField(
@@ -1710,7 +1710,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -1858,7 +1858,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: Theme.of(context).dividerColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1873,7 +1873,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                 Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -1919,7 +1919,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
-                  color: Colors.grey[700],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                 ),
               ),
               SizedBox(height: 8),
@@ -1950,7 +1950,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                       SizedBox(height: 4),
                       Text(
                         'Add a bank account to withdraw funds',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 12),
@@ -2045,11 +2045,11 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.schedule, size: 14, color: Colors.grey),
+                  Icon(Icons.schedule, size: 14, color: Theme.of(context).textTheme.bodySmall?.color),
                   SizedBox(width: 4),
                   Text(
                     'Processing time: 24-48 hours',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ],
               ),
@@ -2069,10 +2069,10 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
         margin: EdgeInsets.only(bottom: 8),
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? Color(0xFF2C3E50).withValues(alpha: 0.1) : Colors.white,
+          color: isSelected ? Color(0xFF2C3E50).withValues(alpha: 0.1) : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Color(0xFF2C3E50) : Colors.grey.shade300,
+            color: isSelected ? Color(0xFF2C3E50) : Theme.of(context).dividerColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -2098,7 +2098,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                   ),
                   Text(
                     '${account.displayAccountNumber} - ${account.accountHolderName}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13),
                   ),
                 ],
               ),
@@ -2130,7 +2130,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.grey[600],
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
         ),

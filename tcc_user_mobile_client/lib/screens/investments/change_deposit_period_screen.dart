@@ -23,12 +23,21 @@ class _ChangeDepositPeriodScreenState extends State<ChangeDepositPeriodScreen> {
     final returnAmount = expectedReturn - totalInvestment;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
           onPressed: () => context.pop(),
         ),
-        title: Text('Change deposit Period'),
+        title: Text(
+          'Change deposit Period',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge?.color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -39,16 +48,16 @@ class _ChangeDepositPeriodScreenState extends State<ChangeDepositPeriodScreen> {
               // Investment Header
               Row(
                 children: [
-                  Icon(Icons.wallet, size: 48, color: Colors.yellow.shade700),
+                  Icon(Icons.wallet, size: 48, color: AppColors.secondaryYellow),
                   SizedBox(width: 16),
                   Text(
                     'Gold',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color),
                   ),
                   Spacer(),
                   Chip(
                     label: Text('Minerals'),
-                    backgroundColor: Colors.yellow.shade100,
+                    backgroundColor: AppColors.secondaryYellow.withValues(alpha: 0.2),
                   ),
                 ],
               ),
@@ -155,9 +164,9 @@ class _ChangeDepositPeriodScreenState extends State<ChangeDepositPeriodScreen> {
                     SizedBox(height: 16),
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: Colors.yellow.shade700,
-                        inactiveTrackColor: Colors.grey.shade300,
-                        thumbColor: Colors.yellow.shade700,
+                        activeTrackColor: AppColors.secondaryYellow,
+                        inactiveTrackColor: Theme.of(context).dividerColor,
+                        thumbColor: AppColors.secondaryYellow,
                       ),
                       child: Slider(
                         value: _period,

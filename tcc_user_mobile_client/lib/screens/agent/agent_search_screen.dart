@@ -207,7 +207,7 @@ class _AgentSearchScreenState extends State<AgentSearchScreen> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -262,7 +262,7 @@ class _AgentSearchScreenState extends State<AgentSearchScreen> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : Theme.of(context).iconTheme.color,
+                color: isSelected ? AppColors.white : Theme.of(context).iconTheme.color,
                 size: 20,
               ),
               SizedBox(height: 4),
@@ -271,7 +271,7 @@ class _AgentSearchScreenState extends State<AgentSearchScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
+                  color: isSelected ? AppColors.white : Theme.of(context).textTheme.bodyMedium?.color,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -474,7 +474,7 @@ class _AgentSearchScreenState extends State<AgentSearchScreen> {
                     label: Text('Navigate'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

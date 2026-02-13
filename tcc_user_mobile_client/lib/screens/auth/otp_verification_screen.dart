@@ -159,7 +159,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 8),
@@ -167,7 +167,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 text: TextSpan(
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   children: [
                     TextSpan(text: 'Please enter the 6- digit code that has\nbeen sent to '),
@@ -175,7 +175,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                       text: phoneNumber,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -211,9 +211,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   borderRadius: BorderRadius.circular(12),
                   fieldHeight: 56,
                   fieldWidth: 48,
-                  activeFillColor: AppColors.white,
+                  activeFillColor: Theme.of(context).colorScheme.surface,
                   inactiveFillColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
-                  selectedFillColor: AppColors.white,
+                  selectedFillColor: Theme.of(context).colorScheme.surface,
                   activeColor: AppColors.primaryBlue,
                   inactiveColor: Theme.of(context).dividerColor,
                   selectedColor: AppColors.primaryBlue,
@@ -235,21 +235,21 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     'Resend OTP in',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.access_time, size: 16, color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey),
+                      Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                       SizedBox(width: 8),
                       Text(
                         '00:${_resendTimer.toString().padLeft(2, '0')}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: _resendTimer == 0 ? AppColors.primaryBlue : Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                          color: _resendTimer == 0 ? AppColors.primaryBlue : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],

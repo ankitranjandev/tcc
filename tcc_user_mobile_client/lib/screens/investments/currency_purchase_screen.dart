@@ -160,13 +160,13 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
             SizedBox(height: 8),
             Text(
               'You bought ${currencyAmount.toStringAsFixed(2)} ${widget.currencyCode}',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 8),
             Text(
               'for ${_tccAmount.toStringAsFixed(2)} TCC',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             ),
           ],
         ),
@@ -199,9 +199,9 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
     final walletBalance = context.watch<AuthProvider>().user?.walletBalance ?? 0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -278,14 +278,14 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
                 hintText: '0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderSide: BorderSide(color: Theme.of(context).dividerColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: AppColors.warning, width: 2),
                 ),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: Theme.of(context).colorScheme.surface,
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -313,11 +313,11 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
               children: [
                 Text(
                   'Min: ${_currency!.minInvestment.toStringAsFixed(0)} TCC',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                 ),
                 Text(
                   'Max: ${_currency!.maxInvestment.toStringAsFixed(0)} TCC',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                 ),
               ],
             ),
@@ -370,7 +370,7 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
                   Expanded(
                     child: Text(
                       'Currency investments carry risk. Exchange rates fluctuate and you may lose value.',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[700], height: 1.3),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8), height: 1.3),
                     ),
                   ),
                 ],
@@ -490,9 +490,9 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -503,7 +503,7 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
             children: [
               Text(
                 'Available Balance',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               ),
               Text(
                 'TCC ${balance.toStringAsFixed(2)}',
@@ -537,10 +537,10 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: isDisabled ? Colors.grey[100] : AppColors.warning.withValues(alpha: 0.1),
+              color: isDisabled ? Theme.of(context).colorScheme.surface : AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isDisabled ? Colors.grey[300]! : AppColors.warning.withValues(alpha: 0.3),
+                color: isDisabled ? Theme.of(context).dividerColor : AppColors.warning.withValues(alpha: 0.3),
               ),
             ),
             child: Text(
@@ -548,7 +548,7 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: isDisabled ? Colors.grey[400] : AppColors.warning,
+                color: isDisabled ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5) : AppColors.warning,
               ),
             ),
           ),
@@ -572,7 +572,7 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
             children: [
               Text(
                 'You will receive',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               ),
               Text(
                 '${_currencyAmount.toStringAsFixed(4)} ${widget.currencyCode}',
@@ -588,7 +588,7 @@ class _CurrencyPurchaseScreenState extends State<CurrencyPurchaseScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Rate', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+              Text('Rate', style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
               Text(
                 '1 TCC = ${_currency!.rate.toStringAsFixed(4)} ${widget.currencyCode}',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),

@@ -98,14 +98,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Welcome Back!',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                     ResponsiveText.body(
                       'Sign in to continue',
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobileFactor: 5)),
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       "Don't have an account? ",
-                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     ),
                     TextButton(
                       onPressed: () {

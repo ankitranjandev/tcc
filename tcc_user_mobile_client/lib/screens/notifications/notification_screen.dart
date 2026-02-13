@@ -127,14 +127,14 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
             Icon(
               Icons.notifications_off_outlined,
               size: 80,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
             ),
             SizedBox(height: 16),
             Text(
               showAll ? 'No notifications yet' : 'No unread notifications',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -236,7 +236,7 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
             notification['time']!,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[500],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],

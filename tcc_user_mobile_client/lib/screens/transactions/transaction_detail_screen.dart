@@ -107,9 +107,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final currencyFormat = NumberFormat.currency(symbol: 'TCC', decimalDigits: 2);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
@@ -156,7 +156,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                 gradient: LinearGradient(
                   colors: [
                     _statusColor(context).withValues(alpha: 0.1),
-                    Colors.white,
+                    Theme.of(context).scaffoldBackgroundColor,
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -335,14 +335,14 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               )
                             : Icon(Icons.download, size: 20),
                         label: Text(_isDownloading ? 'Downloading...' : 'Download Receipt', style: TextStyle(fontSize: 14)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBlue,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -463,7 +463,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                               label: Text('Retry Transaction', style: TextStyle(fontSize: 13)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.error,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppColors.white,
                               ),
                             ),
                           ),
@@ -524,7 +524,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -809,7 +809,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
             ),
             child: Text('Send Request'),
           ),

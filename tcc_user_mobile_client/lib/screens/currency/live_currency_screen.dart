@@ -94,25 +94,25 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Live Currency Rates',
           style: TextStyle(
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: Colors.black87),
+            icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.onSurface),
             onPressed: _isLoading ? null : _loadCurrencyRates,
           ),
         ],
@@ -147,7 +147,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[700],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             SizedBox(height: 24),
@@ -255,12 +255,12 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
           margin: EdgeInsets.only(bottom: 12),
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             border: canInvest ? Border.all(color: AppColors.warning.withValues(alpha: 0.3)) : null,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
@@ -277,7 +277,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       alignment: Alignment.center,
@@ -300,7 +300,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               if (canInvest) ...[
@@ -328,7 +328,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
                             name,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -349,7 +349,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 2),
@@ -357,7 +357,7 @@ class _LiveCurrencyScreenState extends State<LiveCurrencyScreen> {
                         '1 TCC = ${formatter.format(rate)} $code',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],

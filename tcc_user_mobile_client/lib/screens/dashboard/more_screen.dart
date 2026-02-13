@@ -261,7 +261,7 @@ class _MoreScreenState extends State<MoreScreen> {
                 icon: Icons.description_outlined,
                 title: 'Terms and conditions',
                 onTap: () {
-                  _showTermsDialog(context);
+                  context.push('/legal/terms');
                 },
               ),
               _buildMenuItem(
@@ -269,7 +269,7 @@ class _MoreScreenState extends State<MoreScreen> {
                 icon: Icons.privacy_tip_outlined,
                 title: 'Privacy Policy',
                 onTap: () {
-                  _showPrivacyDialog(context);
+                  context.push('/legal/privacy');
                 },
               ),
 
@@ -292,6 +292,32 @@ class _MoreScreenState extends State<MoreScreen> {
                       SizedBox(width: 12),
                       Text(
                         'Logout',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 8),
+
+              // Delete Account Button
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: TextButton(
+                  onPressed: () => _showDeleteAccountDialog(context),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_forever),
+                      SizedBox(width: 12),
+                      Text(
+                        'Delete Account',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -366,7 +392,7 @@ class _MoreScreenState extends State<MoreScreen> {
                             Icon(
                               Icons.account_balance_outlined,
                               size: 64,
-                              color: Colors.grey[400],
+                              color: Theme.of(context).disabledColor,
                             ),
                             SizedBox(height: 16),
                             Text(
@@ -374,7 +400,7 @@ class _MoreScreenState extends State<MoreScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.grey[600],
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
                               ),
                             ),
                             SizedBox(height: 8),
@@ -382,7 +408,7 @@ class _MoreScreenState extends State<MoreScreen> {
                               'Add a bank account to get started',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey[500],
+                                color: Theme.of(context).textTheme.bodySmall?.color,
                               ),
                             ),
                           ],
@@ -524,10 +550,10 @@ class _MoreScreenState extends State<MoreScreen> {
       child: Container(
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: account.isPrimary ? AppColors.primaryBlue : Colors.grey.shade300,
+            color: account.isPrimary ? AppColors.primaryBlue : Theme.of(context).dividerColor,
             width: account.isPrimary ? 2 : 1,
           ),
         ),
@@ -549,7 +575,7 @@ class _MoreScreenState extends State<MoreScreen> {
                   Text(
                     account.displayAccountNumber,
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: 12,
                     ),
                   ),
@@ -573,7 +599,7 @@ class _MoreScreenState extends State<MoreScreen> {
                 ),
               ),
             SizedBox(width: 8),
-            Icon(Icons.more_vert, size: 20, color: Colors.grey[600]),
+            Icon(Icons.more_vert, size: 20, color: Theme.of(context).textTheme.bodySmall?.color),
           ],
         ),
       ),
@@ -821,6 +847,85 @@ class _MoreScreenState extends State<MoreScreen> {
         ],
       ),
     );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.error),
+            SizedBox(width: 8),
+            Text('Delete Account'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete your account?\n\n'
+          'This action is permanent and cannot be undone. '
+          'All your data, including transaction history, investments, and wallet balance will be permanently deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              _performAccountDeletion(context);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performAccountDeletion(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: AppColors.error),
+            SizedBox(width: 16),
+            Text('Deleting account...'),
+          ],
+        ),
+      ),
+    );
+
+    final success = await authProvider.deleteAccount();
+
+    if (context.mounted) {
+      Navigator.pop(context); // Close loading dialog
+
+      if (success) {
+        context.go('/login');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Your account has been deleted'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Failed to delete account'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   static bool _isKycInProgress(String kycStatus) {

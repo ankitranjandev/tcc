@@ -133,8 +133,8 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
               'Skip',
               style: TextStyle(
                 color: _isSubmitting
-                    ? Colors.grey.withValues(alpha: 0.5)
-                    : Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                    ? Theme.of(context).disabledColor
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
             ),
@@ -154,7 +154,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -162,7 +162,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                   'Optional - You can add this later',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 SizedBox(height: 32),
@@ -230,7 +230,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: isSelected ? AppColors.white : Theme.of(context).textTheme.bodyMedium?.color,
+                                  color: isSelected ? AppColors.white : Theme.of(context).colorScheme.onSurface,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -305,7 +305,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                           ),
                         )
                       : Text(

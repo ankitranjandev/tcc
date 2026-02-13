@@ -65,7 +65,7 @@ class GiftScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -156,11 +156,13 @@ class GiftScreen extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(top: 8),
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
+              child: Builder(
+                builder: (context) => Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
                 ),
               ),
             ),

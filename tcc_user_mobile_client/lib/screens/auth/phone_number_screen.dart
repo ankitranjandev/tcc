@@ -129,7 +129,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -137,7 +137,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   'The number should be same as the one provide in Bank',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 SizedBox(height: 48),

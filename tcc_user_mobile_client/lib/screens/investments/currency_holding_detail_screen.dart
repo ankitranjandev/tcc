@@ -64,9 +64,9 @@ class _CurrencyHoldingDetailScreenState extends State<CurrencyHoldingDetailScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -214,7 +214,7 @@ class _CurrencyHoldingDetailScreenState extends State<CurrencyHoldingDetailScree
                       : 'Consider waiting for better rates',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -225,7 +225,7 @@ class _CurrencyHoldingDetailScreenState extends State<CurrencyHoldingDetailScree
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -248,7 +248,7 @@ class _CurrencyHoldingDetailScreenState extends State<CurrencyHoldingDetailScree
                               'on ${dateFormat.format(holding.soldAt!)}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey[600],
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                         ],
@@ -418,9 +418,9 @@ class _CurrencyHoldingDetailScreenState extends State<CurrencyHoldingDetailScree
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         children: rows,
@@ -438,7 +438,7 @@ class _CurrencyHoldingDetailScreenState extends State<CurrencyHoldingDetailScree
             label,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           Text(
@@ -446,7 +446,7 @@ class _CurrencyHoldingDetailScreenState extends State<CurrencyHoldingDetailScree
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: valueColor ?? Colors.black87,
+              color: valueColor ?? Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],

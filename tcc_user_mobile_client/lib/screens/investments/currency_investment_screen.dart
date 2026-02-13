@@ -80,9 +80,9 @@ class _CurrencyInvestmentScreenState extends State<CurrencyInvestmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -130,7 +130,7 @@ class _CurrencyInvestmentScreenState extends State<CurrencyInvestmentScreen> {
           SizedBox(height: 16),
           Text(
             'Fetching live rates...',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
           ),
         ],
       ),
@@ -157,7 +157,7 @@ class _CurrencyInvestmentScreenState extends State<CurrencyInvestmentScreen> {
             SizedBox(height: 8),
             Text(
               _errorMessage ?? 'Unknown error',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 24),
@@ -195,7 +195,7 @@ class _CurrencyInvestmentScreenState extends State<CurrencyInvestmentScreen> {
           SizedBox(height: 8),
           Text(
             'Check back later for currency investment options',
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
           ),
         ],
       ),
@@ -250,7 +250,7 @@ class _CurrencyInvestmentScreenState extends State<CurrencyInvestmentScreen> {
                       'Updated ${_getTimeSinceUpdate()}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                 ],
@@ -354,13 +354,12 @@ class _CurrencyInvestmentScreenState extends State<CurrencyInvestmentScreen> {
         child: Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Theme.of(context).dividerColor),
             boxShadow: [
               BoxShadow(
-                color: (Theme.of(context).textTheme.titleLarge?.color ?? AppColors.black)
-                    .withValues(alpha: 0.04),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),

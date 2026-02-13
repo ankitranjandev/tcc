@@ -132,9 +132,9 @@ class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -232,7 +232,7 @@ class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
               _errorMessage ?? 'Unknown error',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -277,7 +277,7 @@ class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
             'Check back later for new investment opportunities',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[500],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -296,12 +296,12 @@ class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
         child: Container(
           padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Theme.of(context).dividerColor),
             boxShadow: [
               BoxShadow(
-                color: (Theme.of(context).textTheme.titleLarge?.color ?? AppColors.black).withValues(alpha: 0.04),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -350,7 +350,7 @@ class _InvestmentCategoryScreenState extends State<InvestmentCategoryScreen> {
                       '${opportunity.availableUnits}/${opportunity.totalUnits} units available',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],

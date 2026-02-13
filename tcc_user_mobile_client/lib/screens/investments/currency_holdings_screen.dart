@@ -46,9 +46,9 @@ class _CurrencyHoldingsScreenState extends State<CurrencyHoldingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -94,7 +94,7 @@ class _CurrencyHoldingsScreenState extends State<CurrencyHoldingsScreen> {
           SizedBox(height: 16),
           Text(
             'Loading holdings...',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
           ),
         ],
       ),
@@ -117,7 +117,7 @@ class _CurrencyHoldingsScreenState extends State<CurrencyHoldingsScreen> {
             SizedBox(height: 8),
             Text(
               _errorMessage ?? 'Unknown error',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 24),
@@ -207,7 +207,7 @@ class _CurrencyHoldingsScreenState extends State<CurrencyHoldingsScreen> {
               'Start investing in currencies to see your holdings here.',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -373,12 +373,12 @@ class _CurrencyHoldingsScreenState extends State<CurrencyHoldingsScreen> {
         child: Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Theme.of(context).dividerColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -417,7 +417,7 @@ class _CurrencyHoldingsScreenState extends State<CurrencyHoldingsScreen> {
                       'Invested: TCC ${holding.amountInvested.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -454,7 +454,7 @@ class _CurrencyHoldingsScreenState extends State<CurrencyHoldingsScreen> {
                 ],
               ),
               SizedBox(width: 8),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
+              Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
             ],
           ),
         ),

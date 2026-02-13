@@ -139,12 +139,12 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
     final isEditMode = widget.account != null;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -152,7 +152,7 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -171,10 +171,10 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: AppColors.primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.blue[200]!,
+                            color: AppColors.primaryBlue.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -189,7 +189,7 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                                 'Your bank details are securely encrypted and stored',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.blue[900],
+                                  color: AppColors.primaryBlue,
                                 ),
                               ),
                             ),
@@ -204,15 +204,15 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: Theme.of(context).dividerColor),
                         ),
                         child: DropdownButtonFormField<String>(
                           initialValue: _accountType,
@@ -387,9 +387,9 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                       // Set as Primary Checkbox
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: Theme.of(context).dividerColor),
                         ),
                         child: CheckboxListTile(
                           value: _isPrimary,
@@ -409,7 +409,7 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                             'Primary account is used by default for transactions',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                           activeColor: AppColors.primaryBlue,
@@ -422,7 +422,7 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -431,7 +431,7 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                             Icon(
                               Icons.lock_outline,
                               size: 20,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                             SizedBox(width: 12),
                             Expanded(
@@ -439,7 +439,7 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
                                 'By ${isEditMode ? 'updating' : 'adding'} this account, you agree to our Terms & Conditions and authorize TCC to debit this account for payments.',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[700],
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                   height: 1.4,
                                 ),
                               ),
@@ -457,10 +457,10 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: Offset(0, -2),
                   ),
@@ -520,7 +520,7 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         SizedBox(height: 8),
@@ -532,14 +532,14 @@ class _ManageBankAccountScreenState extends State<ManageBankAccountScreen> {
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

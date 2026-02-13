@@ -44,6 +44,8 @@ import 'screens/voting/elections_screen.dart';
 import 'screens/voting/election_details_screen.dart';
 import 'screens/voting/election_results_screen.dart';
 import 'screens/help/faq_screen.dart';
+import 'screens/legal/terms_and_conditions_screen.dart';
+import 'screens/legal/privacy_policy_screen.dart';
 import 'models/investment_model.dart';
 import 'models/transaction_model.dart';
 import 'models/election_model.dart';
@@ -382,6 +384,14 @@ class _TCCAppState extends State<TCCApp> {
         GoRoute(
           path: '/help/faq',
           builder: (context, state) => FaqScreen(),
+        ),
+        GoRoute(
+          path: '/legal/terms',
+          builder: (context, state) => TermsAndConditionsScreen(),
+        ),
+        GoRoute(
+          path: '/legal/privacy',
+          builder: (context, state) => PrivacyPolicyScreen(),
         ),
       ],
     );

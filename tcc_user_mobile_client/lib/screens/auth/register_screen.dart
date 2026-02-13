@@ -105,7 +105,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       'Register',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
@@ -115,7 +115,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       'Already have an account? ',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     GestureDetector(
@@ -296,7 +296,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: (_agreeToPrivacyPolicy && _agreeToTerms) ? _handleRegister : null,
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    disabledBackgroundColor: Colors.grey[300],
+                    disabledBackgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                   child: Text(
                     'Continue',

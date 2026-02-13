@@ -130,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           child: Icon(
                             Icons.camera_alt,
-                            color: Colors.white,
+                            color: AppColors.white,
                             size: 20,
                           ),
                         ),
@@ -187,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Icon(
                           _getKycStatusIcon(user.kycStatus),
-                          color: Colors.white,
+                          color: AppColors.white,
                           size: 24,
                         ),
                       ),

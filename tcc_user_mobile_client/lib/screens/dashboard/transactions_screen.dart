@@ -155,7 +155,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
           SizedBox(height: 8),
           Text(
             _errorMessage ?? 'Unknown error',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 24),
@@ -379,7 +379,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: Theme.of(context).dividerColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -586,7 +586,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
       selectedColor: AppColors.primaryBlue.withValues(alpha: 0.2),
       checkmarkColor: AppColors.primaryBlue,
       labelStyle: TextStyle(
-        color: isSelected ? AppColors.primaryBlue : Colors.black,
+        color: isSelected ? AppColors.primaryBlue : Theme.of(context).colorScheme.onSurface,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
     );

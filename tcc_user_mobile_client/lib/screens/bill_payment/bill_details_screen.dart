@@ -206,7 +206,7 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _accountError != null
-                        ? Colors.red
+                        ? AppColors.error
                         : Theme.of(context).dividerColor,
                   ),
                 ),
@@ -237,7 +237,7 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
                 Text(
                   _accountError!,
                   style: TextStyle(
-                    color: Colors.red,
+                    color: AppColors.error,
                     fontSize: 12,
                   ),
                 ),

@@ -184,13 +184,13 @@ class _AccountScreenState extends State<AccountScreen> {
             icon: Icons.description_outlined,
             title: 'Terms of Service',
             subtitle: 'Read our terms of service',
-            onTap: () => _openTermsOfService(context),
+            onTap: () => context.push('/legal/terms'),
           ),
           _buildSettingsTile(
             icon: Icons.privacy_tip_outlined,
             title: 'Privacy Policy',
             subtitle: 'How we handle your data',
-            onTap: () => _showPrivacyDialog(context),
+            onTap: () => context.push('/legal/privacy'),
           ),
 
           SizedBox(height: 24),
@@ -350,7 +350,7 @@ class _AccountScreenState extends State<AccountScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
             ),
             child: Text('Save'),
           ),
@@ -501,7 +501,7 @@ class _AccountScreenState extends State<AccountScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
             ),
             child: Text('Change Password'),
           ),
@@ -536,7 +536,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? AppColors.primaryBlue : Colors.grey,
+                    color: isSelected ? AppColors.primaryBlue : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     width: 2,
                   ),
                 ),
@@ -598,7 +598,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? AppColors.primaryBlue : Colors.grey,
+                    color: isSelected ? AppColors.primaryBlue : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     width: 2,
                   ),
                 ),
@@ -791,7 +791,7 @@ class _AccountScreenState extends State<AccountScreen> {
       child: Container(
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -819,7 +819,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            Icon(Icons.arrow_forward_ios, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
           ],
         ),
       ),

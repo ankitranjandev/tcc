@@ -524,7 +524,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
               'Go to Settings > Apps > TCC > Permissions > Contacts',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -543,7 +543,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
             ),
-            child: Text('Open Settings', style: TextStyle(color: Colors.white)),
+            child: Text('Open Settings', style: TextStyle(color: AppColors.white)),
           ),
         ],
       ),
@@ -626,7 +626,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -700,7 +700,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                         '${_filteredContacts.length} contacts',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       if (_registeredPhoneNumbers.isNotEmpty) ...[
@@ -708,7 +708,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                           ' • ',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         Container(
@@ -738,13 +738,13 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.person_off, size: 48, color: Colors.grey[400]),
+                              Icon(Icons.person_off, size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                               SizedBox(height: 16),
                               Text(
                                 'No contacts found',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                 ),
                               ),
                             ],
@@ -817,7 +817,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                                               child: Icon(
                                                 Icons.check,
                                                 size: 10,
-                                                color: Colors.white,
+                                                color: AppColors.white,
                                               ),
                                             ),
                                           ),
@@ -867,7 +867,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                                             phoneNumber,
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: Colors.grey[600],
+                                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                             ),
                                           ),
                                         ],
@@ -877,7 +877,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
                                     // Arrow icon
                                     Icon(
                                       Icons.chevron_right,
-                                      color: Colors.grey[400],
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                     ),
                                   ],
                                 ),
@@ -1108,7 +1108,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
             ),
-            child: Text('Add Funds', style: TextStyle(color: Colors.white)),
+            child: Text('Add Funds', style: TextStyle(color: AppColors.white)),
           ),
         ],
       ),
@@ -1203,7 +1203,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
             ),
-            child: Text('Send Gift', style: TextStyle(color: Colors.white)),
+            child: Text('Send Gift', style: TextStyle(color: AppColors.white)),
           ),
         ],
       ),
@@ -1302,7 +1302,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
             ),
-            child: Text('Verify', style: TextStyle(color: Colors.white)),
+            child: Text('Verify', style: TextStyle(color: AppColors.white)),
           ),
         ],
       ),
@@ -1400,7 +1400,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
             ),
-            child: Text('Done', style: TextStyle(color: Colors.white)),
+            child: Text('Done', style: TextStyle(color: AppColors.white)),
           ),
         ],
       ),
@@ -1425,7 +1425,7 @@ class _SendGiftScreenState extends State<SendGiftScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
             ),
-            child: Text('OK', style: TextStyle(color: Colors.white)),
+            child: Text('OK', style: TextStyle(color: AppColors.white)),
           ),
         ],
       ),
